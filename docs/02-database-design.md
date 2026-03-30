@@ -86,7 +86,7 @@ erDiagram
 
     %% ── 系统模块 ──
     USERS ||--o{ OPERATION_LOGS : "操作"
-    EXCHANGE_RATES }|--|| SYSTEM_CONFIG : "汇率配置"
+    %% EXCHANGE_RATES 与 SYSTEM_CONFIG 无直接外键关系，同属系统设置模块
 ```
 
 ---
@@ -157,7 +157,7 @@ CREATE TABLE materials (
     spec            TEXT,                              -- 规格型号
     base_unit_id    INTEGER NOT NULL,                  -- 基本计量单位（关联 units.id）
     aux_unit_id     INTEGER,                           -- 辅助计量单位（关联 units.id）
-    conversion_rate REAL,                              -- 基本单位/辅助单位换算比例
+    conversion_rate REAL CHECK(conversion_rate IS NULL OR conversion_rate > 0),  -- 辅助单位换算率（1 辅助单位 = ? 基本单位）
     ref_cost_price  INTEGER DEFAULT 0,                 -- 参考进价（USD，最小货币单位）
     sale_price      INTEGER DEFAULT 0,                 -- 销售价格（USD，最小货币单位）
     safety_stock    REAL    DEFAULT 0,                 -- 安全库存
@@ -178,7 +178,7 @@ CREATE TABLE materials (
     updated_at      TEXT    DEFAULT (datetime('now','localtime'))
 );
 
-CREATE INDEX idx_materials_code ON materials(code);
+-- idx_materials_code: 已由 UNIQUE(code) 约束隐式创建，无需额外索引
 CREATE INDEX idx_materials_type ON materials(material_type);
 CREATE INDEX idx_materials_category ON materials(category_id);
 CREATE INDEX idx_materials_barcode ON materials(barcode);
@@ -193,8 +193,8 @@ CREATE TABLE suppliers (
     code                TEXT    NOT NULL UNIQUE,       -- 供应商编码
     name                TEXT    NOT NULL,              -- 供应商全称
     short_name          TEXT,                          -- 简称
-    country             TEXT    DEFAULT 'VN',
-                                                       -- 所在国家: VN=越南 CN=中国 MY=马来西亚 ID=印尼 TH=泰国 等
+    country             TEXT    NOT NULL DEFAULT 'VN' CHECK(country IN ('VN', 'CN', 'MY', 'ID', 'TH', 'US', 'EU', 'OTHER')),
+                                                        -- 供应商所在国家（范围比客户更广）
     contact_person      TEXT,                          -- 联系人
     contact_phone       TEXT,                          -- 联系电话（含国际区号）
     email               TEXT,                          -- 电子邮箱
@@ -218,7 +218,7 @@ CREATE TABLE suppliers (
     updated_at          TEXT    DEFAULT (datetime('now','localtime'))
 );
 
-CREATE INDEX idx_suppliers_code ON suppliers(code);
+-- idx_suppliers_code: 已由 UNIQUE(code) 约束隐式创建，无需额外索引
 ```
 
 #### customers — 客户
@@ -281,6 +281,7 @@ CREATE TABLE default_warehouses (
                                                       -- 按物料类型配置默认仓
     warehouse_id    INTEGER NOT NULL,                  -- 关联 warehouses.id
     remark          TEXT,
+    created_at      TEXT    DEFAULT (datetime('now','localtime')),
     updated_at      TEXT    DEFAULT (datetime('now','localtime')),
 
     UNIQUE(material_type)
@@ -300,7 +301,9 @@ CREATE TABLE units (
     symbol      TEXT,                                 -- 符号：kg、m、㎡
     decimal_places INTEGER DEFAULT 0,                 -- 数量小数位
     sort_order  INTEGER DEFAULT 0,
-    is_enabled  INTEGER DEFAULT 1
+    is_enabled  INTEGER DEFAULT 1,
+    created_at  TEXT DEFAULT (datetime('now', 'localtime')),
+    updated_at  TEXT DEFAULT (datetime('now', 'localtime'))
 );
 ```
 
@@ -444,6 +447,7 @@ CREATE TABLE purchase_order_items (
 
 CREATE INDEX idx_poi_order ON purchase_order_items(order_id);
 CREATE INDEX idx_poi_warehouse ON purchase_order_items(warehouse_id);
+CREATE INDEX idx_po_items_material ON purchase_order_items(material_id);
 ```
 
 #### inbound_orders — 入库单
@@ -479,6 +483,7 @@ CREATE TABLE inbound_orders (
 
 CREATE INDEX idx_inbound_purchase ON inbound_orders(purchase_id);
 CREATE INDEX idx_inbound_date ON inbound_orders(inbound_date);
+CREATE INDEX idx_inbound_orders_wh ON inbound_orders(warehouse_id);
 ```
 
 #### inbound_order_items — 入库单明细
@@ -487,6 +492,7 @@ CREATE INDEX idx_inbound_date ON inbound_orders(inbound_date);
 CREATE TABLE inbound_order_items (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     inbound_id      INTEGER NOT NULL,                   -- 关联 inbound_orders.id（应用层级联删除）
+    purchase_order_item_id INTEGER,                     -- 关联采购单明细行ID（应用层外键 → purchase_order_items.id）；非采购入库时为 NULL
     material_id     INTEGER NOT NULL,                   -- 关联 materials.id
     unit_id         INTEGER NOT NULL,                  -- 关联 units.id
     unit_name_snapshot TEXT NOT NULL,                  -- 单位名称快照
@@ -503,6 +509,8 @@ CREATE TABLE inbound_order_items (
 );
 
 CREATE INDEX idx_ioi_inbound ON inbound_order_items(inbound_id);
+CREATE INDEX idx_inbound_items_po_item ON inbound_order_items(purchase_order_item_id);
+CREATE INDEX idx_inbound_items_material ON inbound_order_items(material_id);
 ```
 
 #### purchase_returns — 采购退货单
@@ -625,6 +633,7 @@ CREATE TABLE sales_order_items (
 
 CREATE INDEX idx_soi_order ON sales_order_items(order_id);
 CREATE INDEX idx_soi_warehouse ON sales_order_items(warehouse_id);
+CREATE INDEX idx_so_items_material ON sales_order_items(material_id);
 ```
 
 #### outbound_orders — 出库单
@@ -659,6 +668,7 @@ CREATE TABLE outbound_orders (
 
 CREATE INDEX idx_oo_sales ON outbound_orders(sales_id);
 CREATE INDEX idx_oo_date ON outbound_orders(outbound_date);
+CREATE INDEX idx_outbound_orders_wh ON outbound_orders(warehouse_id);
 ```
 
 #### outbound_order_items — 出库单明细
@@ -753,7 +763,7 @@ CREATE TABLE inventory (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     material_id     INTEGER NOT NULL,                   -- 关联 materials.id
     warehouse_id    INTEGER NOT NULL,                   -- 关联 warehouses.id
-    quantity        REAL    DEFAULT 0,                 -- 当前库存数量
+    quantity        REAL    DEFAULT 0 CHECK(quantity >= 0),  -- 当前库存数量
     reserved_qty    REAL    DEFAULT 0,                 -- 已预留库存数量
     available_qty   REAL    GENERATED ALWAYS AS (quantity - reserved_qty) STORED,
                                                       -- 可用库存数量
@@ -782,7 +792,7 @@ CREATE TABLE inventory_lots (
     received_date       TEXT    NOT NULL,               -- 入库确认日期，用于库龄分析
     supplier_batch_no   TEXT,                           -- 供应商批次号
     trace_attrs_json    TEXT,                           -- 批次追溯属性 JSON
-    qty_on_hand         REAL    DEFAULT 0,              -- 当前批次库存
+    qty_on_hand         REAL    DEFAULT 0 CHECK(qty_on_hand >= 0),  -- 当前批次库存
     qty_reserved        REAL    DEFAULT 0,              -- 当前批次预留
     available_qty       REAL    GENERATED ALWAYS AS (qty_on_hand - qty_reserved) STORED,
     receipt_unit_cost   INTEGER DEFAULT 0,              -- 入库时单位成本（USD，最小货币单位）
@@ -936,7 +946,10 @@ CREATE TABLE stock_check_items (
 
 CREATE INDEX idx_sci_check ON stock_check_items(check_id);
 CREATE INDEX idx_sci_lot ON stock_check_items(lot_id);
+CREATE INDEX idx_stock_check_items_material ON stock_check_items(material_id);
 ```
+
+> **注意**：`diff_qty` 和 `diff_amount` 为 GENERATED 列，在 `actual_qty` 为 NULL 时（实盘前）会显示虚假差异值（`-system_qty`）。应用层前端需在 `actual_qty IS NULL` 时隐藏差异列展示。
 
 #### transfers — 调拨单
 
@@ -957,6 +970,9 @@ CREATE TABLE transfers (
     created_at      TEXT    DEFAULT (datetime('now','localtime')),
     updated_at      TEXT    DEFAULT (datetime('now','localtime'))
 );
+
+CREATE INDEX idx_transfers_from_wh ON transfers(from_warehouse);
+CREATE INDEX idx_transfers_to_wh ON transfers(to_warehouse);
 ```
 
 #### transfer_items — 调拨单明细
@@ -977,6 +993,7 @@ CREATE TABLE transfer_items (
 
 CREATE INDEX idx_ti_transfer ON transfer_items(transfer_id);
 CREATE INDEX idx_ti_lot ON transfer_items(lot_id);
+CREATE INDEX idx_transfer_items_material ON transfer_items(material_id);
 ```
 
 ---
@@ -1020,11 +1037,14 @@ CREATE TABLE payment_records (
     payable_id      INTEGER NOT NULL,                   -- 关联 payables.id
     payment_date    TEXT    NOT NULL,
     payment_amount  INTEGER NOT NULL,                    -- 付款金额（最小货币单位）
-    currency        TEXT    DEFAULT 'USD',               -- 付款币种（v1.0 默认跟随应付币种）
+    currency        TEXT    NOT NULL CHECK(currency IN ('VND', 'CNY', 'USD')),
+                                                        -- 付款币种（v1.0 默认跟随应付币种）
     payment_method  TEXT,                               -- 现金/转账/支票
     remark          TEXT,
     created_at      TEXT    DEFAULT (datetime('now','localtime'))
 );
+
+CREATE INDEX idx_payment_records_payable ON payment_records(payable_id);
 ```
 
 #### receivables — 应收账款
@@ -1064,11 +1084,14 @@ CREATE TABLE receipt_records (
     receivable_id   INTEGER NOT NULL,                   -- 关联 receivables.id
     receipt_date    TEXT    NOT NULL,
     receipt_amount  INTEGER NOT NULL,                    -- 收款金额（最小货币单位）
-    currency        TEXT    DEFAULT 'USD',               -- 收款币种（v1.0 默认跟随应收币种）
+    currency        TEXT    NOT NULL CHECK(currency IN ('VND', 'CNY', 'USD')),
+                                                        -- 收款币种（v1.0 默认跟随应收币种）
     receipt_method  TEXT,
     remark          TEXT,
     created_at      TEXT    DEFAULT (datetime('now','localtime'))
 );
+
+CREATE INDEX idx_receipt_records_receivable ON receipt_records(receivable_id);
 ```
 
 ---
@@ -1284,12 +1307,14 @@ CREATE TABLE exchange_rates (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     currency        TEXT    NOT NULL CHECK (currency IN ('VND', 'CNY')),
                                                        -- 外币类型（USD 为基准，不需记录）
-    rate            REAL    NOT NULL,                   -- 1 外币 = N USD
+    rate            REAL    NOT NULL CHECK(rate > 0),   -- 1 外币 = N USD
     effective_date  TEXT    NOT NULL,                   -- 生效日期
     updated_by_user_id INTEGER,                         -- 更新人（关联 users.id）
     updated_by_name TEXT,                               -- 更新人快照
     remark          TEXT,
-    created_at      TEXT    DEFAULT (datetime('now','localtime'))
+    created_at      TEXT    DEFAULT (datetime('now','localtime')),
+
+    UNIQUE(currency, effective_date)
 );
 
 CREATE INDEX idx_exr_currency ON exchange_rates(currency);
@@ -1349,6 +1374,32 @@ migrations/
 - 从仅有预留汇总、不含 `inventory_reservation_lots` 的旧版本升级时，应按 FIFO 为批次物料补建预留分配明细；无法精确分配时先生成 `lot_id=NULL` 的待分配记录，并在后续出库前完成调整
 - 新增 `users.session_version` 字段后，升级脚本应为存量用户初始化默认值 `1`
 
+#### 版本跟踪表
+
+```sql
+-- 数据库 Schema 版本跟踪（由应用在执行迁移脚本后自动写入）
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  version  INTEGER PRIMARY KEY,                              -- 迁移版本号
+  name     TEXT NOT NULL,                                    -- 迁移脚本名称
+  applied_at TEXT DEFAULT (datetime('now', 'localtime'))     -- 执行时间
+);
+```
+
+> 应用启动时检查 `schema_migrations` 中最大 version，依次执行尚未应用的迁移脚本。确保迁移幂等。
+
+#### PRAGMA 初始化清单
+
+应用每次打开数据库连接时需执行以下 PRAGMA（建议写入 `src-tauri/src/db.rs` 的连接初始化函数）：
+
+```sql
+PRAGMA journal_mode = WAL;           -- 启用 WAL 模式，提升读写并发
+PRAGMA busy_timeout = 5000;          -- 写锁等待超时 5 秒
+PRAGMA foreign_keys = OFF;           -- 不使用数据库级外键（应用层校验）
+PRAGMA synchronous = NORMAL;         -- WAL 模式下 NORMAL 即可保证一致性
+PRAGMA cache_size = -8000;           -- 8MB 页面缓存
+PRAGMA temp_store = MEMORY;          -- 临时表存内存
+```
+
 ### 3.3 数据量预估
 
 | 表 | 预估年增量 | 5 年数据量 |
@@ -1358,6 +1409,7 @@ migrations/
 | sales_orders | 2,000 | 10,000 |
 | inventory_transactions | 50,000 | 250,000 |
 | operation_logs | 100,000 | 500,000 |
+| inventory_lots | ~5,000 | ~25,000 | 低 |
 
 SQLite 在百万级数据量下仍有良好性能，配合适当的索引即可满足需求。
 
