@@ -1,6 +1,6 @@
-# 家具进销存管理系统 — 需求文档
+# 云枢 (CloudPivot IMS) — 需求文档
 
-> **项目代号**：Furniture IMS (Inventory Management System)
+> **项目代号**：云枢 (CloudPivot IMS)
 > **工厂所在地**：🇻🇳 越南
 > **文档版本**：v1.3
 > **更新日期**：2026-03-27

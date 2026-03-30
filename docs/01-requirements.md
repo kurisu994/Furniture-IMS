@@ -1,4 +1,4 @@
-# 家具进销存管理系统 — 需求规格说明书
+# 云枢 (CloudPivot IMS) — 需求规格说明书
 
 > **版本**：v1.3 &nbsp;|&nbsp; **日期**：2026-03-27
 > **工厂所在地**：越南
@@ -116,7 +116,7 @@
 ### 2.3 目录结构规划
 
 ```
-furniture-ims/
+cloudpivot-ims/
 ├── src-tauri/                  # Tauri Rust 后端
 │   ├── src/
 │   │   ├── main.rs             # Tauri 入口

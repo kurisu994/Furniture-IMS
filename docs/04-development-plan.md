@@ -1,4 +1,4 @@
-# 家具进销存管理系统 — 开发计划
+# 云枢 (CloudPivot IMS) — 开发计划
 
 > **版本**：v1.3 &nbsp;|&nbsp; **日期**：2026-03-27
 > **工厂所在地**：越南
@@ -24,7 +24,7 @@
 
 ```mermaid
 gantt
-    title 家具进销存管理系统 — 开发甘特图
+    title 云枢 (CloudPivot IMS) — 开发甘特图
     dateFormat  YYYY-MM-DD
     axisFormat  %m/%d
 
