@@ -154,8 +154,8 @@ CREATE TABLE categories (
     path        TEXT,                                 -- 层级路径，如 "1/3/7"
     remark      TEXT,
     is_enabled  INTEGER DEFAULT 1,                   -- 1=启用, 0=禁用
-    created_at  TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at  TEXT    DEFAULT (datetime('now','localtime'))
+    created_at  TEXT    DEFAULT (datetime('now')),
+    updated_at  TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_categories_parent ON categories(parent_id);
@@ -192,8 +192,8 @@ CREATE TABLE materials (
     image_path      TEXT,                              -- 图片本地路径
     remark          TEXT,
     is_enabled      INTEGER DEFAULT 1,
-    created_at      TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at      TEXT    DEFAULT (datetime('now','localtime'))
+    created_at      TEXT    DEFAULT (datetime('now')),
+    updated_at      TEXT    DEFAULT (datetime('now'))
 );
 
 -- idx_materials_code: 已由 UNIQUE(code) 约束隐式创建，无需额外索引
@@ -232,8 +232,8 @@ CREATE TABLE suppliers (
                                                       -- 供应商等级
     remark              TEXT,
     is_enabled          INTEGER DEFAULT 1,
-    created_at          TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at          TEXT    DEFAULT (datetime('now','localtime'))
+    created_at          TEXT    DEFAULT (datetime('now')),
+    updated_at          TEXT    DEFAULT (datetime('now'))
 );
 
 -- idx_suppliers_code: 已由 UNIQUE(code) 约束隐式创建，无需额外索引
@@ -263,8 +263,8 @@ CREATE TABLE customers (
     default_discount    REAL    DEFAULT 0,             -- 默认折扣率(%)，0=无折扣，10=打九折
     remark              TEXT,
     is_enabled          INTEGER DEFAULT 1,
-    created_at          TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at          TEXT    DEFAULT (datetime('now','localtime'))
+    created_at          TEXT    DEFAULT (datetime('now')),
+    updated_at          TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_customers_code ON customers(code);
@@ -285,8 +285,8 @@ CREATE TABLE warehouses (
     address         TEXT,
     remark          TEXT,
     is_enabled      INTEGER DEFAULT 1,
-    created_at      TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at      TEXT    DEFAULT (datetime('now','localtime'))
+    created_at      TEXT    DEFAULT (datetime('now')),
+    updated_at      TEXT    DEFAULT (datetime('now'))
 );
 ```
 
@@ -299,8 +299,8 @@ CREATE TABLE default_warehouses (
                                                       -- 按物料类型配置默认仓
     warehouse_id    INTEGER NOT NULL,                  -- 关联 warehouses.id
     remark          TEXT,
-    created_at      TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at      TEXT    DEFAULT (datetime('now','localtime')),
+    created_at      TEXT    DEFAULT (datetime('now')),
+    updated_at      TEXT    DEFAULT (datetime('now')),
 
     UNIQUE(material_type)
 );
@@ -335,14 +335,16 @@ CREATE TABLE supplier_materials (
     supplier_id     INTEGER NOT NULL,                   -- 关联 suppliers.id
     material_id     INTEGER NOT NULL,                   -- 关联 materials.id
     supply_price    INTEGER,                           -- 该供应商的报价（最小货币单位）
-    currency        TEXT    DEFAULT 'USD',              -- 报价币种
+    currency        TEXT    DEFAULT 'USD' CHECK (currency IN ('VND', 'CNY', 'USD')),              -- 报价币种
     lead_days       INTEGER DEFAULT 7,                 -- 交货周期(天)
     min_order_qty   REAL,                              -- 最小起订量
-    is_preferred    INTEGER DEFAULT 0,                 -- 是否首选供应商
+    is_preferred    INTEGER DEFAULT 0,
+    valid_from      TEXT,                               -- 报价有效期起始
+    valid_to        TEXT,                               -- 报价有效期截止                 -- 是否首选供应商
     last_purchase_date TEXT,                           -- 最近采购日期
     remark          TEXT,
-    created_at      TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at      TEXT    DEFAULT (datetime('now','localtime')),
+    created_at      TEXT    DEFAULT (datetime('now')),
+    updated_at      TEXT    DEFAULT (datetime('now')),
 
     UNIQUE(supplier_id, material_id)                   -- 供应商+物料唯一
 );
@@ -369,8 +371,8 @@ CREATE TABLE bom (
     total_standard_cost INTEGER DEFAULT 0,             -- 汇总标准材料成本（USD，最小货币单位）
     custom_order_id INTEGER,                           -- 定制单关联，NULL=标准BOM（关联 custom_orders.id）
     remark          TEXT,
-    created_at      TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at      TEXT    DEFAULT (datetime('now','localtime'))
+    created_at      TEXT    DEFAULT (datetime('now')),
+    updated_at      TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_bom_material ON bom(material_id);
@@ -391,7 +393,9 @@ CREATE TABLE bom_items (
     is_key_part         INTEGER DEFAULT 0,             -- 是否关键件
     substitute_id       INTEGER,                        -- 替代物料（关联 materials.id）
     remark              TEXT,
-    sort_order          INTEGER DEFAULT 0
+    sort_order          INTEGER DEFAULT 0,
+    created_at          TEXT    DEFAULT (datetime('now')),
+    updated_at          TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_bom_items_bom ON bom_items(bom_id);
@@ -432,8 +436,8 @@ CREATE TABLE purchase_orders (
     cancelled_by_user_id INTEGER,                       -- 作废人（关联 users.id）
     cancelled_by_name   TEXT,                           -- 作废人快照
     cancelled_at        TEXT,
-    created_at          TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at          TEXT    DEFAULT (datetime('now','localtime'))
+    created_at          TEXT    DEFAULT (datetime('now')),
+    updated_at          TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_po_supplier ON purchase_orders(supplier_id);
@@ -495,8 +499,8 @@ CREATE TABLE inbound_orders (
     confirmed_by_user_id INTEGER,                       -- 确认人（关联 users.id）
     confirmed_by_name   TEXT,                           -- 确认人快照
     confirmed_at        TEXT,
-    created_at      TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at      TEXT    DEFAULT (datetime('now','localtime'))
+    created_at      TEXT    DEFAULT (datetime('now')),
+    updated_at      TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_inbound_purchase ON inbound_orders(purchase_id);
@@ -553,9 +557,14 @@ CREATE TABLE purchase_returns (
     confirmed_by_user_id INTEGER,                       -- 确认人（关联 users.id）
     confirmed_by_name   TEXT,                           -- 确认人快照
     confirmed_at        TEXT,
-    created_at      TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at      TEXT    DEFAULT (datetime('now','localtime'))
+    created_at      TEXT    DEFAULT (datetime('now')),
+    updated_at      TEXT    DEFAULT (datetime('now'))
 );
+
+CREATE INDEX idx_pr_supplier ON purchase_returns(supplier_id);
+CREATE INDEX idx_pr_inbound ON purchase_returns(inbound_id);
+CREATE INDEX idx_pr_status ON purchase_returns(status);
+CREATE INDEX idx_pr_date ON purchase_returns(return_date);
 ```
 
 #### purchase_return_items — 采购退货单明细
@@ -617,8 +626,8 @@ CREATE TABLE sales_orders (
     cancelled_by_user_id INTEGER,                       -- 作废人（关联 users.id）
     cancelled_by_name   TEXT,                           -- 作废人快照
     cancelled_at        TEXT,
-    created_at          TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at          TEXT    DEFAULT (datetime('now','localtime'))
+    created_at          TEXT    DEFAULT (datetime('now')),
+    updated_at          TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_so_customer ON sales_orders(customer_id);
@@ -680,8 +689,8 @@ CREATE TABLE outbound_orders (
     confirmed_by_user_id INTEGER,                       -- 确认人（关联 users.id）
     confirmed_by_name   TEXT,                           -- 确认人快照
     confirmed_at        TEXT,
-    created_at      TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at      TEXT    DEFAULT (datetime('now','localtime'))
+    created_at      TEXT    DEFAULT (datetime('now')),
+    updated_at      TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_oo_sales ON outbound_orders(sales_id);
@@ -718,6 +727,7 @@ CREATE TABLE outbound_order_items (
 CREATE INDEX idx_ooi_outbound ON outbound_order_items(outbound_id);
 CREATE INDEX idx_ooi_sales_item ON outbound_order_items(sales_item_id);
 CREATE INDEX idx_ooi_lot ON outbound_order_items(lot_id);
+CREATE INDEX idx_ooi_material ON outbound_order_items(material_id);
 ```
 
 #### sales_returns — 销售退货单
@@ -742,12 +752,14 @@ CREATE TABLE sales_returns (
     confirmed_by_user_id INTEGER,                       -- 确认人（关联 users.id）
     confirmed_by_name   TEXT,                           -- 确认人快照
     confirmed_at        TEXT,
-    created_at      TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at      TEXT    DEFAULT (datetime('now','localtime'))
+    created_at      TEXT    DEFAULT (datetime('now')),
+    updated_at      TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_sr_customer ON sales_returns(customer_id);
 CREATE INDEX idx_sr_outbound ON sales_returns(outbound_id);
+CREATE INDEX idx_sr_date ON sales_returns(return_date);
+CREATE INDEX idx_sr_status ON sales_returns(status);
 ```
 
 #### sales_return_items — 销售退货单明细
@@ -786,13 +798,13 @@ CREATE TABLE inventory (
     material_id     INTEGER NOT NULL,                   -- 关联 materials.id
     warehouse_id    INTEGER NOT NULL,                   -- 关联 warehouses.id
     quantity        REAL    DEFAULT 0 CHECK(quantity >= 0),  -- 当前库存数量
-    reserved_qty    REAL    DEFAULT 0,                 -- 已预留库存数量
+    reserved_qty    REAL    DEFAULT 0 CHECK(reserved_qty >= 0),                 -- 已预留库存数量
     available_qty   REAL    GENERATED ALWAYS AS (quantity - reserved_qty) STORED,
                                                       -- 可用库存数量
     avg_cost        INTEGER DEFAULT 0,                 -- 移动加权平均成本（USD，最小货币单位）
     last_in_date    TEXT,                              -- 最后入库日期
     last_out_date   TEXT,                              -- 最后出库日期
-    updated_at      TEXT    DEFAULT (datetime('now','localtime')),
+    updated_at      TEXT    DEFAULT (datetime('now')),
 
     UNIQUE(material_id, warehouse_id)                  -- 物料+仓库唯一
 );
@@ -815,12 +827,12 @@ CREATE TABLE inventory_lots (
     supplier_batch_no   TEXT,                           -- 供应商批次号
     trace_attrs_json    TEXT,                           -- 批次追溯属性 JSON
     qty_on_hand         REAL    DEFAULT 0 CHECK(qty_on_hand >= 0),  -- 当前批次库存
-    qty_reserved        REAL    DEFAULT 0,              -- 当前批次预留
+    qty_reserved        REAL    DEFAULT 0 CHECK(qty_reserved >= 0),  -- 当前批次预留
     available_qty       REAL    GENERATED ALWAYS AS (qty_on_hand - qty_reserved) STORED,
     receipt_unit_cost   INTEGER DEFAULT 0,              -- 入库时单位成本（USD，最小货币单位）
     remark              TEXT,
-    created_at          TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at          TEXT    DEFAULT (datetime('now','localtime'))
+    created_at          TEXT    DEFAULT (datetime('now')),
+    updated_at          TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_lot_material ON inventory_lots(material_id);
@@ -843,8 +855,8 @@ CREATE TABLE inventory_reservations (
     released_qty    REAL    DEFAULT 0,                 -- 已释放数量
     status          TEXT    DEFAULT 'active' CHECK (status IN ('active', 'consumed', 'released', 'cancelled')),
     remark          TEXT,
-    created_at      TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at      TEXT    DEFAULT (datetime('now','localtime'))
+    created_at      TEXT    DEFAULT (datetime('now')),
+    updated_at      TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_invr_source ON inventory_reservations(source_type, source_id);
@@ -866,8 +878,8 @@ CREATE TABLE inventory_reservation_lots (
     status          TEXT    DEFAULT 'allocated' CHECK (status IN ('allocated', 'consumed', 'released', 'cancelled')),
     sort_order      INTEGER DEFAULT 0,
     remark          TEXT,
-    created_at      TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at      TEXT    DEFAULT (datetime('now','localtime'))
+    created_at      TEXT    DEFAULT (datetime('now')),
+    updated_at      TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_invrl_reservation ON inventory_reservation_lots(reservation_id);
@@ -910,7 +922,7 @@ CREATE TABLE inventory_transactions (
     operator_user_id    INTEGER,                        -- 操作人（关联 users.id）
     operator_name       TEXT,                           -- 操作人快照
     remark              TEXT,
-    created_at          TEXT    DEFAULT (datetime('now','localtime'))
+    created_at          TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_invt_material ON inventory_transactions(material_id);
@@ -940,11 +952,13 @@ CREATE TABLE stock_checks (
     confirmed_by_user_id INTEGER,                       -- 审核人（关联 users.id）
     confirmed_by_name   TEXT,                           -- 审核人快照
     confirmed_at        TEXT,
-    created_at      TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at      TEXT    DEFAULT (datetime('now','localtime'))
+    created_at      TEXT    DEFAULT (datetime('now')),
+    updated_at      TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_sc_scope_category ON stock_checks(scope_category_id);
+CREATE INDEX idx_sc_date ON stock_checks(check_date);
+CREATE INDEX idx_sc_status ON stock_checks(status);
 ```
 
 #### stock_check_items — 盘点单明细
@@ -981,8 +995,8 @@ CREATE INDEX idx_stock_check_items_material ON stock_check_items(material_id);
 CREATE TABLE transfers (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     transfer_no     TEXT    NOT NULL UNIQUE,            -- 调拨单号: TF-YYYYMMDD-XXX
-    from_warehouse  INTEGER NOT NULL,                   -- 调出仓库（关联 warehouses.id）
-    to_warehouse    INTEGER NOT NULL,                   -- 调入仓库（关联 warehouses.id）
+    from_warehouse_id INTEGER NOT NULL,                   -- 调出仓库（关联 warehouses.id）
+    to_warehouse_id INTEGER NOT NULL,                   -- 调入仓库（关联 warehouses.id）
     transfer_date   TEXT    NOT NULL,
     status          TEXT    DEFAULT 'draft' CHECK (status IN ('draft', 'confirmed')),
     remark          TEXT,
@@ -991,12 +1005,14 @@ CREATE TABLE transfers (
     confirmed_by_user_id INTEGER,                       -- 确认人（关联 users.id）
     confirmed_by_name   TEXT,                           -- 确认人快照
     confirmed_at        TEXT,
-    created_at      TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at      TEXT    DEFAULT (datetime('now','localtime'))
+    created_at      TEXT    DEFAULT (datetime('now')),
+    updated_at      TEXT    DEFAULT (datetime('now'))
 );
 
-CREATE INDEX idx_transfers_from_wh ON transfers(from_warehouse);
-CREATE INDEX idx_transfers_to_wh ON transfers(to_warehouse);
+CREATE INDEX idx_transfers_from_wh ON transfers(from_warehouse_id);
+CREATE INDEX idx_transfers_to_wh ON transfers(to_warehouse_id);
+CREATE INDEX idx_transfers_date ON transfers(transfer_date);
+CREATE INDEX idx_transfers_status ON transfers(status);
 ```
 
 #### transfer_items — 调拨单明细
@@ -1045,12 +1061,13 @@ CREATE TABLE payables (
     due_date        TEXT,                                -- 到期日
     status          TEXT    DEFAULT 'unpaid' CHECK (status IN ('unpaid', 'partial', 'paid')),
     remark          TEXT,
-    created_at      TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at      TEXT    DEFAULT (datetime('now','localtime'))
+    created_at      TEXT    DEFAULT (datetime('now')),
+    updated_at      TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_pay_supplier ON payables(supplier_id);
 CREATE INDEX idx_pay_status ON payables(status);
+CREATE INDEX idx_pay_date ON payables(payable_date);
 ```
 
 #### payment_records — 付款记录
@@ -1065,7 +1082,7 @@ CREATE TABLE payment_records (
                                                         -- 付款币种（v1.0 默认跟随应付币种）
     payment_method  TEXT,                               -- 现金/转账/支票
     remark          TEXT,
-    created_at      TEXT    DEFAULT (datetime('now','localtime'))
+    created_at      TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_payment_records_payable ON payment_records(payable_id);
@@ -1092,12 +1109,13 @@ CREATE TABLE receivables (
     due_date            TEXT,
     status              TEXT    DEFAULT 'unpaid' CHECK (status IN ('unpaid', 'partial', 'paid')),
     remark              TEXT,
-    created_at          TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at          TEXT    DEFAULT (datetime('now','localtime'))
+    created_at          TEXT    DEFAULT (datetime('now')),
+    updated_at          TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_recv_customer ON receivables(customer_id);
 CREATE INDEX idx_recv_status ON receivables(status);
+CREATE INDEX idx_recv_date ON receivables(receivable_date);
 ```
 
 #### receipt_records — 收款记录
@@ -1112,7 +1130,7 @@ CREATE TABLE receipt_records (
                                                         -- 收款币种（v1.0 默认跟随应收币种）
     receipt_method  TEXT,
     remark          TEXT,
-    created_at      TEXT    DEFAULT (datetime('now','localtime'))
+    created_at      TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_receipt_records_receivable ON receipt_records(receivable_id);
@@ -1156,8 +1174,8 @@ CREATE TABLE custom_orders (
     cancelled_by_user_id INTEGER,                       -- 取消人（关联 users.id）
     cancelled_by_name   TEXT,                           -- 取消人快照
     cancelled_at        TEXT,
-    created_at          TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at          TEXT    DEFAULT (datetime('now','localtime'))
+    created_at          TEXT    DEFAULT (datetime('now')),
+    updated_at          TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_co_customer ON custom_orders(customer_id);
@@ -1210,8 +1228,8 @@ CREATE TABLE work_orders (
     remark              TEXT,
     created_by_user_id  INTEGER,                            -- 创建人（关联 users.id）
     created_by_name     TEXT,                               -- 创建人快照
-    created_at          TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at          TEXT    DEFAULT (datetime('now','localtime'))
+    created_at          TEXT    DEFAULT (datetime('now')),
+    updated_at          TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_wo_bom ON work_orders(bom_id);
@@ -1232,8 +1250,8 @@ CREATE TABLE work_order_materials (
     issued_qty          REAL    NOT NULL DEFAULT 0,         -- 实际已领料量
     returned_qty        REAL    NOT NULL DEFAULT 0,         -- 退料量
     remark              TEXT,
-    created_at          TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at          TEXT    DEFAULT (datetime('now','localtime'))
+    created_at          TEXT    DEFAULT (datetime('now')),
+    updated_at          TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_wom_wo ON work_order_materials(work_order_id);
@@ -1254,7 +1272,7 @@ CREATE TABLE replenishment_rules (
     batch_multiple  REAL    DEFAULT 1,                 -- 批量倍数
     preferred_supplier_id INTEGER,                     -- 首选供应商（关联 suppliers.id）
     is_enabled      INTEGER DEFAULT 1,                 -- 是否启用自动建议
-    updated_at      TEXT    DEFAULT (datetime('now','localtime')),
+    updated_at      TEXT    DEFAULT (datetime('now')),
 
     UNIQUE(material_id)
 );
@@ -1282,7 +1300,7 @@ CREATE TABLE replenishment_logs (
     status              TEXT    DEFAULT 'pending' CHECK (status IN ('pending', 'ordered', 'ignored')),
                                                        -- pending=待处理 ordered=已下单 ignored=已忽略
     purchase_order_id   INTEGER,                        -- 关联生成的采购单（关联 purchase_orders.id）
-    created_at          TEXT    DEFAULT (datetime('now','localtime'))
+    created_at          TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_rl_material ON replenishment_logs(material_id);
@@ -1311,8 +1329,8 @@ CREATE TABLE users (
     password_changed_at TEXT,                            -- 最近改密时间
     session_version     INTEGER DEFAULT 1,               -- 本地会话版本号，改密后递增
     last_login_at       TEXT,
-    created_at          TEXT    DEFAULT (datetime('now','localtime')),
-    updated_at          TEXT    DEFAULT (datetime('now','localtime'))
+    created_at          TEXT    DEFAULT (datetime('now')),
+    updated_at          TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_users_role ON users(role);
@@ -1329,7 +1347,7 @@ CREATE TABLE system_config (
     key         TEXT    PRIMARY KEY,
     value       TEXT    NOT NULL,
     remark      TEXT,
-    updated_at  TEXT    DEFAULT (datetime('now','localtime'))
+    updated_at  TEXT    DEFAULT (datetime('now'))
 );
 
 -- 预置配置项
@@ -1397,7 +1415,7 @@ CREATE TABLE exchange_rates (
     updated_by_user_id INTEGER,                         -- 更新人（关联 users.id）
     updated_by_name TEXT,                               -- 更新人快照
     remark          TEXT,
-    created_at      TEXT    DEFAULT (datetime('now','localtime')),
+    created_at      TEXT    DEFAULT (datetime('now')),
 
     UNIQUE(currency, effective_date)
 );
@@ -1424,7 +1442,7 @@ CREATE TABLE operation_logs (
     detail          TEXT,                               -- 操作详情
     operator_user_id INTEGER,                           -- 操作人（关联 users.id）
     operator_name_snapshot TEXT,                        -- 操作人名称快照
-    created_at      TEXT    DEFAULT (datetime('now','localtime'))
+    created_at      TEXT    DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_oplog_module ON operation_logs(module);
@@ -1512,7 +1530,7 @@ v2.0 计划从 SQLite 迁移至 PostgreSQL，以下为迁移时的关键差异�
 | `GENERATED ALWAYS AS ... STORED` | `GENERATED ALWAYS AS ... STORED` (PG12+) | 语法基本兼容，表达式需适配（如 `amount - paid` 直接兼容） |
 | `PRAGMA journal_mode = WAL` | PostgreSQL WAL 原生支持 | 无需处理 |
 | `PRAGMA foreign_keys = OFF` | v2.0 可启用 `FOREIGN KEY` | 迁移时根据 ER 图添加外键约束 |
-| `datetime('now','localtime')` → 已改为 `datetime('now')` UTC | `NOW()` 返回 UTC | 直接兼容 |
+| `datetime('now')` → 已改为 `datetime('now')` UTC | `NOW()` 返回 UTC | 直接兼容 |
 | 无并发连接池 | `deadpool-postgres` 或 `sqlx` pool | v2.0 新增连接池配置 |
 
 **数据迁移流程（v2.0 实施时执行）**：
