@@ -418,15 +418,15 @@ CREATE TABLE purchase_orders (
     warehouse_id        INTEGER NOT NULL,               -- 单头入库仓库（关联 warehouses.id，v1.0 单仓）
     currency            TEXT    DEFAULT 'USD' CHECK (currency IN ('VND', 'CNY', 'USD')),
                                                        -- 结算币种，从供应商默认带出
-    exchange_rate       REAL    DEFAULT 1,              -- 对基准币种汇率（默认 USD，USD 时为1）
+    exchange_rate       REAL    DEFAULT 1,              -- 汇率（存储方向：1 USD = N 外币；USD 时为 1）
     status              TEXT    DEFAULT 'draft' CHECK (status IN ('draft', 'approved', 'partial_in', 'completed', 'cancelled')),
                                                        -- draft=草稿 approved=已审核 partial_in=部分入库 completed=已入库 cancelled=已作废
-    total_amount        INTEGER DEFAULT 0,              -- 合计金额（原币，最小货币单位）
+    total_amount        INTEGER DEFAULT 0,              -- 采购货款小计（原币，最小货币单位，仅明细行合计）
     total_amount_base   INTEGER DEFAULT 0,              -- 合计金额（基准币种，默认 USD）
     discount_amount     INTEGER DEFAULT 0,              -- 折扣金额（最小货币单位）
     freight_amount      INTEGER DEFAULT 0,              -- 运费（跨国采购常用）
     other_charges       INTEGER DEFAULT 0,              -- 其他费用（关税、报关费、保险等）
-    payable_amount      INTEGER DEFAULT 0,              -- 应付金额 = 合计 - 折扣 + 运费 + 其他
+    payable_amount      INTEGER DEFAULT 0,              -- 订单级预估应付 = total_amount - discount + freight + other
     remark              TEXT,
     created_by_user_id  INTEGER,                        -- 创建人（关联 users.id）
     created_by_name     TEXT,                           -- 创建人快照
@@ -489,9 +489,9 @@ CREATE TABLE inbound_orders (
     source_id       INTEGER,                           -- 来源单据 ID
     currency        TEXT    DEFAULT 'USD' CHECK (currency IN ('VND', 'CNY', 'USD')),
                                                        -- 币种（继承采购单币种）
-    exchange_rate   REAL    DEFAULT 1,                  -- 对基准币种汇率（默认 USD）
-    total_amount    INTEGER DEFAULT 0,                  -- 合计金额（最小货币单位，仅明细行合计）
-    allocated_discount    INTEGER DEFAULT 0,            -- 按比例分摊的采购单折扣金额（最小货币单位）
+    exchange_rate   REAL    DEFAULT 1,                  -- 汇率（存储方向：1 USD = N 外币；USD 时为 1）
+    total_amount    INTEGER DEFAULT 0,                  -- 本次入库货款小计（最小货币单位，仅明细行合计）
+    allocated_discount    INTEGER DEFAULT 0,            -- 按比例分摊的采购单折扣金额（正数，最小货币单位）
     allocated_freight     INTEGER DEFAULT 0,            -- 按比例分摊的采购单运费（最小货币单位）
     allocated_other       INTEGER DEFAULT 0,            -- 按比例分摊的采购单其他费用（最小货币单位）
     payable_amount        INTEGER DEFAULT 0,            -- 应付金额 = total_amount - allocated_discount + allocated_freight + allocated_other
@@ -551,7 +551,7 @@ CREATE TABLE purchase_returns (
     return_date     TEXT    NOT NULL,
     currency        TEXT    DEFAULT 'USD' CHECK (currency IN ('VND', 'CNY', 'USD')),
                                                        -- 币种（继承原入库单币种）
-    exchange_rate   REAL    DEFAULT 1,                  -- 对基准币种汇率（默认 USD）
+    exchange_rate   REAL    DEFAULT 1,                  -- 汇率（存储方向：1 USD = N 外币；USD 时为 1）
     return_reason   TEXT,
     total_amount    INTEGER DEFAULT 0,                  -- 退货金额（最小货币单位）
     total_amount_base INTEGER DEFAULT 0,                -- 退货金额（基准币种，默认 USD）
@@ -612,15 +612,15 @@ CREATE TABLE sales_orders (
     warehouse_id        INTEGER NOT NULL,               -- 单头出库仓库（关联 warehouses.id，v1.0 单仓）
     currency            TEXT    DEFAULT 'USD' CHECK (currency IN ('VND', 'CNY', 'USD')),
                                                        -- 结算币种，从客户默认带出
-    exchange_rate       REAL    DEFAULT 1,              -- 对基准币种汇率（默认 USD，USD 时为1）
+    exchange_rate       REAL    DEFAULT 1,              -- 汇率（存储方向：1 USD = N 外币；USD 时为 1）
     status              TEXT    DEFAULT 'draft' CHECK (status IN ('draft', 'approved', 'partial_out', 'completed', 'cancelled')),
-    total_amount        INTEGER DEFAULT 0,              -- 合计金额（原币，最小货币单位）
+    total_amount        INTEGER DEFAULT 0,              -- 销售货款小计（原币，最小货币单位，仅明细行合计，已含行折扣）
     total_amount_base   INTEGER DEFAULT 0,              -- 合计金额（基准币种，默认 USD）
     discount_rate       REAL    DEFAULT 0,              -- 整单折扣率(%)
-    discount_amount     INTEGER DEFAULT 0,              -- 折扣金额（最小货币单位）
+    discount_amount     INTEGER DEFAULT 0,              -- 整单折扣金额（最小货币单位，正数）
     freight_amount      INTEGER DEFAULT 0,              -- 运费
     other_charges       INTEGER DEFAULT 0,              -- 其他费用
-    receivable_amount   INTEGER DEFAULT 0,              -- 应收金额 = 合计 - 折扣 + 运费 + 其他
+    receivable_amount   INTEGER DEFAULT 0,              -- 订单级预估应收 = total_amount - discount + freight + other
     shipping_address    TEXT,                           -- 收货地址
     remark              TEXT,
     created_by_user_id  INTEGER,                        -- 创建人（关联 users.id）
@@ -656,7 +656,7 @@ CREATE TABLE sales_order_items (
     quantity        REAL    NOT NULL,
     unit_price      INTEGER NOT NULL,                  -- 单价（最小货币单位）
     discount_rate   REAL    DEFAULT 0,                 -- 行折扣率(%)，0=无折扣，10=打九折
-    amount          INTEGER NOT NULL DEFAULT 0,         -- 金额（由应用层计算）
+    amount          INTEGER NOT NULL DEFAULT 0,         -- 金额（由应用层计算，已含行折扣）
     shipped_qty     REAL    DEFAULT 0,                 -- 已出库数量
     warehouse_id    INTEGER NOT NULL,                  -- 出库仓库快照（关联 warehouses.id，v1.0 强制等于单头仓库）
     remark          TEXT,
@@ -685,9 +685,9 @@ CREATE TABLE outbound_orders (
     source_id       INTEGER,                           -- 来源单据 ID
     currency        TEXT    DEFAULT 'USD' CHECK (currency IN ('VND', 'CNY', 'USD')),
                                                        -- 币种（继承销售单币种）
-    exchange_rate   REAL    DEFAULT 1,                  -- 对基准币种汇率（默认 USD）
-    total_amount    INTEGER DEFAULT 0,                  -- 合计金额（最小货币单位，仅明细行合计）
-    allocated_discount    INTEGER DEFAULT 0,            -- 按比例分摊的销售单折扣金额（最小货币单位）
+    exchange_rate   REAL    DEFAULT 1,                  -- 汇率（存储方向：1 USD = N 外币；USD 时为 1）
+    total_amount    INTEGER DEFAULT 0,                  -- 本次出库货款小计（最小货币单位，仅明细行合计，已含行折扣份额）
+    allocated_discount    INTEGER DEFAULT 0,            -- 按比例分摊的销售单整单折扣金额（正数，最小货币单位）
     allocated_freight     INTEGER DEFAULT 0,            -- 按比例分摊的销售单运费（最小货币单位）
     allocated_other       INTEGER DEFAULT 0,            -- 按比例分摊的销售单其他费用（最小货币单位）
     receivable_amount     INTEGER DEFAULT 0,            -- 应收金额 = total_amount - allocated_discount + allocated_freight + allocated_other
@@ -752,7 +752,7 @@ CREATE TABLE sales_returns (
     return_date     TEXT    NOT NULL,
     currency        TEXT    DEFAULT 'USD' CHECK (currency IN ('VND', 'CNY', 'USD')),
                                                        -- 币种（继承原出库单币种）
-    exchange_rate   REAL    DEFAULT 1,                  -- 对基准币种汇率（默认 USD）
+    exchange_rate   REAL    DEFAULT 1,                  -- 汇率（存储方向：1 USD = N 外币；USD 时为 1）
     return_reason   TEXT,
     total_amount    INTEGER DEFAULT 0,                  -- 退货金额（最小货币单位）
     total_amount_base INTEGER DEFAULT 0,                -- 退货金额（基准币种，默认 USD）
@@ -857,7 +857,7 @@ CREATE INDEX idx_lot_received ON inventory_lots(received_date);
 CREATE TABLE inventory_reservations (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     source_type     TEXT    NOT NULL CHECK (source_type IN ('custom_order', 'sales_order')),
-                                                      -- 预留来源：定制单/销售单
+                                                      -- 预留来源：custom_order=定制单原材料预留；sales_order=销售单成品预留
     source_id       INTEGER NOT NULL,                   -- 来源单据 ID
     material_id     INTEGER NOT NULL,                   -- 关联 materials.id
     warehouse_id    INTEGER NOT NULL,                   -- 关联 warehouses.id
@@ -882,7 +882,7 @@ CREATE INDEX idx_invr_status ON inventory_reservations(status);
 CREATE TABLE inventory_reservation_lots (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     reservation_id  INTEGER NOT NULL,                   -- 关联 inventory_reservations.id（应用层级联删除）
-    lot_id          INTEGER,                            -- 关联 inventory_lots.id；非批次物料或待分配时可为空
+    lot_id          INTEGER,                            -- 关联 inventory_lots.id；非批次物料可为空，批次物料预留后必须落到具体 lot
     reserved_qty    REAL    NOT NULL,                  -- 分配到该批次的预留数量
     consumed_qty    REAL    DEFAULT 0,                 -- 已随出库消耗数量
     released_qty    REAL    DEFAULT 0,                 -- 已释放数量
@@ -1066,7 +1066,7 @@ CREATE TABLE payables (
     payable_date    TEXT    NOT NULL,                    -- 应付日期
     currency        TEXT    NOT NULL DEFAULT 'USD' CHECK(currency IN ('VND', 'CNY', 'USD')),
                                                        -- 币种（继承采购单币种）
-    exchange_rate   REAL    DEFAULT 1,                   -- 对基准币种汇率（默认 USD）
+    exchange_rate   REAL    DEFAULT 1,                   -- 汇率（存储方向：1 USD = N 外币；USD 时为 1）
     payable_amount  INTEGER NOT NULL,                   -- 应付金额（原币，最小货币单位）
     payable_amount_base INTEGER DEFAULT 0,              -- 应付金额（基准币种折算，默认 USD）
     paid_amount     INTEGER DEFAULT 0,                   -- 已付金额（最小货币单位）
@@ -1116,7 +1116,7 @@ CREATE TABLE receivables (
     receivable_date     TEXT    NOT NULL,
     currency            TEXT    NOT NULL DEFAULT 'USD' CHECK(currency IN ('VND', 'CNY', 'USD')),
                                                        -- 币种（继承销售单币种）
-    exchange_rate       REAL    DEFAULT 1,               -- 对基准币种汇率（默认 USD）
+    exchange_rate       REAL    DEFAULT 1,               -- 汇率（存储方向：1 USD = N 外币；USD 时为 1）
     receivable_amount   INTEGER NOT NULL,                -- 应收金额（原币，最小货币单位）
     receivable_amount_base INTEGER DEFAULT 0,            -- 应收金额（基准币种折算，默认 USD）
     received_amount     INTEGER DEFAULT 0,               -- 已收金额（最小货币单位）
@@ -1180,7 +1180,7 @@ CREATE TABLE custom_orders (
     quote_amount_base   INTEGER DEFAULT 0,              -- 报价金额（基准币种，默认 USD）
     cost_amount         INTEGER DEFAULT 0,              -- 成本金额（BOM 核算，USD，最小货币单位）
     attachment_path     TEXT,                           -- 设计图/参考图路径
-    sales_order_id      INTEGER,                        -- 转销售单后关联（关联 sales_orders.id）
+    sales_order_id      INTEGER,                        -- 转销售单后的业务关联（关联 sales_orders.id）；完工后可据此分配成品预留
     remark              TEXT,
     created_by_user_id  INTEGER,                        -- 创建人（关联 users.id）
     created_by_name     TEXT,                           -- 创建人快照
@@ -1231,7 +1231,7 @@ CREATE TABLE work_orders (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
     work_order_code     TEXT    NOT NULL UNIQUE,            -- 工单编号: WO-YYYYMMDD-XXX
     bom_id              INTEGER NOT NULL,                   -- 关联 bom.id（BOM 版本）
-    custom_order_id     INTEGER,                            -- 关联 custom_orders.id（可选，定制单触发）
+    custom_order_id     INTEGER,                            -- 关联 custom_orders.id（可选，定制单触发；领料优先消耗其原材料预留）
     product_material_id INTEGER NOT NULL,                   -- 产出物料（关联 materials.id，成品/半成品）
     planned_qty         REAL    NOT NULL,                   -- 计划生产数量
     completed_qty       REAL    NOT NULL DEFAULT 0,         -- 已完工数量
@@ -1262,10 +1262,10 @@ CREATE TABLE work_order_materials (
     work_order_id       INTEGER NOT NULL,                   -- 关联 work_orders.id
     material_id         INTEGER NOT NULL,                   -- 领料物料（关联 materials.id，原材料）
     bom_item_id         INTEGER,                            -- 关联 bom_items.id（BOM 展算来源）
-    lot_id              INTEGER,                            -- 关联 lots.id（必须追踪到具体的出库批次才能有效核算）
+    lot_id              INTEGER,                            -- 关联 inventory_lots.id（必须追踪到具体的出库批次才能有效核算）
     planned_qty         REAL    NOT NULL,                   -- 计划领料量（BOM 展算，含损耗）
-    issued_qty          REAL    NOT NULL DEFAULT 0,         -- 实际已领料量
-    returned_qty        REAL    NOT NULL DEFAULT 0,         -- 退料量
+    issued_qty          REAL    NOT NULL DEFAULT 0,         -- 实际已领料量；如有关联定制单，同步消耗其原材料预留
+    returned_qty        REAL    NOT NULL DEFAULT 0,         -- 退料量；如有关联定制单仍有效，优先恢复其原材料预留
     remark              TEXT,
     created_at          TEXT    DEFAULT (datetime('now')),
     updated_at          TEXT    DEFAULT (datetime('now'))
