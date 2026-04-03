@@ -78,5 +78,29 @@
     "lowStock": "库存预警",
     "salesTrend": "近30天销售趋势",
     "stockDistribution": "库存分布"
+  },
+  "login": {
+    "welcome": "欢迎登录",
+    "username": "用户名",
+    "usernamePlaceholder": "admin",
+    "password": "密码",
+    "passwordPlaceholder": "请输入密码",
+    "language": "语言选择",
+    "rememberMe": "记住我",
+    "submit": "登录",
+    "hint": "提示：初始账号 {username} / 初始密码 {password}，首次登录后需立即修改密码。"
+  },
+  "changePassword": {
+    "title": "首次修改密码",
+    "subtitle": "为了您的账户安全，初次登录请重新设置密码",
+    "newPassword": "新密码",
+    "newPasswordPlaceholder": "请输入新密码",
+    "confirmPassword": "确认密码",
+    "confirmPasswordPlaceholder": "请再次输入新密码",
+    "requirement": "密码要求：至少 8 位，包含字母和数字。建议使用大小写字母、数字及特殊字符的组合。",
+    "logout": "退出登录",
+    "submit": "确认修改",
+    "mismatch": "两次输入的密码不一致",
+    "tooShort": "密码长度至少 8 位"
   }
 }

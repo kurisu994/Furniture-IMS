@@ -78,5 +78,29 @@
     "lowStock": "Low Stock Alerts",
     "salesTrend": "30-Day Sales Trend",
     "stockDistribution": "Stock Distribution"
+  },
+  "login": {
+    "welcome": "Welcome",
+    "username": "Username",
+    "usernamePlaceholder": "admin",
+    "password": "Password",
+    "passwordPlaceholder": "Enter password",
+    "language": "Language",
+    "rememberMe": "Remember me",
+    "submit": "Sign In",
+    "hint": "Hint: Default account {username} / Default password {password}. Please change your password after first login."
+  },
+  "changePassword": {
+    "title": "Change Password",
+    "subtitle": "For your account security, please reset your password on first login",
+    "newPassword": "New Password",
+    "newPasswordPlaceholder": "Enter new password",
+    "confirmPassword": "Confirm Password",
+    "confirmPasswordPlaceholder": "Re-enter new password",
+    "requirement": "Password must be at least 8 characters, containing letters and numbers. Recommended to use a mix of uppercase, lowercase, numbers and special characters.",
+    "logout": "Sign Out",
+    "submit": "Confirm",
+    "mismatch": "Passwords do not match",
+    "tooShort": "Password must be at least 8 characters"
   }
 }

@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "@/i18n/navigation";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
+import { AppFooter } from "./app-footer";
 import { cn } from "@/lib/utils";
 
 /**
@@ -12,7 +14,14 @@ import { cn } from "@/lib/utils";
  * 参考 demo/src/components/Layout.tsx 的结构和样式
  */
 export function AppLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  /** 认证相关页面（登录、改密码等）无需主布局，直接渲染 */
+  const authRoutes = ["/login", "/change-password"];
+  if (authRoutes.includes(pathname)) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="bg-background flex h-screen overflow-hidden">
@@ -38,29 +47,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </main>
 
         {/* 固定在底部的页脚（不参与滚动） */}
-        <footer className="flex shrink-0 flex-col items-center justify-between border-t border-slate-200 bg-white/50 px-6 py-4 text-xs font-medium text-slate-400 md:flex-row dark:border-slate-800 dark:bg-slate-900/50">
-          <div>© 2024 云枢 (CLOUDPIVOT IMS) V2.4.0. 保留所有权利。</div>
-          <div className="mt-2 flex items-center gap-6 text-[10px] tracking-widest md:mt-0">
-            <a
-              href="#"
-              className="transition-colors hover:text-slate-600 dark:hover:text-slate-200"
-            >
-              服务条款
-            </a>
-            <a
-              href="#"
-              className="transition-colors hover:text-slate-600 dark:hover:text-slate-200"
-            >
-              隐私政策
-            </a>
-            <a
-              href="#"
-              className="transition-colors hover:text-slate-600 dark:hover:text-slate-200"
-            >
-              技术支持
-            </a>
-          </div>
-        </footer>
+        <AppFooter />
       </div>
     </div>
   );
