@@ -32,22 +32,31 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         collapsed ? "w-16" : "w-60"
       )}
     >
-      {/* Logo 区域 */}
-      <div className="border-sidebar-border flex h-14 items-center border-b px-4">
+      <div className="flex h-14 items-center px-4 pt-1">
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="bg-primary text-primary-foreground flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold">
-            CP
+          <div className="bg-[#294985] text-white flex h-7 w-7 shrink-0 items-center justify-center rounded-[6px] shadow-sm">
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2.5" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              className="w-4 h-4"
+            >
+              <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+            </svg>
           </div>
           {!collapsed && (
-            <span className="text-sidebar-foreground truncate text-sm font-bold">
-              CloudPivot IMS
+            <span className="text-[#294985] dark:text-[#6b85c1] truncate text-[15px] font-black tracking-tight">
+              云枢 (CloudPivot)
             </span>
           )}
         </div>
       </div>
-
       {/* 导航菜单 */}
-      <nav className="flex-1 overflow-x-hidden overflow-y-auto px-2 py-3">
+      <nav className="flex-1 overflow-x-hidden overflow-y-auto px-2 py-3 mt-2">
         <ul className="space-y-0.5">
           {navConfig.map((item) => (
             <NavMenuItem
@@ -117,8 +126,8 @@ function NavMenuItem({
           className={cn(
             "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
             isActive
-              ? "text-sidebar-primary"
-              : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              ? "bg-[#43619f] text-white"
+              : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
           )}
           title={collapsed ? label : undefined}
         >
@@ -136,7 +145,7 @@ function NavMenuItem({
           )}
         </button>
         {!collapsed && expanded && (
-          <ul className="border-sidebar-border mt-0.5 ml-4 space-y-0.5 border-l pl-3">
+          <ul className="mt-1 ml-4 space-y-1 pl-3">
             {item.children!.map((child) => {
               const ChildIcon = child.icon;
               const childActive = pathname === child.href;
@@ -147,8 +156,8 @@ function NavMenuItem({
                     className={cn(
                       "flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors",
                       childActive
-                        ? "bg-sidebar-accent text-sidebar-primary"
-                        : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                        ? "text-[#43619f] font-bold dark:text-[#6b85c1]"
+                        : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
                     )}
                   >
                     <ChildIcon className="h-3.5 w-3.5 shrink-0" />
@@ -174,8 +183,8 @@ function NavMenuItem({
         className={cn(
           "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
           active
-            ? "bg-sidebar-accent text-sidebar-primary"
-            : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            ? "bg-[#43619f] text-white"
+            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
         )}
         title={collapsed ? label : undefined}
       >

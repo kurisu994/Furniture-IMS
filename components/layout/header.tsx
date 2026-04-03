@@ -15,51 +15,61 @@ export function Header() {
   const { theme, setTheme } = useTheme();
 
   return (
-    <header className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-20 flex h-14 items-center justify-between border-b px-6 backdrop-blur">
-      {/* 搜索框 */}
-      <div className="relative max-w-md flex-1">
-        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-        <input
-          type="text"
-          placeholder={t("search")}
-          className="border-input bg-background text-foreground placeholder:text-muted-foreground focus:ring-ring/20 focus:border-ring h-9 w-full rounded-lg border pr-4 pl-9 text-sm transition-all focus:ring-2 focus:outline-none"
-        />
+    <header className="border-border bg-white supports-[backdrop-filter]:bg-white/95 sticky top-0 z-20 flex h-14 items-center justify-between border-b px-4 backdrop-blur dark:bg-slate-950">
+      {/* 左侧：菜单折叠与面包屑 */}
+      <div className="flex items-center gap-4 flex-1">
+        <button className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="4" y1="6" x2="20" y2="6"></line>
+            <line x1="4" y1="12" x2="20" y2="12"></line>
+            <line x1="4" y1="18" x2="20" y2="18"></line>
+          </svg>
+        </button>
+        <div className="hidden items-center gap-2 text-sm text-slate-500 dark:text-slate-400 md:flex">
+          <span className="hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer">首页</span>
+          <span className="text-slate-300 dark:text-slate-600">/</span>
+          <span className="hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer">基础数据</span>
+          <span className="text-slate-300 dark:text-slate-600">/</span>
+          <span className="font-semibold text-slate-800 dark:text-slate-200">物料管理</span>
+        </div>
       </div>
 
       {/* 右侧工具区 */}
-      <div className="flex items-center gap-1">
-        {/* 语言切换器 */}
-        <LocaleSwitcher />
+      <div className="flex items-center gap-3">
+        {/* 图标按钮组 */}
+        <div className="flex items-center gap-1">
+          <LocaleSwitcher />
 
-        {/* 主题切换 */}
-        <button
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="text-muted-foreground hover:bg-accent hover:text-accent-foreground flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
-          title={t("theme")}
-        >
-          <Sun className="h-4 w-4 scale-100 rotate-0 transition-transform dark:scale-0 dark:-rotate-90" />
-          <Moon className="absolute h-4 w-4 scale-0 rotate-90 transition-transform dark:scale-100 dark:rotate-0" />
-        </button>
+          <button
+            className="text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 relative flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
+          >
+            <Bell className="h-[18px] w-[18px]" />
+            <span className="bg-destructive absolute top-2 right-2 h-1.5 w-1.5 rounded-full" />
+          </button>
 
-        {/* 通知 */}
-        <button
-          className="text-muted-foreground hover:bg-accent hover:text-accent-foreground relative flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
-          title={t("notifications")}
-        >
-          <Bell className="h-4 w-4" />
-          {/* 通知红点 */}
-          <span className="bg-destructive absolute top-2 right-2 h-2 w-2 rounded-full" />
-        </button>
+          <button
+            className="text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </button>
+        </div>
 
         {/* 分隔线 */}
-        <div className="bg-border mx-2 h-6 w-px" />
+        <div className="bg-slate-200 dark:bg-slate-800 h-8 w-px mx-1" />
 
         {/* 用户信息 */}
-        <button className="text-foreground hover:bg-accent flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-colors">
-          <div className="bg-primary text-primary-foreground flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold">
-            <User className="h-3.5 w-3.5" />
+        <button className="items-center gap-3 rounded-lg pl-2 pr-1 py-1 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors text-left hidden sm:flex">
+          <div className="flex flex-col">
+            <span className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-none">Admin User</span>
+            <span className="text-[10px] font-semibold text-slate-400 tracking-wider mt-1">SUPER ADMINISTRATOR</span>
           </div>
-          <span className="hidden text-sm md:block">Admin</span>
+          <div className="bg-slate-100 text-slate-500 dark:bg-slate-800 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700">
+            <User className="h-4 w-4" />
+          </div>
         </button>
       </div>
     </header>
