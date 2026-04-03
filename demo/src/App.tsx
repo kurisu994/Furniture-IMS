@@ -1,9 +1,9 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import MaterialList from './pages/MaterialList';
-import PurchaseOrderList from './pages/PurchaseOrderList';
-import PurchaseOrderDetail from './pages/PurchaseOrderDetail';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Layout from "./components/Layout";
+import Dashboard from "./pages/Dashboard";
+import MaterialList from "./pages/MaterialList";
+import PurchaseOrderList from "./pages/PurchaseOrderList";
+import PurchaseOrderDetail from "./pages/PurchaseOrderDetail";
 
 export default function App() {
   return (

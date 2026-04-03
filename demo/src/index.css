@@ -57,7 +57,7 @@
 
 @layer base {
   body {
-    font-family: 'Inter', 'Noto Sans SC', sans-serif;
+    font-family: "Inter", "Noto Sans SC", sans-serif;
     -webkit-font-smoothing: antialiased;
     @apply bg-surface text-on-surface;
   }
@@ -65,7 +65,11 @@
 
 @layer utilities {
   .material-symbols-outlined {
-    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    font-variation-settings:
+      "FILL" 0,
+      "wght" 400,
+      "GRAD" 0,
+      "opsz" 24;
   }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
@@ -74,21 +78,33 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   /* Sticky Table Column styles */
-  .sticky-col-1 { position: sticky; left: 0; z-index: 10; background-color: inherit; }
-  .sticky-col-2 { position: sticky; left: 52px; z-index: 10; background-color: inherit; }
-  .sticky-col-header { z-index: 20 !important; }
-  
+  .sticky-col-1 {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    background-color: inherit;
+  }
+  .sticky-col-2 {
+    position: sticky;
+    left: 52px;
+    z-index: 10;
+    background-color: inherit;
+  }
+  .sticky-col-header {
+    z-index: 20 !important;
+  }
+
   /* Shadow for sticky columns on scroll */
   .sticky-shadow::after {
-      content: '';
-      position: absolute;
-      right: 0;
-      top: 0;
-      bottom: 0;
-      width: 4px;
-      pointer-events: none;
-      box-shadow: inset -4px 0 4px -4px rgba(0,0,0,0.15);
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    pointer-events: none;
+    box-shadow: inset -4px 0 4px -4px rgba(0, 0, 0, 0.15);
   }
 }

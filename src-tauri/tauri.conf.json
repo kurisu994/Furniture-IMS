@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "cloud-pivot-ims",
+  "productName": "CloudPivot IMS",
   "version": "0.1.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "com.cloudpivot.ims",
   "build": {
     "frontendDist": "../out",
     "devUrl": "http://localhost:3000",
@@ -13,10 +13,13 @@
     "windows": [
       {
         "title": "云枢 (CloudPivot IMS)",
-        "width": 800,
-        "height": 600,
+        "width": 1440,
+        "height": 900,
+        "minWidth": 1024,
+        "minHeight": 768,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "decorations": true
       }
     ],
     "security": {
