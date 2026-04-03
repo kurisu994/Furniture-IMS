@@ -30,7 +30,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         )}
       >
         {/* 顶部工具栏 */}
-        <Header />
+        <Header onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
 
         {/* 页面内容主体（单独滚动） */}
         <main className="flex-1 overflow-y-auto bg-slate-50/50 p-6 dark:bg-slate-950/50">
