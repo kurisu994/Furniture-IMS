@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Noto_Sans_SC } from "next/font/google";
+import { Inter, Noto_Sans_SC, Raleway } from "next/font/google";
 import "./globals.css";
 
 /** 主字体 — Inter */
@@ -14,6 +14,14 @@ const notoSansSC = Noto_Sans_SC({
   variable: "--font-noto-sans-sc",
   subsets: ["latin"],
   weight: ["400", "500", "700"],
+  display: "swap",
+});
+
+/** 品牌字体 — Raleway，用于 Logo 旁的品牌名称 */
+const raleway = Raleway({
+  variable: "--font-brand",
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
   display: "swap",
 });
 
@@ -35,7 +43,7 @@ export default function RootLayout({
   return (
     <html
       suppressHydrationWarning
-      className={`${inter.variable} ${notoSansSC.variable} h-full antialiased`}
+      className={`${inter.variable} ${notoSansSC.variable} ${raleway.variable} h-full antialiased`}
     >
       <body className="h-full">{children}</body>
     </html>

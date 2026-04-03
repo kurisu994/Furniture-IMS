@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { usePathname } from "@/i18n/navigation";
 import { Link } from "@/i18n/navigation";
@@ -32,31 +33,46 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         collapsed ? "w-16" : "w-60"
       )}
     >
-      <div className="flex h-14 items-center px-4 pt-1">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <div className="bg-[#294985] text-white flex h-7 w-7 shrink-0 items-center justify-center rounded-[6px] shadow-sm">
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="2.5" 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              className="w-4 h-4"
-            >
-              <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
-            </svg>
+      <div className="flex h-14 items-center px-3 pt-1">
+        <div className="flex items-center gap-2.5 overflow-hidden">
+          {/* Logo 图标 */}
+          <div className="relative h-8 shrink-0">
+            <Image
+              src="/cloudpivot_logo.png"
+              alt="CloudPivot"
+              width={37}
+              height={32}
+              className="h-8 w-auto object-contain dark:hidden"
+            />
+            <Image
+              src="/cloudpivot_logo_dark.png"
+              alt="CloudPivot"
+              width={37}
+              height={32}
+              className="hidden h-8 w-auto object-contain dark:block"
+            />
           </div>
+          {/* 展开时显示品牌名称 */}
           {!collapsed && (
-            <span className="text-[#294985] dark:text-[#6b85c1] truncate text-[15px] font-black tracking-tight">
-              云枢 (CloudPivot)
-            </span>
+            <div className="flex flex-col leading-tight select-none">
+              <span
+                className="text-[15px] font-extrabold tracking-tight text-[#294985] dark:text-slate-100"
+                style={{ fontFamily: "var(--font-noto-sans-sc), system-ui" }}
+              >
+                云枢
+              </span>
+              <span
+                className="text-[10px] font-semibold tracking-[0.2em] text-slate-400/80 uppercase dark:text-slate-500"
+                style={{ fontFamily: "var(--font-brand), system-ui" }}
+              >
+                CloudPivot
+              </span>
+            </div>
           )}
         </div>
       </div>
       {/* 导航菜单 */}
-      <nav className="flex-1 overflow-x-hidden overflow-y-auto px-2 py-3 mt-2">
+      <nav className="flex-1 overflow-x-hidden overflow-y-auto px-2 py-2.5">
         <ul className="space-y-0.5">
           {navConfig.map((item) => (
             <NavMenuItem
@@ -156,7 +172,7 @@ function NavMenuItem({
                     className={cn(
                       "flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors",
                       childActive
-                        ? "text-[#43619f] font-bold dark:text-[#6b85c1]"
+                        ? "font-bold text-[#43619f] dark:text-[#6b85c1]"
                         : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
                     )}
                   >
