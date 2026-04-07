@@ -177,15 +177,17 @@ docs/                       # 设计文档（约 6000 行）
 
 ## 开发命令
 
+本项目使用 `just`（[Justfile](https://just.systems/)）作为任务运行器，统合了 pnpm 和 cargo 的常用操作。你可以通过 `just --list` 查看所有可用命令。
+
 ```bash
-pnpm dev                    # Next.js 开发服务器（Turbopack，端口 3000）
-pnpm build                  # Next.js SSG 构建（输出到 ./out/）
-pnpm tauri dev              # Tauri 全栈开发（自动启动 pnpm dev）
-pnpm tauri build            # 生产构建（SSG + Rust 编译 + 安装包）
-pnpm lint                   # ESLint 检查
-pnpm format                 # Prettier 格式化
-pnpm typecheck              # tsc --noEmit（严格模式）
-pnpm shadcn add <组件名>    # 安装 shadcn/ui 组件
+just dev                    # 启动 Tauri 开发模式（前端 + 后端热重载）
+just dev-web                # 仅启动 Next.js 前端开发服务器
+just build                  # 构建生产版本（Tauri 桌面应用）
+just check                  # 运行全部代码检查（前端 + 后端）
+just fmt                    # 格式化全部代码（prettier + cargo fmt）
+just test                   # 运行全部测试
+just ui <组件名>             # 安装 shadcn/ui 组件
+just i18n-check             # 检查翻译文件完整性
 ```
 
 ## 当前进度
