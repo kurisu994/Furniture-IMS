@@ -1,7 +1,8 @@
 //! CloudPivot IMS — Tauri 应用入口
 //!
-//! 负责初始化日志、数据库、注册 IPC 命令并启动应用。
+//! 负责初始化日志、数据库、管理员账号、注册 IPC 命令并启动应用。
 
+mod auth;
 mod commands;
 mod db;
 mod error;
@@ -26,6 +27,12 @@ pub fn run() {
                 match db::init_db(&handle).await {
                     Ok(pool) => {
                         log::info!("数据库初始化成功");
+
+                        // 确保管理员账号存在
+                        if let Err(e) = auth::ensure_admin_exists(&pool).await {
+                            log::error!("管理员初始化失败: {}", e);
+                        }
+
                         // 将连接池注入全局状态
                         handle.manage(DbState { pool });
                     }
@@ -42,6 +49,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::ping,
             commands::get_db_version,
+            commands::login,
+            commands::change_password,
+            commands::get_user_info,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

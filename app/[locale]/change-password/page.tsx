@@ -10,18 +10,20 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { AppFooter } from "@/components/layout/app-footer";
+import { useAuth } from "@/components/providers/auth-provider";
 
 /**
  * 首次登录修改密码页面
  *
- * 使用 shadcn/ui 组件库实现：
- * - Card 卡片容器
- * - Input / Label 表单组件
- * - Button 按钮
+ * 对接 Rust 后端改密 API，支持：
+ * - 密码强度校验（≥8位、不能与初始密码相同）
+ * - 密码一致性校验
+ * - 改密成功后登出并跳转登录页
  */
 export default function ChangePasswordPage() {
   const t = useTranslations("changePassword");
   const router = useRouter();
+  const { changePassword, logout } = useAuth();
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -34,6 +36,10 @@ export default function ChangePasswordPage() {
   const validate = (): boolean => {
     if (newPassword.length < 8) {
       setError(t("tooShort"));
+      return false;
+    }
+    if (newPassword === "admin123") {
+      setError(t("sameAsDefault"));
       return false;
     }
     if (newPassword !== confirmPassword) {
@@ -50,16 +56,23 @@ export default function ChangePasswordPage() {
     if (!validate()) return;
 
     setIsLoading(true);
-    // TODO: 接入后端修改密码 API
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    setIsLoading(false);
-    router.push("/");
+    setError("");
+
+    try {
+      await changePassword(newPassword);
+      // 改密成功 → 登出并跳转登录页
+      logout();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t("changeFailed");
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   /** 退出登录 */
   const handleLogout = () => {
-    // TODO: 清除登录态
-    router.push("/login");
+    logout();
   };
 
   return (

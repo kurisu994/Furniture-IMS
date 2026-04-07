@@ -15,25 +15,28 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import {
   Card,
   CardContent,
 } from "@/components/ui/card";
 import { AppFooter } from "@/components/layout/app-footer";
+import { useAuth } from "@/components/providers/auth-provider";
 
 /**
  * 登录页面组件
  *
- * 使用 shadcn/ui 组件库实现：
- * - Card 卡片容器
- * - Input / Label / Checkbox / Select 表单组件
- * - Button 按钮
+ * 对接 Rust 后端认证 API，支持：
+ * - 用户名密码登录
+ * - 记住我
+ * - 语言选择
+ * - 首次登录强制改密跳转
+ * - 登录失败提示（含锁定信息）
  */
 export default function LoginPage() {
   const t = useTranslations("login");
   const router = useRouter();
+  const { login } = useAuth();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -41,17 +44,33 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [selectedLocale, setSelectedLocale] = useState<Locale>("zh");
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   /** 处理登录提交 */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage("");
     setIsLoading(true);
 
-    // TODO: 接入后端登录 API
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    try {
+      const result = await login(username, password);
 
-    setIsLoading(false);
-    router.push("/");
+      if (result.success) {
+        if (result.mustChangePassword) {
+          // 首次登录 → 强制改密
+          router.push("/change-password");
+        } else {
+          router.push("/");
+        }
+      } else {
+        // 登录失败，显示错误
+        setErrorMessage(result.error || t("loginFailed"));
+      }
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : t("loginFailed"));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -113,6 +132,13 @@ export default function LoginPage() {
                 </p>
               </div>
 
+              {/* 错误提示 */}
+              {errorMessage && (
+                <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/30 dark:bg-red-950/30 dark:text-red-400">
+                  {errorMessage}
+                </div>
+              )}
+
               {/* 表单 */}
               <form onSubmit={handleSubmit} className="space-y-5">
                 {/* 用户名 */}
@@ -129,7 +155,10 @@ export default function LoginPage() {
                       id="login-username"
                       type="text"
                       value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                      onChange={(e) => {
+                        setUsername(e.target.value);
+                        setErrorMessage("");
+                      }}
                       placeholder={t("usernamePlaceholder")}
                       className="h-11 pl-10"
                       autoComplete="username"
@@ -152,7 +181,10 @@ export default function LoginPage() {
                       id="login-password"
                       type={showPassword ? "text" : "password"}
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setErrorMessage("");
+                      }}
                       placeholder={t("passwordPlaceholder")}
                       className="h-11 pl-10 pr-11"
                       autoComplete="current-password"

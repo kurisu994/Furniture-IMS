@@ -5,6 +5,30 @@
  * 在浏览器环境下（开发模式无 Tauri）提供 mock 降级。
  */
 
+// ================================================================
+// 类型定义
+// ================================================================
+
+/** 用户信息（对应 Rust UserInfo） */
+export interface UserInfo {
+  id: number;
+  username: string;
+  display_name: string;
+  role: "admin" | "operator";
+  must_change_password: boolean;
+  session_version: number;
+}
+
+/** 登录响应 */
+export interface LoginResponse {
+  user: UserInfo;
+  must_change_password: boolean;
+}
+
+// ================================================================
+// 底层通信
+// ================================================================
+
 /**
  * 判断是否运行在 Tauri 环境中
  */
@@ -25,7 +49,6 @@ export async function invoke<T>(command: string, args?: Record<string, unknown>)
     throw new Error(`Command "${command}" is not available outside Tauri environment`);
   }
 
-  // 动态导入 Tauri API（仅在 Tauri 环境下可用）
   const { invoke: tauriInvoke } = await import("@tauri-apps/api/core");
   return tauriInvoke<T>(command, args);
 }
@@ -34,16 +57,35 @@ export async function invoke<T>(command: string, args?: Record<string, unknown>)
 // 通用命令
 // ================================================================
 
-/**
- * ping 测试 — 验证前后端通信链路
- */
+/** ping 测试 — 验证前后端通信链路 */
 export async function ping(): Promise<string> {
   return invoke<string>("ping");
 }
 
-/**
- * 获取数据库版本号
- */
+/** 获取数据库版本号 */
 export async function getDbVersion(): Promise<number> {
   return invoke<number>("get_db_version");
+}
+
+// ================================================================
+// 认证命令
+// ================================================================
+
+/** 用户登录 */
+export async function login(username: string, password: string): Promise<LoginResponse> {
+  return invoke<LoginResponse>("login", {
+    request: { username, password },
+  });
+}
+
+/** 修改密码 */
+export async function changePassword(userId: number, newPassword: string): Promise<void> {
+  return invoke<void>("change_password", {
+    request: { user_id: userId, new_password: newPassword },
+  });
+}
+
+/** 获取用户信息 */
+export async function getUserInfo(userId: number): Promise<UserInfo> {
+  return invoke<UserInfo>("get_user_info", { user_id: userId });
 }

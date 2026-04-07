@@ -89,6 +89,8 @@
     "language": "Ngôn ngữ",
     "rememberMe": "Ghi nhớ đăng nhập",
     "submit": "Đăng nhập",
+    "loggingIn": "Đang đăng nhập...",
+    "loginFailed": "Đăng nhập thất bại",
     "hint": "Gợi ý: Tài khoản mặc định {username} / Mật khẩu mặc định {password}. Vui lòng đổi mật khẩu sau lần đăng nhập đầu tiên."
   },
   "changePassword": {
@@ -101,7 +103,11 @@
     "requirement": "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ cái và số. Khuyến nghị sử dụng kết hợp chữ hoa, chữ thường, số và ký tự đặc biệt.",
     "logout": "Đăng xuất",
     "submit": "Xác nhận",
+    "submitting": "Đang cập nhật...",
     "mismatch": "Mật khẩu không khớp",
-    "tooShort": "Mật khẩu phải có ít nhất 8 ký tự"
+    "tooShort": "Mật khẩu phải có ít nhất 8 ký tự",
+    "sameAsDefault": "Mật khẩu mới không được giống mật khẩu mặc định",
+    "changeSuccess": "Đổi mật khẩu thành công, vui lòng đăng nhập lại",
+    "changeFailed": "Đổi mật khẩu thất bại"
   }
 }
