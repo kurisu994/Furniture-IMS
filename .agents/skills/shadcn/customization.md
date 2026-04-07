@@ -1,55 +1,55 @@
-# Customization & Theming
+# 定制化与主题 (Customization & Theming)
 
-Components reference semantic CSS variable tokens. Change the variables to change every component.
+组件会引用语义化的 CSS 变量（tokens）。只要改变这些变量，就能改变所有组件的样式。
 
-## Contents
+## 目录
 
-- How it works (CSS variables → Tailwind utilities → components)
-- Color variables and OKLCH format
-- Dark mode setup
-- Changing the theme (presets, CSS variables)
-- Adding custom colors (Tailwind v3 and v4)
-- Border radius
-- Customizing components (variants, className, wrappers)
-- Checking for updates
-
----
-
-## How It Works
-
-1. CSS variables defined in `:root` (light) and `.dark` (dark mode).
-2. Tailwind maps them to utilities: `bg-primary`, `text-muted-foreground`, etc.
-3. Components use these utilities — changing a variable changes all components that reference it.
+- 工作原理 (CSS 变量 → Tailwind 工具类 → 组件)
+- 颜色变量和 OKLCH 格式
+- 暗色模式（Dark mode）设置
+- 更改主题 (预设，CSS 变量)
+- 添加自定义颜色 (Tailwind v3 和 v4)
+- 边框圆角 (Border radius)
+- 自定义组件 (变体 variants, className, 包装器 wrappers)
+- 检查更新
 
 ---
 
-## Color Variables
+## 工作原理
 
-Every color follows the `name` / `name-foreground` convention. The base variable is for backgrounds, `-foreground` is for text/icons on that background.
+1. CSS 变量定义在 `:root`（浅色）和 `.dark`（暗色模式）中。
+2. Tailwind 将它们映射到工具类（utilities）：`bg-primary`, `text-muted-foreground` 等。
+3. 组件使用这些工具类 —— 更改一个变量，就会更改所有引用该变量的组件。
 
-| Variable                                     | Purpose                          |
+---
+
+## 颜色变量
+
+每个颜色都遵循 `name` / `name-foreground` 的命名约定。基础变量用于背景，`-foreground` 用于该背景上的文字或图标。
+
+| 变量                                     | 用途                          |
 | -------------------------------------------- | -------------------------------- |
-| `--background` / `--foreground`              | Page background and default text |
-| `--card` / `--card-foreground`               | Card surfaces                    |
-| `--primary` / `--primary-foreground`         | Primary buttons and actions      |
-| `--secondary` / `--secondary-foreground`     | Secondary actions                |
-| `--muted` / `--muted-foreground`             | Muted/disabled states            |
-| `--accent` / `--accent-foreground`           | Hover and accent states          |
-| `--destructive` / `--destructive-foreground` | Error and destructive actions    |
-| `--border`                                   | Default border color             |
-| `--input`                                    | Form input borders               |
-| `--ring`                                     | Focus ring color                 |
-| `--chart-1` through `--chart-5`              | Chart/data visualization         |
-| `--sidebar-*`                                | Sidebar-specific colors          |
-| `--surface` / `--surface-foreground`         | Secondary surface                |
+| `--background` / `--foreground`              | 页面背景和默认文本 |
+| `--card` / `--card-foreground`               | 卡片表面 |
+| `--primary` / `--primary-foreground`         | 主要按钮和主要操作 |
+| `--secondary` / `--secondary-foreground`     | 次要操作 |
+| `--muted` / `--muted-foreground`             | 弱化/禁用状态 |
+| `--accent` / `--accent-foreground`           | 悬停（Hover）和强调状态 |
+| `--destructive` / `--destructive-foreground` | 错误和破坏性操作 |
+| `--border`                                   | 默认边框颜色 |
+| `--input`                                    | 表单输入框边框 |
+| `--ring`                                     | 焦点环颜色 (Focus ring) |
+| `--chart-1` 到 `--chart-5`              | 图表/数据可视化 |
+| `--sidebar-*`                                | 侧边栏专属颜色 |
+| `--surface` / `--surface-foreground`         | 次级表面层 |
 
-Colors use OKLCH: `--primary: oklch(0.205 0 0)` where values are lightness (0–1), chroma (0 = gray), and hue (0–360).
+颜色使用 OKLCH 格式：`--primary: oklch(0.205 0 0)`，其中的值分别代表亮度（Lightness，0–1）、色度（Chroma，0 = 灰色）和色相（Hue，0–360）。
 
 ---
 
-## Dark Mode
+## 暗色模式 (Dark Mode)
 
-Class-based toggle via `.dark` on the root element. In Next.js, use `next-themes`:
+通过根元素上的 `.dark` 类（基于 class 的切换）来实现。在 Next.js 中，使用 `next-themes`：
 
 ```tsx
 import { ThemeProvider } from "next-themes"
@@ -61,30 +61,30 @@ import { ThemeProvider } from "next-themes"
 
 ---
 
-## Changing the Theme
+## 更改主题
 
 ```bash
-# Apply a preset code from ui.shadcn.com.
+# 应用来自 ui.shadcn.com 的预设代码。
 npx shadcn@latest init --preset a2r6bw --force
 
-# Switch to a named preset.
+# 切换到命名预设 (Named preset)。
 npx shadcn@latest init --preset radix-nova --force
-npx shadcn@latest init --reinstall  # update existing components to match
+npx shadcn@latest init --reinstall  # 更新现有组件以匹配新预设
 
-# Use a custom theme URL.
+# 使用自定义主题的 URL。
 npx shadcn@latest init --preset "https://ui.shadcn.com/init?base=radix&style=nova&theme=blue&..." --force
 ```
 
-Or edit CSS variables directly in `globals.css`.
+或者直接在 `globals.css` 中编辑 CSS 变量。
 
 ---
 
-## Adding Custom Colors
+## 添加自定义颜色
 
-Add variables to the file at `tailwindCssFile` from `npx shadcn@latest info` (typically `globals.css`). Never create a new CSS file for this.
+在你通过 `npx shadcn@latest info` 获取到的 `tailwindCssFile` （通常是 `globals.css`）文件中添加变量。**绝对不要**为此创建一个新的 CSS 文件。
 
 ```css
-/* 1. Define in the global CSS file. */
+/* 1. 在全局 CSS 文件中定义。 */
 :root {
   --warning: oklch(0.84 0.16 84);
   --warning-foreground: oklch(0.28 0.07 46);
@@ -96,17 +96,17 @@ Add variables to the file at `tailwindCssFile` from `npx shadcn@latest info` (ty
 ```
 
 ```css
-/* 2a. Register with Tailwind v4 (@theme inline). */
+/* 2a. 使用 Tailwind v4 注册 (@theme inline)。 */
 @theme inline {
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
 }
 ```
 
-When `tailwindVersion` is `"v3"` (check via `npx shadcn@latest info`), register in `tailwind.config.js` instead:
+如果 `tailwindVersion` 是 `"v3"`（可通过 `npx shadcn@latest info` 检查），请改为在 `tailwind.config.js` 中注册：
 
 ```js
-// 2b. Register with Tailwind v3 (tailwind.config.js).
+// 2b. 使用 Tailwind v3 注册 (tailwind.config.js)。
 module.exports = {
   theme: {
     extend: {
@@ -121,48 +121,48 @@ module.exports = {
 ```
 
 ```tsx
-// 3. Use in components.
+// 3. 在组件中使用。
 <div className="bg-warning text-warning-foreground">Warning</div>
 ```
 
 ---
 
-## Border Radius
+## 边框圆角 (Border Radius)
 
-`--radius` controls border radius globally. Components derive values from it (`rounded-lg` = `var(--radius)`, `rounded-md` = `calc(var(--radius) - 2px)`).
+`--radius` 全局控制边框的圆角大小。组件的圆角值由此推导而来（`rounded-lg` = `var(--radius)`，`rounded-md` = `calc(var(--radius) - 2px)`）。
 
 ---
 
-## Customizing Components
+## 自定义组件
 
-See also: [rules/styling.md](./rules/styling.md) for Incorrect/Correct examples.
+另见：[rules/styling.md](./rules/styling.md) 获取 错误/正确 代码示例。
 
-Prefer these approaches in order:
+请按以下顺序优先采用这些方法：
 
-### 1. Built-in variants
+### 1. 内置变体 (Built-in variants)
 
 ```tsx
 <Button variant="outline" size="sm">Click</Button>
 ```
 
-### 2. Tailwind classes via `className`
+### 2. 通过 `className` 传递 Tailwind 类
 
 ```tsx
 <Card className="max-w-md mx-auto">...</Card>
 ```
 
-### 3. Add a new variant
+### 3. 添加新的变体
 
-Edit the component source to add a variant via `cva`:
+编辑组件源码，通过 `cva` 添加一个新的变体 (variant)：
 
 ```tsx
 // components/ui/button.tsx
 warning: "bg-warning text-warning-foreground hover:bg-warning/90",
 ```
 
-### 4. Wrapper components
+### 4. 包装器组件 (Wrapper components)
 
-Compose shadcn/ui primitives into higher-level components:
+将 shadcn/ui 的基础组件 (primitives) 组合成更高级的组件：
 
 ```tsx
 export function ConfirmDialog({ title, description, onConfirm, children }) {
@@ -186,17 +186,17 @@ export function ConfirmDialog({ title, description, onConfirm, children }) {
 
 ---
 
-## Checking for Updates
+## 检查更新
 
 ```bash
 npx shadcn@latest add button --diff
 ```
 
-To preview exactly what would change before updating, use `--dry-run` and `--diff`:
+要在更新之前准确预览将要发生的更改，请使用 `--dry-run` 和 `--diff`：
 
 ```bash
-npx shadcn@latest add button --dry-run        # see all affected files
-npx shadcn@latest add button --diff button.tsx # see the diff for a specific file
+npx shadcn@latest add button --dry-run        # 查看所有受影响的文件
+npx shadcn@latest add button --diff button.tsx # 查看特定文件的差异内容
 ```
 
-See [Updating Components in SKILL.md](./SKILL.md#updating-components) for the full smart merge workflow.
+完整的智能合并工作流，请参见 [SKILL.md 中的 Updating Components](./SKILL.md#updating-components)。
