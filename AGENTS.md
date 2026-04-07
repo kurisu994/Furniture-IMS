@@ -11,22 +11,52 @@
 app/                       # Next.js App Router（Tauri 生产构建使用 SSG）
   layout.tsx               # 根布局：仅字体（Inter + Noto Sans SC + Raleway）
   globals.css              # 主题系统（浅色/深色 CSS 变量，遵循 shadcn 规范）
+  page.tsx                 # 根路由重定向
   [locale]/                # i18n 路由（next-intl）
-    layout.tsx             # NextIntlClientProvider + ThemeProvider + AppLayout
+    layout.tsx             # NextIntlClientProvider + ThemeProvider + AuthProvider + AppLayout
     page.tsx               # 首页看板（已实现，含图表 + mock 数据）
+    login/page.tsx         # 登录页（已实现，对接 Rust 认证 API）
+    change-password/page.tsx # 首次登录强制改密页（已实现）
+    _components/           # 看板子组件目录
+      dashboard-content.tsx   # 看板主内容编排
+      dashboard/              # 看板拆分组件（7 个）
+        metrics-cards.tsx     # KPI 指标卡片
+        quick-actions.tsx     # 快捷操作栏
+        sales-trend-chart.tsx # 销售趋势图
+        inventory-donut.tsx   # 库存分布环形图
+        best-sellers.tsx      # 热销 Top10
+        pending-tasks.tsx     # 待办事项
+        purchase-trend-chart.tsx # 采购趋势图
     {模块名}/page.tsx      # 业务页面（当前均为 PagePlaceholder 占位）
 components/
   ui/                      # shadcn/ui 组件（base-nova 风格，基于 @base-ui/react）
-  layout/                  # 布局组件：AppLayout、Sidebar、Header、LocaleSwitcher
+  layout/                  # 布局组件：AppLayout、Sidebar、Header、LocaleSwitcher、AppFooter
   common/                  # 通用组件：PagePlaceholder
-  providers/               # ThemeProvider（next-themes）
+  providers/               # ThemeProvider（next-themes）+ AuthProvider（认证上下文 + 路由守卫）
 config/nav.ts              # 侧边栏导航树 — 路由的唯一真实来源
 i18n/                      # next-intl 配置（config / routing / request / navigation）
-messages/{zh,vi,en}.json   # 翻译文件（当前骨架约 80 行/语言）
-lib/utils.ts               # cn() 工具函数（clsx + tailwind-merge）
-src-tauri/                 # Rust 后端（当前仅有最小框架，无数据库/IPC）
-  src/lib.rs               # Tauri Builder + 日志插件
-  Cargo.toml               # tauri 2.10, serde, log（尚未集成 sqlx）
+messages/{zh,vi,en}.json   # 翻译文件（当前约 113 行/语言，含 login/changePassword 域）
+lib/
+  utils.ts                 # cn() 工具函数（clsx + tailwind-merge）
+  tauri.ts                 # Tauri IPC 通信封装（invoke 泛型 + 全部认证命令 + 非 Tauri 降级）
+  currency.ts              # 多币种格式化工具（VND/CNY/USD，整数存储 ↔ 显示金额转换）
+  types/
+    system-config.ts       # 系统配置键名枚举 + TypeScript 类型（SystemConfigKeys、Locale、Theme 等）
+src-tauri/                 # Rust 后端
+  Cargo.toml               # tauri 2.10, sqlx(sqlite), bcrypt, chrono, uuid, thiserror
+  src/
+    lib.rs                 # Tauri Builder：日志 + 数据库初始化 + 管理员初始化 + IPC 注册
+    main.rs                # 入口
+    error.rs               # 统一错误类型（AppError: Database/Sqlx/Auth/Business/Io）
+    auth.rs                # 认证模块：登录（含锁定）、改密（含强度校验）、管理员初始化
+    db/
+      mod.rs               # SQLite 连接池初始化 + PRAGMA 配置（WAL 模式）
+      migration.rs         # 自管理迁移框架（include_str! 内嵌 SQL，版本化执行）
+    commands/
+      mod.rs               # IPC 命令：ping、get_db_version、login、change_password、get_user_info
+  migrations/sqlite/
+    001_init.sql           # 建表迁移（45 张表 DDL，44KB）
+    002_seed_data.sql      # 种子数据（系统配置、默认分类等）
 docs/                      # 设计文档（共约 6000 行，实现功能前必读）
   01-requirements.md       # 需求规格：12 大模块详细设计
   02-database-design.md    # 数据库：45 张表 DDL + ER 关系
@@ -96,7 +126,7 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
 
 ### i18n 翻译键
 
-`messages/*.json` 按领域嵌套：`nav.*`、`common.*`、`header.*`、`sidebar.*`、`dashboard.*`。  
+`messages/*.json` 按领域嵌套：`common.*`、`nav.*`、`header.*`、`sidebar.*`、`dashboard.*`、`login.*`、`changePassword.*`。  
 新增页面时必须**同时更新三个语言文件**（zh.json / vi.json / en.json）。
 
 ### 导航系统
@@ -118,9 +148,58 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
 ### Tauri 集成
 
 - 仅当 `TAURI_ENV_PLATFORM` 环境变量存在时启用 SSG（`output: "export"`）
-- 开发模式使用标准 Next.js 服务器（`localhost:3000`）
-- Rust 后端当前为最小框架 — 数据库层、IPC 命令、用户认证**均未实现**
-- 规划中：sqlx + SQLite、Repository trait 抽象、bcrypt 认证（详见 `docs/04-development-plan.md`）
+- 开发模式使用标准 Next.js 服务器（`localhost:3000`），前端通过 `lib/tauri.ts` 的 `isTauriEnv()` 做运行时判断
+- 非 Tauri 环境自动降级为 mock 数据（如登录返回模拟管理员）
+
+### 认证系统
+
+**已完成的认证流程**：
+
+- **Rust 后端**（`src-tauri/src/auth.rs`）：
+  - bcrypt 密码哈希（cost=DEFAULT_COST）
+  - 登录失败锁定（5 次失败锁定 15 分钟）
+  - 首次登录强制改密（`must_change_password` 标记）
+  - 改密后 `session_version` 递增（使旧会话失效）
+  - 启动时自动创建默认管理员（admin / admin123）
+
+- **前端**（`components/providers/auth-provider.tsx`）：
+  - `AuthProvider` Context 全局状态管理
+  - `useAuth()` Hook（`login` / `changePassword` / `logout`）
+  - 路由守卫：未登录 → `/login`，需改密 → `/change-password`
+  - localStorage 会话持久化 + `session_version` 验证
+  - 认证页面（`/login`、`/change-password`）使用独立布局（无侧边栏/顶栏）
+
+- **IPC 命令**（`src-tauri/src/commands/mod.rs`）：
+  - `ping` — 前后端通信 + 数据库健康检查
+  - `get_db_version` — 查询当前数据库迁移版本
+  - `login` — 用户登录（返回 `LoginResponse`）
+  - `change_password` — 修改密码
+  - `get_user_info` — 获取用户信息
+
+### 数据库层
+
+- **连接池**：sqlx + SQLite，WAL 模式，5 连接上限
+- **PRAGMA**：`journal_mode=WAL`、`busy_timeout=5000`、`foreign_keys=OFF`、`synchronous=NORMAL`
+- **迁移框架**：自管理（`db/migration.rs`），`include_str!` 内嵌 SQL，`schema_migrations` 版本跟踪表
+- **迁移脚本**：
+  - `001_init.sql`：45 张表 DDL（44KB）
+  - `002_seed_data.sql`：系统配置、默认分类等种子数据
+- **全局状态**：`DbState { pool: SqlitePool }` 通过 `tauri::Manager::manage()` 注入
+
+### 错误处理
+
+统一错误类型 `AppError`（`src-tauri/src/error.rs`），实现 `Serialize` 以便 Tauri IPC 返回前端：
+- `Database(String)` — 数据库错误
+- `Sqlx(sqlx::Error)` — SQL 执行错误
+- `Auth(String)` — 认证错误
+- `Business(String)` — 业务逻辑错误
+- `Io(std::io::Error)` — IO 错误
+
+### 前端工具库
+
+- `lib/tauri.ts`：Tauri IPC 封装，泛型 `invoke<T>(command, args)`，运行时 Tauri 环境检测与降级
+- `lib/currency.ts`：多币种格式化（VND 无小数 / CNY·USD 精确到分），`formatAmount()` / `toDisplayAmount()` / `toStorageAmount()`
+- `lib/types/system-config.ts`：系统配置键名枚举（`SystemConfigKeys`）+ 业务类型定义（`Locale`、`Theme`、`Currency`、`PaperSize` 等）
 
 ## 设计文档
 
@@ -133,8 +212,24 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
 | `docs/03-ui-prototype.md` | 页面布局、交互流程、组件规格 |
 | `docs/04-development-plan.md` | 任务分解、当前进度状态 |
 
-## 当前状态（阶段一，约 45%）
+## 当前状态（阶段一，约 85%）
 
-**已完成**：项目脚手架、Next.js + Tailwind + shadcn、ESLint/Prettier、i18n 框架、布局组件（侧边栏/顶栏/语言切换器）、App Router 路由、首页看板 UI 原型（mock 数据）、深浅主题系统。
+**已完成**：
+- 项目脚手架：Next.js 16 + Tailwind CSS 4 + shadcn/ui + ESLint/Prettier
+- i18n 框架：next-intl，三语翻译文件（113 行/语言），含 `login.*`、`changePassword.*` 域
+- 布局组件：AppLayout（侧边栏 + 顶栏 + 主内容区 + 页脚）、Sidebar、Header、LocaleSwitcher、AppFooter
+- 深浅主题系统：CSS 变量 + next-themes
+- 首页看板 UI：7 个模块化子组件（指标卡片、图表、待办等），使用 Recharts + mock 数据
+- **Rust 数据库层**：sqlx + SQLite 连接池、WAL PRAGMA、自管理迁移框架、45 张表 DDL + 种子数据
+- **用户认证（全栈）**：登录页 / 改密页 UI、AuthProvider 路由守卫、Rust 后端 bcrypt 认证 + 锁定 + session_version
+- **IPC 通信**：ping / get_db_version / login / change_password / get_user_info
+- **前端工具库**：Tauri IPC 封装、多币种格式化、系统配置类型定义
+- App Router 路由骨架：23 个业务路由目录
 
-**未开始**：Rust 数据库层（sqlx/SQLite）、IPC 命令、用户认证、全部 20+ 业务模块页面（当前为 `PagePlaceholder` 占位）、多币种逻辑、CI/CD。
+**未开始**：
+- 全部 20+ 业务模块页面 UI 实现（当前为 `PagePlaceholder` 占位）
+- Repository trait 抽象（业务数据 CRUD）
+- 业务 IPC 命令（物料、供应商、仓库、单据等）
+- 状态管理（zustand 已安装但未使用）
+- 多币种前端集成（逻辑已就绪，待业务页面对接）
+- CI/CD
