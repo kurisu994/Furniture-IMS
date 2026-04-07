@@ -77,7 +77,8 @@
     "todayPurchase": "今日采购额",
     "lowStock": "库存预警",
     "salesTrend": "近30天销售趋势",
-    "stockDistribution": "库存分布"
+    "stockDistribution": "库存分布",
+    "refreshData": "刷新数据"
   },
   "login": {
     "welcome": "欢迎登录",

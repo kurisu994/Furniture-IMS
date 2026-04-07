@@ -20,12 +20,12 @@ export function DashboardContent() {
       {/* Dashboard Header */}
       <div className="mt-2 flex items-center justify-between">
         <h2 className="text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
-          首页看板
+          {t("dashboard.title")}
         </h2>
         <div className="flex items-center gap-3">
           <Button variant="outline" className="gap-2 bg-slate-100 border-none hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
             <RefreshCcw className="h-4 w-4" />
-            刷新数据
+            {t("dashboard.refreshData")}
           </Button>
         </div>
       </div>

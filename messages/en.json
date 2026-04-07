@@ -77,7 +77,8 @@
     "todayPurchase": "Today's Purchases",
     "lowStock": "Low Stock Alerts",
     "salesTrend": "30-Day Sales Trend",
-    "stockDistribution": "Stock Distribution"
+    "stockDistribution": "Stock Distribution",
+    "refreshData": "Refresh Data"
   },
   "login": {
     "welcome": "Welcome",

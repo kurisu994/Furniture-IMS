@@ -77,7 +77,8 @@
     "todayPurchase": "Mua hàng hôm nay",
     "lowStock": "Cảnh báo tồn kho",
     "salesTrend": "Xu hướng doanh số 30 ngày",
-    "stockDistribution": "Phân bổ tồn kho"
+    "stockDistribution": "Phân bổ tồn kho",
+    "refreshData": "Làm mới dữ liệu"
   },
   "login": {
     "welcome": "Chào mừng đăng nhập",
