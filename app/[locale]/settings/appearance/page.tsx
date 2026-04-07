@@ -1,5 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
-import { PagePlaceholder } from "@/components/common/page-placeholder";
+import { AppearanceContent } from "../_components/appearance-content";
 
 export default async function Page({
   params,
@@ -8,5 +8,5 @@ export default async function Page({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  return <PagePlaceholder titleKey="nav.appearance" />;
+  return <AppearanceContent />;
 }

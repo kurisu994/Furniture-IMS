@@ -14,7 +14,7 @@ export function AppFooter({ className }: { className?: string }) {
         className
       )}
     >
-      <div>© 2024 云枢 (CLOUDPIVOT IMS) V2.4.0. 保留所有权利。</div>
+      <div>© 2026 云枢 (CLOUDPIVOT IMS) V1.0.0. 保留所有权利。</div>
       <div className="mt-2 flex items-center gap-6 text-[10px] tracking-widest md:mt-0">
         <a
           href="#"
@@ -32,7 +32,7 @@ export function AppFooter({ className }: { className?: string }) {
           href="#"
           className="uppercase transition-colors hover:text-slate-600 dark:hover:text-slate-200"
         >
-          Support
+          技术支持
         </a>
       </div>
     </footer>
