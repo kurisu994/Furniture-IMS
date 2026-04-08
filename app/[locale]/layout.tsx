@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { DisplayPreferencesProvider } from "@/components/providers/display-preferences-provider";
 import { AppLayout } from "@/components/layout/app-layout";
+import { Toaster } from "@/components/ui/sonner";
 
 /**
  * 为 SSG 模式生成所有语言的静态页面
@@ -43,6 +44,7 @@ export default async function LocaleLayout({
           </DisplayPreferencesProvider>
         </AuthProvider>
       </ThemeProvider>
+      <Toaster />
     </NextIntlClientProvider>
   );
 }

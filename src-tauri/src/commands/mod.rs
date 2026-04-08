@@ -148,3 +148,50 @@ pub async fn set_system_config(
 
     Ok(())
 }
+
+/// 批量设置系统配置参数
+#[derive(Deserialize)]
+pub struct ConfigSetItem {
+    pub key: String,
+    pub value: String,
+}
+
+/// 批量设置系统配置（upsert）
+///
+/// 使用事务处理多个配置项的更新
+#[tauri::command]
+pub async fn set_system_configs(
+    db: State<'_, DbState>,
+    configs: Vec<ConfigSetItem>,
+) -> Result<(), AppError> {
+    if configs.is_empty() {
+        return Ok(());
+    }
+
+    let mut tx = db
+        .pool
+        .begin()
+        .await
+        .map_err(|e| AppError::Database(format!("开启数据库事务失败: {}", e)))?;
+
+    for config in configs {
+        sqlx::query(
+            "INSERT INTO system_config (key, value, updated_at)
+             VALUES (?, ?, datetime('now'))
+             ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')",
+        )
+        .bind(&config.key)
+        .bind(&config.value)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| {
+            AppError::Database(format!("设置系统配置 '{}' 失败: {}", config.key, e))
+        })?;
+    }
+
+    tx.commit()
+        .await
+        .map_err(|e| AppError::Database(format!("提交事务失败: {}", e)))?;
+
+    Ok(())
+}

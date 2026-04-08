@@ -138,3 +138,19 @@ export async function setSystemConfig(key: string, value: string): Promise<void>
   // Web 调试模式：写入 localStorage
   localStorage.setItem(CONFIG_STORAGE_PREFIX + key, value);
 }
+
+/**
+ * 批量设置系统配置
+ *
+ * Tauri 环境调用后端 IPC；web 调试模式写入 localStorage。
+ */
+export async function setSystemConfigs(configs: { key: string; value: string }[]): Promise<void> {
+  if (isTauriEnv()) {
+    return invoke<void>("set_system_configs", { configs });
+  }
+
+  // Web 调试模式：写入 localStorage
+  for (const { key, value } of configs) {
+    localStorage.setItem(CONFIG_STORAGE_PREFIX + key, value);
+  }
+}
