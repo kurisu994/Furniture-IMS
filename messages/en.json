@@ -72,7 +72,10 @@
     "notifications": "Notifications",
     "profile": "Profile",
     "logout": "Logout",
-    "theme": "Toggle Theme"
+    "theme": "Toggle Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System"
   },
   "sidebar": {
     "collapse": "Collapse Menu",

@@ -34,6 +34,11 @@ fn get_migrations() -> Vec<Migration> {
             name: "seed_data",
             sql: include_str!("../../migrations/sqlite/002_seed_data.sql"),
         },
+        Migration {
+            version: 3,
+            name: "appearance_config",
+            sql: include_str!("../../migrations/sqlite/003_appearance_config.sql"),
+        },
     ]
 }
 

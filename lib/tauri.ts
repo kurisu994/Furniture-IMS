@@ -89,3 +89,52 @@ export async function changePassword(userId: number, newPassword: string): Promi
 export async function getUserInfo(userId: number): Promise<UserInfo> {
   return invoke<UserInfo>("get_user_info", { user_id: userId });
 }
+
+// ================================================================
+// 系统配置命令
+// ================================================================
+
+/** 系统配置记录 */
+export interface SystemConfigRecord {
+  key: string;
+  value: string;
+  remark?: string;
+}
+
+/** localStorage 中系统配置的存储键前缀（web 调试模式降级用） */
+const CONFIG_STORAGE_PREFIX = "cloudpivot_config_";
+
+/**
+ * 批量获取系统配置
+ *
+ * Tauri 环境调用后端 IPC；web 调试模式从 localStorage 读取。
+ */
+export async function getSystemConfigs(keys: string[]): Promise<SystemConfigRecord[]> {
+  if (isTauriEnv()) {
+    return invoke<SystemConfigRecord[]>("get_system_configs", { keys });
+  }
+
+  // Web 调试模式：从 localStorage 降级读取
+  const records: SystemConfigRecord[] = [];
+  for (const key of keys) {
+    const stored = localStorage.getItem(CONFIG_STORAGE_PREFIX + key);
+    if (stored !== null) {
+      records.push({ key, value: stored });
+    }
+  }
+  return records;
+}
+
+/**
+ * 设置单个系统配置（upsert）
+ *
+ * Tauri 环境调用后端 IPC；web 调试模式写入 localStorage。
+ */
+export async function setSystemConfig(key: string, value: string): Promise<void> {
+  if (isTauriEnv()) {
+    return invoke<void>("set_system_config", { key, value });
+  }
+
+  // Web 调试模式：写入 localStorage
+  localStorage.setItem(CONFIG_STORAGE_PREFIX + key, value);
+}

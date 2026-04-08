@@ -179,3 +179,36 @@
     @apply font-sans;
   }
 }
+
+/* ========================================
+ * 显示偏好 — 通过 data-attribute 驱动
+ * ======================================== */
+
+/* 默认表格/列表尺寸变量 */
+:root {
+  --table-row-height: 48px;
+  --list-item-padding-y: 12px;
+  --list-item-padding-x: 16px;
+}
+
+/* 大字体模式 — 根 font-size 放大，rem 单位全局生效 */
+html[data-large-font="true"] {
+  font-size: 20px;
+
+  /* Switch 组件使用 rem 尺寸，大字体下 thumb 会溢出容器，固定为 px */
+  [data-slot="switch"] {
+    height: 18.4px;
+    width: 32px;
+  }
+  [data-slot="switch-thumb"] {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* 紧凑列表视图 — 减小行高和间距 */
+html[data-compact="true"] {
+  --table-row-height: 36px;
+  --list-item-padding-y: 6px;
+  --list-item-padding-x: 16px;
+}

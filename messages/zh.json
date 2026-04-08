@@ -73,7 +73,10 @@
     "notifications": "通知",
     "profile": "个人信息",
     "logout": "退出登录",
-    "theme": "主题切换"
+    "theme": "主题切换",
+    "themeLight": "浅色模式",
+    "themeDark": "深色模式",
+    "themeSystem": "跟随系统"
   },
   "sidebar": {
     "collapse": "折叠菜单",

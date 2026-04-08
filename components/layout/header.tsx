@@ -2,24 +2,30 @@
 
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
-import { Bell, Sun, Moon, User, ChevronRight } from "lucide-react";
+import { Bell, Sun, Moon, Monitor, User, ChevronRight } from "lucide-react";
 import { usePathname, Link } from "@/i18n/navigation";
-import { navConfig, type NavItem } from "@/config/nav";
+import { navConfig } from "@/config/nav";
 import { LocaleSwitcher } from "./locale-switcher";
-import React from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { SystemConfigKeys } from "@/lib/types/system-config";
+import { setSystemConfig } from "@/lib/tauri";
+
+/** 主题选项配置 */
+const themeOptions = [
+  { value: "light", icon: Sun, labelKey: "header.themeLight" },
+  { value: "dark", icon: Moon, labelKey: "header.themeDark" },
+  { value: "system", icon: Monitor, labelKey: "header.themeSystem" },
+] as const;
 
 /** 根据当前路径查找面包屑链 */
 function useBreadcrumbs(): { titleKey: string; href?: string }[] {
   const pathname = usePathname();
 
-  // 首页
   if (pathname === "/" || pathname === "") {
     return [{ titleKey: "nav.dashboard" }];
   }
 
-  // 在导航树中查找匹配项
   for (const item of navConfig) {
-    // 无子菜单 — 直接匹配
     if (!item.children) {
       const href = item.href || "/";
       if (pathname === href) {
@@ -31,7 +37,6 @@ function useBreadcrumbs(): { titleKey: string; href?: string }[] {
       continue;
     }
 
-    // 有子菜单 — 在 children 中查找
     for (const child of item.children) {
       if (pathname === child.href) {
         return [
@@ -43,8 +48,85 @@ function useBreadcrumbs(): { titleKey: string; href?: string }[] {
     }
   }
 
-  // 未匹配到导航项 — 仅显示首页
   return [{ titleKey: "nav.dashboard", href: "/" }];
+}
+
+/**
+ * 主题切换下拉选择器
+ */
+function ThemeSwitcher() {
+  const t = useTranslations();
+  const { theme, setTheme } = useTheme();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // 点击外部关闭
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // 解决 next-themes hydration mismatch：SSR 时 theme 为 undefined
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  /** 切换主题并持久化 */
+  const handleSwitch = useCallback(
+    async (newTheme: string) => {
+      setTheme(newTheme);
+      setOpen(false);
+      try {
+        await setSystemConfig(SystemConfigKeys.THEME, newTheme);
+      } catch {
+        // 持久化失败不影响前端体验
+      }
+    },
+    [setTheme],
+  );
+
+  /** 当前主题图标（未挂载时用 Sun 保证 SSR/CSR 一致） */
+  const CurrentIcon =
+    !mounted ? Sun : theme === "dark" ? Moon : theme === "system" ? Monitor : Sun;
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="text-muted-foreground hover:bg-accent hover:text-accent-foreground flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
+        title={t("header.theme")}
+      >
+        <CurrentIcon className="h-[18px] w-[18px]" />
+      </button>
+
+      {open && (
+        <div className="border-border bg-popover absolute top-full right-0 mt-1 w-40 rounded-lg border p-1 shadow-lg">
+          {themeOptions.map((opt) => {
+            const Icon = opt.icon;
+            const isActive = theme === opt.value;
+            return (
+              <button
+                key={opt.value}
+                onClick={() => handleSwitch(opt.value)}
+                className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+                  isActive
+                    ? "bg-accent text-accent-foreground font-medium"
+                    : "text-popover-foreground hover:bg-accent"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{t(opt.labelKey)}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
 
 /**
@@ -58,7 +140,6 @@ interface HeaderProps {
 
 export function Header({ onToggleSidebar }: HeaderProps) {
   const t = useTranslations();
-  const { theme, setTheme } = useTheme();
   const breadcrumbs = useBreadcrumbs();
 
   return (
@@ -106,6 +187,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
         {/* 图标按钮组 */}
         <div className="flex items-center gap-1">
           <LocaleSwitcher />
+          <ThemeSwitcher />
 
           <button
             className="text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 relative flex h-9 w-9 items-center justify-center rounded-lg transition-colors"

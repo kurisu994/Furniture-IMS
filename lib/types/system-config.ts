@@ -70,6 +70,11 @@ export const SystemConfigKeys = {
   // 主题
   THEME: "theme",
 
+  // 显示偏好
+  COMPACT_LIST_VIEW: "compact_list_view",
+  LARGE_FONT_MODE: "large_font_mode",
+  SIDEBAR_AUTO_COLLAPSE: "sidebar_auto_collapse",
+
   // 打印
   PRINT_LANGUAGE_MODE: "print_language_mode",
   PRINT_BILINGUAL_PRIMARY_LOCALE: "print_bilingual_primary_locale",
@@ -86,7 +91,8 @@ export const SystemConfigKeys = {
 } as const;
 
 /** 系统配置键名类型 */
-export type SystemConfigKey = (typeof SystemConfigKeys)[keyof typeof SystemConfigKeys];
+export type SystemConfigKey =
+  (typeof SystemConfigKeys)[keyof typeof SystemConfigKeys];
 
 /** 系统配置记录 */
 export interface SystemConfigRecord {
@@ -103,7 +109,12 @@ export type Theme = "light" | "dark";
 export type Locale = "zh" | "vi" | "en";
 
 /** 打印语言模式 */
-export type PrintLanguageMode = "follow_system" | "zh" | "vi" | "en" | "bilingual";
+export type PrintLanguageMode =
+  | "follow_system"
+  | "zh"
+  | "vi"
+  | "en"
+  | "bilingual";
 
 /** 纸张尺寸 */
 export type PaperSize = "A4" | "A5" | "custom";

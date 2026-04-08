@@ -72,7 +72,10 @@
     "notifications": "Thông báo",
     "profile": "Thông tin cá nhân",
     "logout": "Đăng xuất",
-    "theme": "Chuyển đổi giao diện"
+    "theme": "Chuyển đổi giao diện",
+    "themeLight": "Sáng",
+    "themeDark": "Tối",
+    "themeSystem": "Theo Hệ Thống"
   },
   "sidebar": {
     "collapse": "Thu gọn menu",

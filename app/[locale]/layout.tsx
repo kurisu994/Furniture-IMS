@@ -3,6 +3,7 @@ import { getMessages, setRequestLocale } from "next-intl/server";
 import { locales } from "@/i18n/config";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { DisplayPreferencesProvider } from "@/components/providers/display-preferences-provider";
 import { AppLayout } from "@/components/layout/app-layout";
 
 /**
@@ -19,6 +20,7 @@ export function generateStaticParams() {
  * - next-intl Provider（注入翻译消息）
  * - ThemeProvider（主题切换）
  * - AuthProvider（认证上下文 + 路由守卫）
+ * - DisplayPreferencesProvider（显示偏好：紧凑视图 / 大字体 / 侧边栏自动收起）
  * - AppLayout（侧边栏 + 顶栏 + 主内容区）
  */
 export default async function LocaleLayout({
@@ -36,7 +38,9 @@ export default async function LocaleLayout({
     <NextIntlClientProvider messages={messages}>
       <ThemeProvider>
         <AuthProvider>
-          <AppLayout>{children}</AppLayout>
+          <DisplayPreferencesProvider>
+            <AppLayout>{children}</AppLayout>
+          </DisplayPreferencesProvider>
         </AuthProvider>
       </ThemeProvider>
     </NextIntlClientProvider>

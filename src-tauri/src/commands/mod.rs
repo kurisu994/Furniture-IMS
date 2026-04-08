@@ -77,3 +77,74 @@ pub async fn get_user_info(
 ) -> Result<UserInfo, AppError> {
     auth::get_user_info(&db.pool, user_id).await
 }
+
+// ================================================================
+// 系统配置命令
+// ================================================================
+
+/// 系统配置记录（返回前端）
+#[derive(Debug, serde::Serialize)]
+pub struct SystemConfigRecord {
+    pub key: String,
+    pub value: String,
+    pub remark: Option<String>,
+}
+
+/// 批量获取系统配置
+///
+/// 按 key 列表查询 system_config 表，返回匹配的记录。
+/// 不存在的 key 不会出现在返回结果中。
+#[tauri::command]
+pub async fn get_system_configs(
+    db: State<'_, DbState>,
+    keys: Vec<String>,
+) -> Result<Vec<SystemConfigRecord>, AppError> {
+    if keys.is_empty() {
+        return Ok(vec![]);
+    }
+
+    // SQLite 不直接支持数组参数，动态构建 IN 子句
+    let placeholders: Vec<String> = keys.iter().map(|_| "?".to_string()).collect();
+    let sql = format!(
+        "SELECT key, value, remark FROM system_config WHERE key IN ({})",
+        placeholders.join(", ")
+    );
+
+    let mut query = sqlx::query_as::<_, (String, String, Option<String>)>(&sql);
+    for key in &keys {
+        query = query.bind(key);
+    }
+
+    let rows = query
+        .fetch_all(&db.pool)
+        .await
+        .map_err(|e| AppError::Database(format!("查询系统配置失败: {}", e)))?;
+
+    Ok(rows
+        .into_iter()
+        .map(|(key, value, remark)| SystemConfigRecord { key, value, remark })
+        .collect())
+}
+
+/// 设置单个系统配置（upsert）
+///
+/// 如果 key 已存在则更新 value，不存在则插入。
+#[tauri::command]
+pub async fn set_system_config(
+    db: State<'_, DbState>,
+    key: String,
+    value: String,
+) -> Result<(), AppError> {
+    sqlx::query(
+        "INSERT INTO system_config (key, value, updated_at)
+         VALUES (?, ?, datetime('now'))
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')",
+    )
+    .bind(&key)
+    .bind(&value)
+    .execute(&db.pool)
+    .await
+    .map_err(|e| AppError::Database(format!("设置系统配置失败: {}", e)))?;
+
+    Ok(())
+}
