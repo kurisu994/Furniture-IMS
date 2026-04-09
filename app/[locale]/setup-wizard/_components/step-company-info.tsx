@@ -111,7 +111,7 @@ export function StepCompanyInfo({
                 className="h-12 bg-slate-50/50 font-medium dark:bg-slate-900/50"
               />
               {error && (
-                <p className="text-xs font-medium text-destructive">{error}</p>
+                <p className="text-destructive text-xs font-medium">{error}</p>
               )}
             </div>
 
@@ -125,6 +125,7 @@ export function StepCompanyInfo({
                 </label>
                 <Select
                   value={data.defaultLanguage}
+                  items={localeOptions}
                   onValueChange={(val) =>
                     val && onChange({ ...data, defaultLanguage: val })
                   }
