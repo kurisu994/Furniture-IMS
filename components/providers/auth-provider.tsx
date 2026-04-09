@@ -12,6 +12,7 @@ import { useRouter, usePathname } from "@/i18n/navigation";
 import { isTauriEnv, type UserInfo } from "@/lib/tauri";
 import * as tauriApi from "@/lib/tauri";
 import { SystemConfigKeys } from "@/lib/types/system-config";
+import { SplashScreen } from "@/components/common/splash-screen";
 
 /** 认证状态 */
 interface AuthState {
@@ -280,6 +281,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
     completeSetup,
   };
+
+  /**
+   * 同步计算是否正在等待重定向，阻止目标页面闪烁。
+   * 覆盖场景：加载中、未登录访问受保护页、需改密、需向导。
+   */
+  const isPendingRedirect =
+    isLoading ||
+    (!user && !isAuthRoute) ||
+    (!!user && user.must_change_password && pathname !== "/change-password") ||
+    (!!user && !user.must_change_password && needsSetup && pathname !== "/setup-wizard");
+
+  if (isPendingRedirect) {
+    return (
+      <AuthContext.Provider value={value}>
+        <SplashScreen />
+      </AuthContext.Provider>
+    );
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
