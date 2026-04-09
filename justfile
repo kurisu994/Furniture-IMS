@@ -102,9 +102,14 @@ i18n-check:
     }
     const keyMap = {};
     for (const loc of locales) {
-      const file = path.join(dir, `${loc}.json`);
-      const data = JSON.parse(fs.readFileSync(file, "utf-8"));
-      keyMap[loc] = new Set(flatKeys(data));
+      const locDir = path.join(dir, loc);
+      const files = fs.readdirSync(locDir).filter(f => f.endsWith('.json'));
+      let allKeys = [];
+      for (const file of files) {
+        const data = JSON.parse(fs.readFileSync(path.join(locDir, file), "utf-8"));
+        allKeys.push(...flatKeys(data));
+      }
+      keyMap[loc] = new Set(allKeys);
     }
     // 以 zh 为基准进行对比
     const base = "zh";
@@ -115,12 +120,12 @@ i18n-check:
       const missing = [...baseKeys].filter(k => !keyMap[loc].has(k));
       const extra = [...keyMap[loc]].filter(k => !baseKeys.has(k));
       if (missing.length) {
-        console.log(`⚠️  ${loc}.json 缺失（相对 ${base}）:`);
+        console.log(`⚠️  ${loc} 缺失（相对 ${base}）:`);
         missing.forEach(k => console.log(`  - ${k}`));
         hasIssue = true;
       }
       if (extra.length) {
-        console.log(`⚠️  ${loc}.json 多余（相对 ${base}）:`);
+        console.log(`⚠️  ${loc} 多余（相对 ${base}）:`);
         extra.forEach(k => console.log(`  + ${k}`));
         hasIssue = true;
       }
