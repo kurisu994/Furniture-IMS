@@ -47,7 +47,8 @@
       "perPage": "{count}/page",
       "lowStock": "Low Stock",
       "active": "Active",
-      "inactive": "Inactive"
+      "inactive": "Inactive",
+      "noResults": "No results"
     },
     "form": {
       "addTitle": "Add Material",

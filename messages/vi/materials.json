@@ -47,7 +47,8 @@
       "perPage": "{count}/trang",
       "lowStock": "Tồn kho thấp",
       "active": "Hoạt động",
-      "inactive": "Vô hiệu hóa"
+      "inactive": "Vô hiệu hóa",
+      "noResults": "Không có dữ liệu"
     },
     "form": {
       "addTitle": "Thêm vật tư",

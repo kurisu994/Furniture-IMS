@@ -4,6 +4,24 @@ import { useTranslations } from "next-intl";
 import { formatAmount } from "@/lib/currency";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { MaterialItem } from "./materials-client-page";
 
 /* ------------------------------------------------------------------ */
@@ -23,36 +41,15 @@ interface MaterialTableProps {
 }
 
 /* ------------------------------------------------------------------ */
-/*  CSS for sticky columns                                             */
+/*  物料类型 Badge 颜色映射                                             */
 /* ------------------------------------------------------------------ */
 
-const stickyStyles = `
-  .sticky-col-1 { position: sticky; left: 0; z-index: 10; }
-  .sticky-col-2 { position: sticky; left: 52px; z-index: 10; }
-  .sticky-col-header { z-index: 20 !important; }
-  .sticky-shadow::after {
-    content: ""; position: absolute; right: 0; top: 0; bottom: 0;
-    width: 4px; pointer-events: none;
-    box-shadow: inset -4px 0 4px -4px rgba(0,0,0,0.1);
-  }
-`;
-
-/* ------------------------------------------------------------------ */
-/*  物料类型标签颜色                                                    */
-/* ------------------------------------------------------------------ */
-
-function TypeBadge({ type, label }: { type: string; label: string }) {
-  const colorMap: Record<string, string> = {
-    raw: "bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
-    semi: "bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-    finished: "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  };
-  return (
-    <span className={`rounded px-2 py-0.5 text-[11px] font-bold ${colorMap[type] ?? "bg-muted text-muted-foreground"}`}>
-      {label}
-    </span>
-  );
-}
+const TYPE_COLORS: Record<string, string> = {
+  raw: "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800",
+  semi: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800",
+  finished:
+    "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800",
+};
 
 /* ------------------------------------------------------------------ */
 /*  组件                                                               */
@@ -72,7 +69,7 @@ export function MaterialTable({
   const t = useTranslations("materials");
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  /* 分页器渲染 */
+  /* 分页器页码生成 */
   const renderPages = () => {
     const pages: (number | "...")[] = [];
     const maxVisible = 5;
@@ -88,178 +85,259 @@ export function MaterialTable({
     return pages;
   };
 
-  return (
-    <>
-      <style>{stickyStyles}</style>
-      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-        {/* 表格区 */}
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1100px] border-collapse text-left">
-            <thead>
-              <tr className="border-b border-border bg-muted/50 text-xs font-bold text-muted-foreground">
-                <th className="sticky-col-1 sticky-col-header w-[52px] bg-muted/50 px-4 py-4">
-                  <input type="checkbox" className="rounded border-border" />
-                </th>
-                <th className="sticky-col-2 sticky-col-header sticky-shadow w-[150px] bg-muted/50 px-3 py-4">
-                  {t("table.codeName")}
-                </th>
-                <th className="px-3 py-4">{t("table.type")}</th>
-                <th className="px-3 py-4">{t("table.category")}</th>
-                <th className="px-3 py-4">{t("table.spec")}</th>
-                <th className="px-3 py-4">{t("table.unit")}</th>
-                <th className="px-3 py-4 text-right">{t("table.refCost")}</th>
-                <th className="px-3 py-4 text-right">{t("table.salePrice")}</th>
-                <th className="px-3 py-4 text-center">{t("table.stock")}</th>
-                <th className="px-3 py-4 text-center">{t("table.status")}</th>
-                <th className="px-4 py-4 text-right">{t("table.operations")}</th>
-              </tr>
-            </thead>
-            <tbody className="text-sm font-medium text-foreground">
-              {loading ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <tr key={i} className="border-b border-border/50">
-                    <td colSpan={11} className="px-4 py-4">
-                      <Skeleton className="h-6 w-full" />
-                    </td>
-                  </tr>
-                ))
-              ) : data.length === 0 ? (
-                <tr>
-                  <td colSpan={11} className="py-16 text-center text-muted-foreground">
-                    No results.
-                  </td>
-                </tr>
-              ) : (
-                data.map((row) => (
-                  <tr
-                    key={row.id}
-                    className="group border-b border-border/50 transition-colors hover:bg-muted/30"
-                  >
-                    <td className="sticky-col-1 bg-card group-hover:bg-muted/30 px-4 py-4">
-                      <input type="checkbox" className="rounded border-border" />
-                    </td>
-                    <td className="sticky-col-2 sticky-shadow bg-card group-hover:bg-muted/30 px-3">
-                      <div className="font-mono text-[10px] text-muted-foreground">{row.code}</div>
-                      <div className="font-bold text-foreground">{row.name}</div>
-                    </td>
-                    <td className="px-3">
-                      <TypeBadge
-                        type={row.material_type}
-                        label={t(`filters.type.${row.material_type}` as any)}
-                      />
-                    </td>
-                    <td className="px-3">{row.category_name || "—"}</td>
-                    <td className="px-3 text-xs text-muted-foreground">{row.spec || "—"}</td>
-                    <td className="px-3">{row.unit_name || "—"}</td>
-                    <td className="px-3 text-right">
-                      {row.ref_cost_price > 0 ? (
-                        <span className="font-bold">{formatAmount(row.ref_cost_price, "USD")}</span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="px-3 text-right">
-                      {row.sale_price > 0 ? (
-                        <span className="font-bold">{formatAmount(row.sale_price, "USD")}</span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="px-3 text-center">
-                      {/* 库存值暂未从后端返回，先显示占位 */}
-                      <span>0</span>
-                    </td>
-                    <td className="px-3 text-center">
-                      {row.is_enabled ? (
-                        <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                          <span className="size-2 rounded-full bg-emerald-500" />
-                          {t("table.active")}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                          <span className="size-2 rounded-full bg-muted-foreground/40" />
-                          {t("table.inactive")}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 text-right whitespace-nowrap">
-                      <button
-                        className="mr-4 font-bold text-primary hover:underline"
-                        onClick={() => onEdit(row.id)}
-                      >
-                        {t("actions.edit")}
-                      </button>
-                      {row.material_type === "finished" || row.material_type === "semi" ? (
-                        <button className="font-bold text-amber-600 dark:text-amber-400 hover:underline">
-                          {t("actions.bom")}
-                        </button>
-                      ) : (
-                        <button
-                          className="font-bold text-muted-foreground transition-colors hover:text-destructive"
-                          onClick={() => onToggleStatus(row.id, row.is_enabled)}
-                        >
-                          {row.is_enabled ? t("actions.disable") : t("actions.enable")}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+  /* 每页条数选项 — 用于 Select items */
+  const pageSizeItems = [
+    { value: "20", label: t("table.perPage", { count: "20" }) },
+    { value: "50", label: t("table.perPage", { count: "50" }) },
+    { value: "100", label: t("table.perPage", { count: "100" }) },
+  ];
 
-        {/* 分页栏 */}
-        <div className="flex items-center justify-between border-t border-border px-6 py-4 text-sm font-medium text-muted-foreground">
-          <div className="flex items-center gap-4">
-            <span>
-              {t("table.totalRecords", { total: String(total) })}
-            </span>
-            <select
-              className="rounded border border-border bg-card px-2 py-1 text-xs outline-none"
-              value={pageSize}
-              onChange={(e) => onPageSizeChange(parseInt(e.target.value))}
-            >
-              <option value="20">{t("table.perPage", { count: "20" })}</option>
-              <option value="50">{t("table.perPage", { count: "50" })}</option>
-              <option value="100">{t("table.perPage", { count: "100" })}</option>
-            </select>
-          </div>
-          <div className="flex items-center gap-1">
-            <button
-              className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted disabled:opacity-40"
-              disabled={page <= 1}
-              onClick={() => onPageChange(page - 1)}
-            >
-              <ChevronLeft className="size-[18px]" />
-            </button>
-            {renderPages().map((p, idx) =>
-              p === "..." ? (
-                <span key={`dots-${idx}`} className="px-2 text-muted-foreground/50">…</span>
-              ) : (
-                <button
-                  key={p}
-                  className={`flex size-8 items-center justify-center rounded-lg font-bold transition-colors ${
-                    page === p
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-foreground hover:bg-muted"
-                  }`}
-                  onClick={() => onPageChange(p as number)}
-                >
-                  {p}
-                </button>
-              ),
-            )}
-            <button
-              className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted disabled:opacity-40"
-              disabled={page >= totalPages}
-              onClick={() => onPageChange(page + 1)}
-            >
-              <ChevronRight className="size-[18px]" />
-            </button>
-          </div>
+  /* sticky 第一列样式 */
+  const stickyHeadCls =
+    "sticky left-0 z-20 bg-muted/80 backdrop-blur-sm after:absolute after:right-0 after:top-0 after:bottom-0 after:w-px after:bg-border";
+  const stickyCellCls =
+    "sticky left-0 z-10 bg-card group-hover:bg-muted/50 after:absolute after:right-0 after:top-0 after:bottom-0 after:w-px after:bg-border/50";
+
+  return (
+    <div className="border-border bg-card rounded-xl border shadow-sm">
+      {/* ━━━ 表格区 — Table 组件内部自带 overflow-x-auto 容器 ━━━ */}
+      <Table className="table-fixed">
+        <TableHeader>
+          <TableRow className="bg-muted/50 hover:bg-muted/50">
+            <TableHead className={`w-[220px] min-w-[220px] ${stickyHeadCls}`}>
+              <div className="flex items-center gap-3 pl-2">
+                <Checkbox />
+                <span>{t("table.codeName")}</span>
+              </div>
+            </TableHead>
+            <TableHead className="min-w-[80px]">{t("table.type")}</TableHead>
+            <TableHead className="min-w-[80px]">
+              {t("table.category")}
+            </TableHead>
+            <TableHead className="min-w-[100px]">{t("table.spec")}</TableHead>
+            <TableHead className="min-w-[60px] text-center">
+              {t("table.unit")}
+            </TableHead>
+            <TableHead className="min-w-[100px] text-right">
+              {t("table.refCost")}
+            </TableHead>
+            <TableHead className="min-w-[100px] text-right">
+              {t("table.salePrice")}
+            </TableHead>
+            <TableHead className="min-w-[60px] text-center">
+              {t("table.stock")}
+            </TableHead>
+            <TableHead className="min-w-[80px] text-center">
+              {t("table.status")}
+            </TableHead>
+            <TableHead className="text-right">
+              {t("table.operations")}
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+
+        <TableBody>
+          {loading ? (
+            /* 加载骨架屏 */
+            Array.from({ length: 4 }).map((_, i) => (
+              <TableRow key={i}>
+                <TableCell colSpan={10} className="px-4 py-4">
+                  <Skeleton className="h-6 w-full" />
+                </TableCell>
+              </TableRow>
+            ))
+          ) : data.length === 0 ? (
+            /* 空状态 */
+            <TableRow>
+              <TableCell
+                colSpan={10}
+                className="text-muted-foreground py-16 text-center"
+              >
+                {t("table.noResults")}
+              </TableCell>
+            </TableRow>
+          ) : (
+            /* 数据行 */
+            data.map((row) => (
+              <TableRow key={row.id} className="group">
+                {/* 第一列 — sticky 编码/名称 */}
+                <TableCell className={`${stickyCellCls}`}>
+                  <div className="flex items-center gap-3 pl-2">
+                    <Checkbox />
+                    <div className="min-w-0">
+                      <div className="text-muted-foreground font-mono text-[10px]">
+                        {row.code}
+                      </div>
+                      <div className="text-foreground truncate font-bold">
+                        {row.name}
+                      </div>
+                    </div>
+                  </div>
+                </TableCell>
+
+                {/* 类型 */}
+                <TableCell>
+                  <Badge
+                    variant="outline"
+                    className={TYPE_COLORS[row.material_type] ?? ""}
+                  >
+                    {t(`filters.type.${row.material_type}` as any)}
+                  </Badge>
+                </TableCell>
+
+                {/* 分类 */}
+                <TableCell>{row.category_name || "—"}</TableCell>
+
+                {/* 规格 */}
+                <TableCell className="text-muted-foreground">
+                  {row.spec || "—"}
+                </TableCell>
+
+                {/* 单位 */}
+                <TableCell className="text-center">
+                  {row.unit_name || "—"}
+                </TableCell>
+
+                {/* 进价 */}
+                <TableCell className="text-right">
+                  {row.ref_cost_price > 0 ? (
+                    <span className="font-bold">
+                      {formatAmount(row.ref_cost_price, "USD")}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+
+                {/* 售价 */}
+                <TableCell className="text-right">
+                  {row.sale_price > 0 ? (
+                    <span className="font-bold">
+                      {formatAmount(row.sale_price, "USD")}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+
+                {/* 库存 */}
+                <TableCell className="text-center">0</TableCell>
+
+                {/* 状态 */}
+                <TableCell className="text-center">
+                  {row.is_enabled ? (
+                    <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                      <span className="size-2 rounded-full bg-emerald-500" />
+                      {t("table.active")}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground inline-flex items-center gap-1.5">
+                      <span className="bg-muted-foreground/40 size-2 rounded-full" />
+                      {t("table.inactive")}
+                    </span>
+                  )}
+                </TableCell>
+
+                {/* 操作 */}
+                <TableCell className="pr-4 text-right">
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="text-primary h-auto p-0 font-bold"
+                    onClick={() => onEdit(row.id)}
+                  >
+                    {t("actions.edit")}
+                  </Button>
+                  {row.material_type === "finished" ||
+                  row.material_type === "semi" ? (
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="ml-3 h-auto p-0 font-bold text-amber-600 dark:text-amber-400"
+                    >
+                      {t("actions.bom")}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="text-muted-foreground hover:text-destructive ml-3 h-auto p-0 font-bold"
+                      onClick={() => onToggleStatus(row.id, row.is_enabled)}
+                    >
+                      {row.is_enabled
+                        ? t("actions.disable")
+                        : t("actions.enable")}
+                    </Button>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+
+      {/* ━━━ 分页栏 — 始终完整可见，不随表格滚动 ━━━ */}
+      <div className="border-border text-muted-foreground flex items-center justify-between border-t px-6 py-3 text-sm">
+        <div className="flex items-center gap-4">
+          <span className="font-medium">
+            {t("table.totalRecords", { total: String(total) })}
+          </span>
+          <Select
+            value={pageSize.toString()}
+            onValueChange={(v) => v && onPageSizeChange(parseInt(v))}
+            items={pageSizeItems}
+          >
+            <SelectTrigger className="h-7 w-[120px] text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {pageSizeItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            disabled={page <= 1}
+            onClick={() => onPageChange(page - 1)}
+          >
+            <ChevronLeft className="size-4" />
+          </Button>
+          {renderPages().map((p, idx) =>
+            p === "..." ? (
+              <span
+                key={`dots-${idx}`}
+                className="text-muted-foreground/50 px-2"
+              >
+                …
+              </span>
+            ) : (
+              <Button
+                key={p}
+                variant={page === p ? "default" : "ghost"}
+                size="icon-sm"
+                className="font-bold"
+                onClick={() => onPageChange(p as number)}
+              >
+                {p}
+              </Button>
+            )
+          )}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            disabled={page >= totalPages}
+            onClick={() => onPageChange(page + 1)}
+          >
+            <ChevronRight className="size-4" />
+          </Button>
         </div>
       </div>
-    </>
+    </div>
   );
 }

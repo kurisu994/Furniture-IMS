@@ -47,7 +47,8 @@
       "perPage": "{count}条/页",
       "lowStock": "低库存",
       "active": "启用",
-      "inactive": "禁用"
+      "inactive": "禁用",
+      "noResults": "暂无数据"
     },
     "form": {
       "addTitle": "新增物料",
