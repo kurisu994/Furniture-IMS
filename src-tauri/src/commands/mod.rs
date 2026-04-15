@@ -73,10 +73,7 @@ pub async fn change_password(
 
 /// 获取用户信息
 #[tauri::command]
-pub async fn get_user_info(
-    db: State<'_, DbState>,
-    user_id: i64,
-) -> Result<UserInfo, AppError> {
+pub async fn get_user_info(db: State<'_, DbState>, user_id: i64) -> Result<UserInfo, AppError> {
     auth::get_user_info(&db.pool, user_id).await
 }
 
@@ -186,9 +183,7 @@ pub async fn set_system_configs(
         .bind(&config.value)
         .execute(&mut *tx)
         .await
-        .map_err(|e| {
-            AppError::Database(format!("设置系统配置 '{}' 失败: {}", config.key, e))
-        })?;
+        .map_err(|e| AppError::Database(format!("设置系统配置 '{}' 失败: {}", config.key, e)))?;
     }
 
     tx.commit()
@@ -244,13 +239,12 @@ pub async fn setup_create_warehouses(
         };
 
         // 查询当前仓库总数用于生成序号
-        let count: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM warehouses WHERE warehouse_type = ?",
-        )
-        .bind(&item.warehouse_type)
-        .fetch_one(&mut *tx)
-        .await
-        .map_err(|e| AppError::Database(format!("查询仓库数量失败: {}", e)))?;
+        let count: (i64,) =
+            sqlx::query_as("SELECT COUNT(*) FROM warehouses WHERE warehouse_type = ?")
+                .bind(&item.warehouse_type)
+                .fetch_one(&mut *tx)
+                .await
+                .map_err(|e| AppError::Database(format!("查询仓库数量失败: {}", e)))?;
 
         let code = format!("WH-{}-{:03}", type_prefix, count.0 + 1);
 

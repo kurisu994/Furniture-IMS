@@ -93,7 +93,7 @@ pub async fn get_materials(
                 m.is_enabled, m.created_at
          FROM materials m
          LEFT JOIN categories c ON m.category_id = c.id
-         LEFT JOIN units u ON m.base_unit_id = u.id"
+         LEFT JOIN units u ON m.base_unit_id = u.id",
     );
 
     let mut has_where = false;
@@ -116,7 +116,7 @@ pub async fn get_materials(
             count_query.push(" OR m.name LIKE ");
             count_query.push_bind(kw.clone());
             count_query.push(")");
-            
+
             add_where_or_and!(&mut data_query);
             data_query.push("(m.code LIKE ");
             data_query.push_bind(kw.clone());
@@ -131,7 +131,7 @@ pub async fn get_materials(
         add_where_or_and!(&mut count_query);
         count_query.push("m.category_id = ");
         count_query.push_bind(cat_id);
-        
+
         add_where_or_and!(&mut data_query);
         data_query.push("m.category_id = ");
         data_query.push_bind(cat_id);
@@ -143,7 +143,7 @@ pub async fn get_materials(
             add_where_or_and!(&mut count_query);
             count_query.push("m.material_type = ");
             count_query.push_bind(m_type.clone());
-            
+
             add_where_or_and!(&mut data_query);
             data_query.push("m.material_type = ");
             data_query.push_bind(m_type.clone());
@@ -156,7 +156,7 @@ pub async fn get_materials(
         add_where_or_and!(&mut count_query);
         count_query.push("m.is_enabled = ");
         count_query.push_bind(val);
-        
+
         add_where_or_and!(&mut data_query);
         data_query.push("m.is_enabled = ");
         data_query.push_bind(val);
@@ -241,7 +241,6 @@ pub async fn save_material(
     db: State<'_, DbState>,
     params: SaveMaterialParams,
 ) -> Result<i64, AppError> {
-    
     // Check if code exists
     let existing: Option<(i64,)> = sqlx::query_as("SELECT id FROM materials WHERE code = ?")
         .bind(&params.code)
@@ -266,7 +265,7 @@ pub async fn save_material(
                 lot_tracking_mode = COALESCE(?, 'none'), texture = ?, color = ?,
                 surface_craft = ?, length_mm = ?, width_mm = ?, height_mm = ?,
                 barcode = ?, remark = ?, updated_at = datetime('now')
-             WHERE id = ?"
+             WHERE id = ?",
         )
         .bind(&params.code)
         .bind(&params.name)
@@ -293,7 +292,7 @@ pub async fn save_material(
         .execute(&db.pool)
         .await
         .map_err(|e| AppError::Database(format!("更新物料失败: {}", e)))?;
-        
+
         Ok(id)
     } else {
         // Insert
@@ -309,7 +308,7 @@ pub async fn save_material(
                 ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, 0), COALESCE(?, 0),
                 COALESCE(?, 0), COALESCE(?, 0), COALESCE(?, 'none'), ?, ?, ?,
                 ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now')
-            ) RETURNING id"
+            ) RETURNING id",
         )
         .bind(&params.code)
         .bind(&params.name)
@@ -335,7 +334,7 @@ pub async fn save_material(
         .fetch_one(&db.pool)
         .await
         .map_err(|e| AppError::Database(format!("创建物料失败: {}", e)))?;
-        
+
         Ok(id)
     }
 }
@@ -353,6 +352,6 @@ pub async fn toggle_material_status(
         .execute(&db.pool)
         .await
         .map_err(|e| AppError::Database(format!("更新状态失败: {}", e)))?;
-        
+
     Ok(())
 }

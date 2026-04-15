@@ -181,7 +181,12 @@ export function MaterialTable({
                     variant="outline"
                     className={TYPE_COLORS[row.material_type] ?? ""}
                   >
-                    {t(`filters.type.${row.material_type}` as "filters.type.raw" | "filters.type.semi" | "filters.type.finished")}
+                    {t(
+                      `filters.type.${row.material_type}` as
+                        | "filters.type.raw"
+                        | "filters.type.semi"
+                        | "filters.type.finished"
+                    )}
                   </Badge>
                 </TableCell>
 

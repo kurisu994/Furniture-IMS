@@ -82,9 +82,26 @@ pub async fn ensure_admin_exists(pool: &SqlitePool) -> Result<(), AppError> {
 /// 3. 验证密码
 /// 4. 更新登录状态
 /// 5. 写入操作日志
-pub async fn login(pool: &SqlitePool, username: &str, password: &str) -> Result<LoginResponse, AppError> {
+pub async fn login(
+    pool: &SqlitePool,
+    username: &str,
+    password: &str,
+) -> Result<LoginResponse, AppError> {
     // 查询用户
-    let row = sqlx::query_as::<_, (i64, String, String, String, String, i64, i64, i64, Option<String>)>(
+    let row = sqlx::query_as::<
+        _,
+        (
+            i64,
+            String,
+            String,
+            String,
+            String,
+            i64,
+            i64,
+            i64,
+            Option<String>,
+        ),
+    >(
         "SELECT id, username, display_name, password_hash, role,
                 is_enabled, must_change_password, failed_login_count, locked_until
          FROM users WHERE username = ?",
@@ -94,28 +111,37 @@ pub async fn login(pool: &SqlitePool, username: &str, password: &str) -> Result<
     .await
     .map_err(|e| AppError::Database(format!("查询用户失败: {}", e)))?;
 
-    let (id, uname, display_name, password_hash, role, is_enabled, must_change_password, failed_count, locked_until) =
-        match row {
-            Some(r) => r,
-            None => {
-                // 用户不存在 — 记录日志但不暴露具体原因
-                write_log(
-                    pool,
-                    OperationLogEntry {
-                        module: "auth",
-                        action: "login_failed",
-                        target_type: "user",
-                        target_id: None,
-                        target_no: None,
-                        detail: &format!("用户名不存在: {}", username),
-                        operator_user_id: None,
-                        operator_name: None,
-                    },
-                )
-                .await;
-                return Err(AppError::Auth("用户名或密码错误".into()));
-            }
-        };
+    let (
+        id,
+        uname,
+        display_name,
+        password_hash,
+        role,
+        is_enabled,
+        must_change_password,
+        failed_count,
+        locked_until,
+    ) = match row {
+        Some(r) => r,
+        None => {
+            // 用户不存在 — 记录日志但不暴露具体原因
+            write_log(
+                pool,
+                OperationLogEntry {
+                    module: "auth",
+                    action: "login_failed",
+                    target_type: "user",
+                    target_id: None,
+                    target_no: None,
+                    detail: &format!("用户名不存在: {}", username),
+                    operator_user_id: None,
+                    operator_name: None,
+                },
+            )
+            .await;
+            return Err(AppError::Auth("用户名或密码错误".into()));
+        }
+    };
 
     // 检查是否启用
     if is_enabled == 0 {
@@ -155,7 +181,8 @@ pub async fn login(pool: &SqlitePool, username: &str, password: &str) -> Result<
             )
             .await;
             return Err(AppError::Auth(format!(
-                "账号已被锁定，请在 {} 后重试", locked
+                "账号已被锁定，请在 {} 后重试",
+                locked
             )));
         }
     }
@@ -169,8 +196,7 @@ pub async fn login(pool: &SqlitePool, username: &str, password: &str) -> Result<
         let new_count = failed_count + 1;
         if new_count >= MAX_FAILED_ATTEMPTS {
             // 锁定账号
-            let lock_time = chrono::Utc::now()
-                + chrono::Duration::minutes(LOCK_DURATION_MINUTES);
+            let lock_time = chrono::Utc::now() + chrono::Duration::minutes(LOCK_DURATION_MINUTES);
             let lock_str = lock_time.format("%Y-%m-%d %H:%M:%S").to_string();
 
             sqlx::query(
@@ -313,8 +339,7 @@ pub async fn change_password(
         .await
         .map_err(|e| AppError::Database(format!("查询用户密码失败: {}", e)))?;
 
-    let same_as_old = bcrypt::verify(new_password, &current_hash)
-        .unwrap_or(false);
+    let same_as_old = bcrypt::verify(new_password, &current_hash).unwrap_or(false);
     if same_as_old {
         return Err(AppError::Auth("新密码不能与当前密码相同".into()));
     }
@@ -337,13 +362,12 @@ pub async fn change_password(
     .map_err(|e| AppError::Database(format!("修改密码失败: {}", e)))?;
 
     // 查询用户名用于日志
-    let (username, display_name): (String, String) = sqlx::query_as(
-        "SELECT username, display_name FROM users WHERE id = ?",
-    )
-    .bind(user_id)
-    .fetch_one(pool)
-    .await
-    .map_err(|e| AppError::Database(format!("查询用户信息失败: {}", e)))?;
+    let (username, display_name): (String, String) =
+        sqlx::query_as("SELECT username, display_name FROM users WHERE id = ?")
+            .bind(user_id)
+            .fetch_one(pool)
+            .await
+            .map_err(|e| AppError::Database(format!("查询用户信息失败: {}", e)))?;
 
     write_log(
         pool,
@@ -392,10 +416,7 @@ pub async fn get_user_info(pool: &SqlitePool, user_id: i64) -> Result<UserInfo, 
 ///
 /// 记录安全审计事件到 operation_logs 表。
 /// 日志写入失败不影响业务流程（仅打印警告）。
-async fn write_log(
-    pool: &SqlitePool,
-    entry: OperationLogEntry<'_>,
-) {
+async fn write_log(pool: &SqlitePool, entry: OperationLogEntry<'_>) {
     let result = sqlx::query(
         "INSERT INTO operation_logs (module, action, target_type, target_id, target_no, detail, operator_user_id, operator_name_snapshot)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)",

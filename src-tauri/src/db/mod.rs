@@ -31,9 +31,8 @@ pub async fn init_db(app: &AppHandle) -> Result<SqlitePool, AppError> {
         .map_err(|e| AppError::Database(format!("无法获取应用数据目录: {}", e)))?;
 
     // 确保目录存在
-    std::fs::create_dir_all(&app_data_dir).map_err(|e| {
-        AppError::Database(format!("创建数据目录失败: {}", e))
-    })?;
+    std::fs::create_dir_all(&app_data_dir)
+        .map_err(|e| AppError::Database(format!("创建数据目录失败: {}", e)))?;
 
     let db_path = app_data_dir.join("cloudpivot.db");
     let db_url = format!("sqlite:{}?mode=rwc", db_path.display());

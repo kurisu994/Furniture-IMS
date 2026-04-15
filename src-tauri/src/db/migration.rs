@@ -62,10 +62,11 @@ pub async fn run_migrations(pool: &SqlitePool) -> Result<(), AppError> {
     .map_err(|e| AppError::Database(format!("创建迁移表失败: {}", e)))?;
 
     // 获取当前已应用的最大版本
-    let current_version: i64 = sqlx::query_scalar("SELECT COALESCE(MAX(version), 0) FROM schema_migrations")
-        .fetch_one(pool)
-        .await
-        .map_err(|e| AppError::Database(format!("查询迁移版本失败: {}", e)))?;
+    let current_version: i64 =
+        sqlx::query_scalar("SELECT COALESCE(MAX(version), 0) FROM schema_migrations")
+            .fetch_one(pool)
+            .await
+            .map_err(|e| AppError::Database(format!("查询迁移版本失败: {}", e)))?;
 
     log::info!("当前数据库版本: {}", current_version);
 
@@ -74,28 +75,21 @@ pub async fn run_migrations(pool: &SqlitePool) -> Result<(), AppError> {
     // 执行未应用的迁移
     for migration in &migrations {
         if migration.version > current_version {
-            log::info!(
-                "执行迁移 v{}: {}",
-                migration.version,
-                migration.name
-            );
+            log::info!("执行迁移 v{}: {}", migration.version, migration.name);
 
             // 按分号分割并逐条执行 SQL 语句
             // 注意：跳过空语句和纯注释行
             for statement in split_sql_statements(migration.sql) {
                 if !statement.is_empty() {
-                    sqlx::raw_sql(statement)
-                        .execute(pool)
-                        .await
-                        .map_err(|e| {
-                            AppError::Database(format!(
-                                "迁移 v{} ({}) 执行失败: {}\nSQL: {}",
-                                migration.version,
-                                migration.name,
-                                e,
-                                &statement[..statement.len().min(200)]
-                            ))
-                        })?;
+                    sqlx::raw_sql(statement).execute(pool).await.map_err(|e| {
+                        AppError::Database(format!(
+                            "迁移 v{} ({}) 执行失败: {}\nSQL: {}",
+                            migration.version,
+                            migration.name,
+                            e,
+                            &statement[..statement.len().min(200)]
+                        ))
+                    })?;
                 }
             }
 
@@ -105,9 +99,7 @@ pub async fn run_migrations(pool: &SqlitePool) -> Result<(), AppError> {
                 .bind(migration.name)
                 .execute(pool)
                 .await
-                .map_err(|e| {
-                    AppError::Database(format!("记录迁移版本失败: {}", e))
-                })?;
+                .map_err(|e| AppError::Database(format!("记录迁移版本失败: {}", e)))?;
 
             log::info!("迁移 v{} 完成", migration.version);
         }
@@ -125,10 +117,11 @@ fn split_sql_statements(sql: &str) -> Vec<&str> {
         .map(|s| s.trim())
         .filter(|s| {
             // 过滤空白和纯注释
-            !s.is_empty() && !s.lines().all(|line| {
-                let trimmed = line.trim();
-                trimmed.is_empty() || trimmed.starts_with("--")
-            })
+            !s.is_empty()
+                && !s.lines().all(|line| {
+                    let trimmed = line.trim();
+                    trimmed.is_empty() || trimmed.starts_with("--")
+                })
         })
         .collect()
 }
