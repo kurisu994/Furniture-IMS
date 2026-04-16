@@ -13,7 +13,7 @@
 ## 📦 基础数据
 
 - [x] 物料管理 (`/materials`)
-- [ ] 分类管理 (`/categories`)
+- [x] 分类管理 (`/categories`)
 - [ ] 供应商管理 (`/suppliers`)
 - [ ] 客户管理 (`/customers`)
 - [ ] 仓库管理 (`/warehouses`)
