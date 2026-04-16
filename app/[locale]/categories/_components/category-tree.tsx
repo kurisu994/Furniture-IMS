@@ -93,7 +93,6 @@ function TreeNodeRenderer({
 
   return (
     <div
-      ref={dragHandle}
       style={style}
       className={`group flex items-center gap-1 rounded-lg px-2 py-1.5 transition-colors ${
         node.isSelected ? 'bg-primary/10 text-primary' : hovered ? 'bg-muted/60' : ''
@@ -103,7 +102,9 @@ function TreeNodeRenderer({
       onClick={() => node.toggle()}
     >
       {/* 拖拽手柄 */}
-      <GripVertical className="text-muted-foreground/40 size-3.5 shrink-0 cursor-grab active:cursor-grabbing" />
+      <div ref={dragHandle} className="flex items-center justify-center py-1" onClick={e => e.stopPropagation()}>
+        <GripVertical className="text-muted-foreground/40 size-3.5 shrink-0 cursor-grab active:cursor-grabbing" />
+      </div>
 
       {/* 展开/折叠图标 */}
       <span className="flex size-5 shrink-0 items-center justify-center">
@@ -193,45 +194,48 @@ export function CategoryTree({ onEdit, refreshKey }: CategoryTreeProps) {
     fetchCategories()
   }, [fetchCategories, refreshKey])
 
-  /** 处理拖拽排序完成 */
-  const handleMove = useCallback(
-    async ({ dragIds, parentId, index }: { dragIds: string[]; parentId: string | null; index: number }) => {
-      // react-arborist 会自动更新内部 tree state，
-      // 我们需要在变更后将整棵树状态持久化到后端
-      // 等待 setState 更新后读取最新树状态
-      setTimeout(async () => {
-        // 从当前树 ref 获取最新的数据
-        // 由于 react-arborist 在 uncontrolled 模式下自己管理数据,
-        // 我们需要通过其内部 API 来获取最新的树结构
-        // 简化方案：基于拖拽事件重建排序列表
-        try {
-          // 重新取一次后端数据来确保同步（优化方案可以后续改进）
-          const currentNodes = await getCategoryTree()
-          const mutableNodes = [...currentNodes]
+  /** 在树中查找并移除指定 id 的节点，返回被移除的节点 */
+  const removeNode = (nodes: TreeNode[], id: string): { remaining: TreeNode[]; removed: TreeNode | null } => {
+    const remaining: TreeNode[] = []
+    let removed: TreeNode | null = null
 
-          // 更新拖拽节点的 parent_id 和 sort_order
-          for (const dragId of dragIds) {
-            const nodeIdx = mutableNodes.findIndex(n => n.id === parseInt(dragId))
-            if (nodeIdx >= 0) {
-              mutableNodes[nodeIdx] = {
-                ...mutableNodes[nodeIdx],
-                parent_id: parentId ? parseInt(parentId) : null,
-              }
-            }
-          }
+    for (const node of nodes) {
+      if (node.id === id) {
+        removed = node
+      } else {
+        const childResult = node.children ? removeNode(node.children, id) : { remaining: [], removed: null }
+        if (childResult.removed) removed = childResult.removed
+        remaining.push({
+          ...node,
+          children: childResult.remaining.length > 0 ? childResult.remaining : undefined,
+        })
+      }
+    }
 
-          // 重建树并提取排序
-          const newTree = buildTree(mutableNodes)
-          const sortItems = flattenTreeForOrder(newTree)
-          await updateCategoryOrder(sortItems)
-          await fetchCategories()
-        } catch (e) {
-          toast.error(typeof e === 'string' ? e : '排序更新失败')
-        }
-      }, 100)
-    },
-    [fetchCategories],
-  )
+    return { remaining, removed }
+  }
+
+  /** 在树的指定父节点下的 index 位置插入节点 */
+  const insertNode = (nodes: TreeNode[], parentId: string | null, index: number, nodeToInsert: TreeNode): TreeNode[] => {
+    if (parentId === null) {
+      // 插入到根级别
+      const result = [...nodes]
+      result.splice(index, 0, nodeToInsert)
+      return result
+    }
+
+    return nodes.map(node => {
+      if (node.id === parentId) {
+        const children = node.children ? [...node.children] : []
+        children.splice(index, 0, nodeToInsert)
+        return { ...node, children }
+      }
+      if (node.children) {
+        return { ...node, children: insertNode(node.children, parentId, index, nodeToInsert) }
+      }
+      return node
+    })
+  }
 
   /** 处理删除 */
   const handleDelete = useCallback(
@@ -261,12 +265,45 @@ export function CategoryTree({ onEdit, refreshKey }: CategoryTreeProps) {
     [onEdit],
   )
 
-  /** 为 react-arborist 的 Node 组件传入额外参数的包裹器 */
-  const NodeWrapper = useMemo(() => {
-    return function WrappedNode(props: NodeRendererProps<TreeNode>) {
-      return <TreeNodeRenderer {...props} onEdit={handleEdit} onDelete={handleDelete} />
-    }
-  }, [handleEdit, handleDelete])
+  /** 处理拖拽排序完成 */
+  const handleMove = useCallback(
+    async ({ dragIds, parentId, index }: { dragIds: string[]; parentId: string | null; index: number }) => {
+      // 1. 立即在本地 state 更新树（视觉反馈）
+      setTreeData(prev => {
+        let updated = prev
+        for (const dragId of dragIds) {
+          const { remaining, removed } = removeNode(updated, dragId)
+          if (removed) {
+            updated = insertNode(remaining, parentId, index, removed)
+          }
+        }
+        return updated
+      })
+
+      // 2. 异步持久化到后端
+      try {
+        // 用最新的 treeData 计算排序（通过回调获取更新后的值）
+        setTreeData(current => {
+          const sortItems = flattenTreeForOrder(current)
+          // fire-and-forget 持久化
+          updateCategoryOrder(sortItems).catch(e => {
+            toast.error(typeof e === 'string' ? e : '排序更新失败')
+          })
+          return current // 不修改状态
+        })
+      } catch (e) {
+        toast.error(typeof e === 'string' ? e : '排序更新失败')
+        fetchCategories() // 回滚到服务端状态
+      }
+    },
+    [fetchCategories],
+  )
+
+  /**
+   * react-arborist 的渲染函数。
+   * 注意：根据官方文档，不需要把它包裹成独立的组件，直接作为 children 函数传递即可。
+   * 实际上 react-arborist 支持直接以 inline function 的形式作为 children。
+   */
 
   if (loading) {
     return (
@@ -289,16 +326,17 @@ export function CategoryTree({ onEdit, refreshKey }: CategoryTreeProps) {
   return (
     <div className="category-tree min-h-[300px]">
       <Tree<TreeNode>
-        initialData={treeData}
+        data={treeData}
         openByDefault={true}
         width="100%"
         height={600}
         indent={24}
         rowHeight={36}
         onMove={handleMove}
+        dndRootElement={typeof document !== 'undefined' ? document.body : undefined}
         disableMultiSelection
       >
-        {NodeWrapper}
+        {props => <TreeNodeRenderer {...props} onEdit={handleEdit} onDelete={handleDelete} />}
       </Tree>
     </div>
   )
