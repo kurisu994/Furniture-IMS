@@ -1,0 +1,27 @@
+{
+  "categories": {
+    "title": "Quản lý phân loại",
+    "addCategory": "Thêm phân loại",
+    "editCategory": "Sửa phân loại",
+    "deleteCategory": "Xóa phân loại",
+    "categoryName": "Tên phân loại",
+    "parentCategory": "Phân loại cha",
+    "sortOrder": "Thứ tự",
+    "remark": "Ghi chú",
+    "noParent": "Không (Cấp cao nhất)",
+    "nameRequired": "Vui lòng nhập tên phân loại",
+    "saveSuccess": "Lưu phân loại thành công",
+    "deleteSuccess": "Xóa phân loại thành công",
+    "deleteConfirm": "Bạn có chắc muốn xóa phân loại \"{name}\" không?",
+    "deleteConfirmDesc": "Sau khi xóa sẽ không thể khôi phục, vui lòng xác nhận phân loại này không có vật tư và phân loại con liên quan.",
+    "hasMaterials": "Phân loại này có vật tư liên quan, không thể xóa",
+    "hasChildren": "Phân loại này có phân loại con, vui lòng xóa phân loại con trước",
+    "emptyState": "Không có dữ liệu phân loại",
+    "emptyStateDesc": "Nhấn \"Thêm phân loại\" để tạo phân loại đầu tiên",
+    "dragHint": "Kéo để điều chỉnh thứ tự và cấp bậc phân loại",
+    "expand": "Mở rộng",
+    "collapse": "Thu gọn",
+    "expandAll": "Mở rộng tất cả",
+    "collapseAll": "Thu gọn tất cả"
+  }
+}

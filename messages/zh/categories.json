@@ -1,0 +1,27 @@
+{
+  "categories": {
+    "title": "分类管理",
+    "addCategory": "新增分类",
+    "editCategory": "编辑分类",
+    "deleteCategory": "删除分类",
+    "categoryName": "分类名称",
+    "parentCategory": "上级分类",
+    "sortOrder": "排序号",
+    "remark": "备注",
+    "noParent": "无（顶级分类）",
+    "nameRequired": "请输入分类名称",
+    "saveSuccess": "分类保存成功",
+    "deleteSuccess": "分类删除成功",
+    "deleteConfirm": "确定要删除分类「{name}」吗？",
+    "deleteConfirmDesc": "删除后不可恢复，请确认该分类下没有关联物料和子分类。",
+    "hasMaterials": "该分类下存在关联物料，无法删除",
+    "hasChildren": "该分类下存在子分类，请先删除子分类",
+    "emptyState": "暂无分类数据",
+    "emptyStateDesc": "点击「新增分类」创建第一个分类",
+    "dragHint": "拖拽可调整分类排序和层级",
+    "expand": "展开",
+    "collapse": "折叠",
+    "expandAll": "展开全部",
+    "collapseAll": "折叠全部"
+  }
+}

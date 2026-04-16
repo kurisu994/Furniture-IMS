@@ -1,7 +1,7 @@
-import type { NextConfig } from "next";
-import createNextIntlPlugin from "next-intl/plugin";
+import type { NextConfig } from 'next'
+import createNextIntlPlugin from 'next-intl/plugin'
 
-const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
+const withNextIntl = createNextIntlPlugin('./i18n/request.ts')
 
 /**
  * Next.js 配置
@@ -11,10 +11,10 @@ const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
  */
 const nextConfig: NextConfig = {
   // 仅在 Tauri 生产构建时启用 SSG
-  output: process.env.TAURI_ENV_PLATFORM ? "export" : undefined,
+  output: process.env.TAURI_ENV_PLATFORM ? 'export' : undefined,
   images: {
     unoptimized: true,
   },
-};
+}
 
-export default withNextIntl(nextConfig);
+export default withNextIntl(nextConfig)

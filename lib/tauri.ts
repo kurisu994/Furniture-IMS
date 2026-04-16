@@ -11,18 +11,18 @@
 
 /** 用户信息（对应 Rust UserInfo） */
 export interface UserInfo {
-  id: number;
-  username: string;
-  display_name: string;
-  role: "admin" | "operator";
-  must_change_password: boolean;
-  session_version: number;
+  id: number
+  username: string
+  display_name: string
+  role: 'admin' | 'operator'
+  must_change_password: boolean
+  session_version: number
 }
 
 /** 登录响应 */
 export interface LoginResponse {
-  user: UserInfo;
-  must_change_password: boolean;
+  user: UserInfo
+  must_change_password: boolean
 }
 
 // ================================================================
@@ -33,7 +33,7 @@ export interface LoginResponse {
  * 判断是否运行在 Tauri 环境中
  */
 export function isTauriEnv(): boolean {
-  return typeof window !== "undefined" && "__TAURI__" in window;
+  return typeof window !== 'undefined' && '__TAURI__' in window
 }
 
 /**
@@ -43,19 +43,14 @@ export function isTauriEnv(): boolean {
  * @param args - 传递给命令的参数
  * @returns 命令返回值
  */
-export async function invoke<T>(
-  command: string,
-  args?: Record<string, unknown>
-): Promise<T> {
+export async function invoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   if (!isTauriEnv()) {
-    console.warn(`[Tauri] 非 Tauri 环境，跳过命令: ${command}`);
-    throw new Error(
-      `Command "${command}" is not available outside Tauri environment`
-    );
+    console.warn(`[Tauri] 非 Tauri 环境，跳过命令: ${command}`)
+    throw new Error(`Command "${command}" is not available outside Tauri environment`)
   }
 
-  const { invoke: tauriInvoke } = await import("@tauri-apps/api/core");
-  return tauriInvoke<T>(command, args);
+  const { invoke: tauriInvoke } = await import('@tauri-apps/api/core')
+  return tauriInvoke<T>(command, args)
 }
 
 // ================================================================
@@ -64,12 +59,12 @@ export async function invoke<T>(
 
 /** ping 测试 — 验证前后端通信链路 */
 export async function ping(): Promise<string> {
-  return invoke<string>("ping");
+  return invoke<string>('ping')
 }
 
 /** 获取数据库版本号 */
 export async function getDbVersion(): Promise<number> {
-  return invoke<number>("get_db_version");
+  return invoke<number>('get_db_version')
 }
 
 // ================================================================
@@ -77,28 +72,22 @@ export async function getDbVersion(): Promise<number> {
 // ================================================================
 
 /** 用户登录 */
-export async function login(
-  username: string,
-  password: string
-): Promise<LoginResponse> {
-  return invoke<LoginResponse>("login", {
+export async function login(username: string, password: string): Promise<LoginResponse> {
+  return invoke<LoginResponse>('login', {
     request: { username, password },
-  });
+  })
 }
 
 /** 修改密码 */
-export async function changePassword(
-  userId: number,
-  newPassword: string
-): Promise<void> {
-  return invoke<void>("change_password", {
+export async function changePassword(userId: number, newPassword: string): Promise<void> {
+  return invoke<void>('change_password', {
     request: { user_id: userId, new_password: newPassword },
-  });
+  })
 }
 
 /** 获取用户信息 */
 export async function getUserInfo(userId: number): Promise<UserInfo> {
-  return invoke<UserInfo>("get_user_info", { user_id: userId });
+  return invoke<UserInfo>('get_user_info', { user_id: userId })
 }
 
 // ================================================================
@@ -107,35 +96,33 @@ export async function getUserInfo(userId: number): Promise<UserInfo> {
 
 /** 系统配置记录 */
 export interface SystemConfigRecord {
-  key: string;
-  value: string;
-  remark?: string;
+  key: string
+  value: string
+  remark?: string
 }
 
 /** localStorage 中系统配置的存储键前缀（web 调试模式降级用） */
-const CONFIG_STORAGE_PREFIX = "cloudpivot_config_";
+const CONFIG_STORAGE_PREFIX = 'cloudpivot_config_'
 
 /**
  * 批量获取系统配置
  *
  * Tauri 环境调用后端 IPC；web 调试模式从 localStorage 读取。
  */
-export async function getSystemConfigs(
-  keys: string[]
-): Promise<SystemConfigRecord[]> {
+export async function getSystemConfigs(keys: string[]): Promise<SystemConfigRecord[]> {
   if (isTauriEnv()) {
-    return invoke<SystemConfigRecord[]>("get_system_configs", { keys });
+    return invoke<SystemConfigRecord[]>('get_system_configs', { keys })
   }
 
   // Web 调试模式：从 localStorage 降级读取
-  const records: SystemConfigRecord[] = [];
+  const records: SystemConfigRecord[] = []
   for (const key of keys) {
-    const stored = localStorage.getItem(CONFIG_STORAGE_PREFIX + key);
+    const stored = localStorage.getItem(CONFIG_STORAGE_PREFIX + key)
     if (stored !== null) {
-      records.push({ key, value: stored });
+      records.push({ key, value: stored })
     }
   }
-  return records;
+  return records
 }
 
 /**
@@ -143,16 +130,13 @@ export async function getSystemConfigs(
  *
  * Tauri 环境调用后端 IPC；web 调试模式写入 localStorage。
  */
-export async function setSystemConfig(
-  key: string,
-  value: string
-): Promise<void> {
+export async function setSystemConfig(key: string, value: string): Promise<void> {
   if (isTauriEnv()) {
-    return invoke<void>("set_system_config", { key, value });
+    return invoke<void>('set_system_config', { key, value })
   }
 
   // Web 调试模式：写入 localStorage
-  localStorage.setItem(CONFIG_STORAGE_PREFIX + key, value);
+  localStorage.setItem(CONFIG_STORAGE_PREFIX + key, value)
 }
 
 /**
@@ -160,16 +144,14 @@ export async function setSystemConfig(
  *
  * Tauri 环境调用后端 IPC；web 调试模式写入 localStorage。
  */
-export async function setSystemConfigs(
-  configs: { key: string; value: string }[]
-): Promise<void> {
+export async function setSystemConfigs(configs: { key: string; value: string }[]): Promise<void> {
   if (isTauriEnv()) {
-    return invoke<void>("set_system_configs", { configs });
+    return invoke<void>('set_system_configs', { configs })
   }
 
   // Web 调试模式：写入 localStorage
   for (const { key, value } of configs) {
-    localStorage.setItem(CONFIG_STORAGE_PREFIX + key, value);
+    localStorage.setItem(CONFIG_STORAGE_PREFIX + key, value)
   }
 }
 
@@ -179,9 +161,9 @@ export async function setSystemConfigs(
 
 /** 向导：仓库创建参数 */
 export interface WarehouseSetupItem {
-  name: string;
-  warehouse_type: "raw" | "semi" | "finished";
-  manager?: string;
+  name: string
+  warehouse_type: 'raw' | 'semi' | 'finished'
+  manager?: string
 }
 
 /**
@@ -189,18 +171,198 @@ export interface WarehouseSetupItem {
  *
  * Tauri 环境调用后端 IPC；web 调试模式写入 localStorage 模拟。
  */
-export async function setupCreateWarehouses(
-  warehouses: WarehouseSetupItem[]
-): Promise<void> {
+export async function setupCreateWarehouses(warehouses: WarehouseSetupItem[]): Promise<void> {
   if (isTauriEnv()) {
-    return invoke<void>("setup_create_warehouses", { warehouses });
+    return invoke<void>('setup_create_warehouses', { warehouses })
   }
 
   // Web 调试模式：模拟仓库创建
-  const existing = localStorage.getItem("cloudpivot_warehouses");
-  const list = existing ? JSON.parse(existing) : [];
+  const existing = localStorage.getItem('cloudpivot_warehouses')
+  const list = existing ? JSON.parse(existing) : []
   for (const wh of warehouses) {
-    list.push({ ...wh, id: Date.now() + Math.random() });
+    list.push({ ...wh, id: Date.now() + Math.random() })
   }
-  localStorage.setItem("cloudpivot_warehouses", JSON.stringify(list));
+  localStorage.setItem('cloudpivot_warehouses', JSON.stringify(list))
+}
+
+// ================================================================
+// 分类管理命令
+// ================================================================
+
+/** 分类树节点（扁平结构，前端组装层级） */
+export interface CategoryNode {
+  id: number
+  parent_id: number | null
+  name: string
+  code: string
+  sort_order: number
+  level: number
+  path: string | null
+  remark: string | null
+  is_enabled: boolean
+  created_at: string | null
+  updated_at: string | null
+}
+
+/** 创建分类参数 */
+export interface CreateCategoryParams {
+  name: string
+  parent_id?: number | null
+  sort_order?: number
+  remark?: string
+}
+
+/** 更新分类参数 */
+export interface UpdateCategoryParams {
+  id: number
+  name: string
+  parent_id?: number | null
+  sort_order?: number
+  remark?: string
+}
+
+/** 排序项 */
+export interface CategorySortItem {
+  id: number
+  parent_id: number | null
+  sort_order: number
+}
+
+/** Mock 分类数据（Web 调试模式） */
+const MOCK_CATEGORIES: CategoryNode[] = [
+  {
+    id: 1,
+    parent_id: null,
+    name: '木材',
+    code: 'CAT-WOOD',
+    sort_order: 0,
+    level: 1,
+    path: '1',
+    remark: null,
+    is_enabled: true,
+    created_at: '2024-01-01',
+    updated_at: '2024-01-01',
+  },
+  {
+    id: 2,
+    parent_id: 1,
+    name: '实木板材',
+    code: 'CAT-SOLID',
+    sort_order: 0,
+    level: 2,
+    path: '1/2',
+    remark: null,
+    is_enabled: true,
+    created_at: '2024-01-01',
+    updated_at: '2024-01-01',
+  },
+  {
+    id: 3,
+    parent_id: 1,
+    name: '人造板材',
+    code: 'CAT-MAN',
+    sort_order: 1,
+    level: 2,
+    path: '1/3',
+    remark: null,
+    is_enabled: true,
+    created_at: '2024-01-01',
+    updated_at: '2024-01-01',
+  },
+  {
+    id: 4,
+    parent_id: null,
+    name: '五金配件',
+    code: 'CAT-HARDWARE',
+    sort_order: 1,
+    level: 1,
+    path: '4',
+    remark: null,
+    is_enabled: true,
+    created_at: '2024-01-01',
+    updated_at: '2024-01-01',
+  },
+  {
+    id: 5,
+    parent_id: 4,
+    name: '铰链/合页',
+    code: 'CAT-HINGE',
+    sort_order: 0,
+    level: 2,
+    path: '4/5',
+    remark: null,
+    is_enabled: true,
+    created_at: '2024-01-01',
+    updated_at: '2024-01-01',
+  },
+  {
+    id: 6,
+    parent_id: null,
+    name: '成品家具',
+    code: 'CAT-FINISHED',
+    sort_order: 2,
+    level: 1,
+    path: '6',
+    remark: null,
+    is_enabled: true,
+    created_at: '2024-01-01',
+    updated_at: '2024-01-01',
+  },
+]
+
+/**
+ * 获取分类树（扁平列表）
+ *
+ * Tauri 环境调用后端 IPC；web 调试模式返回 mock 数据。
+ */
+export async function getCategoryTree(): Promise<CategoryNode[]> {
+  if (isTauriEnv()) {
+    return invoke<CategoryNode[]>('get_category_tree')
+  }
+  return MOCK_CATEGORIES
+}
+
+/**
+ * 创建分类
+ *
+ * @returns 新分类 ID
+ */
+export async function createCategory(params: CreateCategoryParams): Promise<number> {
+  if (isTauriEnv()) {
+    return invoke<number>('create_category', { params })
+  }
+  // Web mock
+  const id = Date.now()
+  console.log('[Mock] createCategory', id, params)
+  return id
+}
+
+/**
+ * 更新分类
+ */
+export async function updateCategory(params: UpdateCategoryParams): Promise<void> {
+  if (isTauriEnv()) {
+    return invoke<void>('update_category', { params })
+  }
+  console.log('[Mock] updateCategory', params)
+}
+
+/**
+ * 删除分类
+ */
+export async function deleteCategory(id: number): Promise<void> {
+  if (isTauriEnv()) {
+    return invoke<void>('delete_category', { id })
+  }
+  console.log('[Mock] deleteCategory', id)
+}
+
+/**
+ * 批量更新分类排序（拖拽后持久化）
+ */
+export async function updateCategoryOrder(items: CategorySortItem[]): Promise<void> {
+  if (isTauriEnv()) {
+    return invoke<void>('update_category_order', { items })
+  }
+  console.log('[Mock] updateCategoryOrder', items)
 }

@@ -1,10 +1,10 @@
-"use client";
+'use client'
 
-import { useLocale } from "next-intl";
-import { usePathname, useRouter } from "@/i18n/navigation";
-import { locales, localeFlags, localeNames, type Locale } from "@/i18n/config";
-import { Languages } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { Languages } from 'lucide-react'
+import { useLocale } from 'next-intl'
+import { useEffect, useRef, useState } from 'react'
+import { type Locale, localeFlags, localeNames, locales } from '@/i18n/config'
+import { usePathname, useRouter } from '@/i18n/navigation'
 
 /**
  * 语言切换器组件
@@ -12,27 +12,27 @@ import { useState, useRef, useEffect } from "react";
  * 下拉菜单展示所有支持的语言，点击切换
  */
 export function LocaleSwitcher() {
-  const locale = useLocale() as Locale;
-  const router = useRouter();
-  const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const locale = useLocale() as Locale
+  const router = useRouter()
+  const pathname = usePathname()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
 
   // 点击外部关闭
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (ref.current && !ref.current.contains(event.target as Node)) {
-        setOpen(false);
+        setOpen(false)
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   /** 切换语言 */
   function handleSwitch(newLocale: Locale) {
-    router.replace(pathname, { locale: newLocale });
-    setOpen(false);
+    router.replace(pathname, { locale: newLocale })
+    setOpen(false)
   }
 
   return (
@@ -47,14 +47,12 @@ export function LocaleSwitcher() {
 
       {open && (
         <div className="border-border bg-popover absolute top-full right-0 mt-1 w-40 rounded-lg border p-1 shadow-lg">
-          {locales.map((loc) => (
+          {locales.map(loc => (
             <button
               key={loc}
               onClick={() => handleSwitch(loc)}
               className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
-                loc === locale
-                  ? "bg-accent text-accent-foreground font-medium"
-                  : "text-popover-foreground hover:bg-accent"
+                loc === locale ? 'bg-accent text-accent-foreground font-medium' : 'text-popover-foreground hover:bg-accent'
               }`}
             >
               <span>{localeFlags[loc]}</span>
@@ -64,5 +62,5 @@ export function LocaleSwitcher() {
         </div>
       )}
     </div>
-  );
+  )
 }

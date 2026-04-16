@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import { SetupWizardContent } from "./_components/setup-wizard-content";
+import { SetupWizardContent } from './_components/setup-wizard-content'
 
 /**
  * 首次使用向导页面
@@ -9,5 +9,5 @@ import { SetupWizardContent } from "./_components/setup-wizard-content";
  * 独立布局（无侧边栏/顶栏），与登录/改密页风格一致。
  */
 export default function SetupWizardPage() {
-  return <SetupWizardContent />;
+  return <SetupWizardContent />
 }

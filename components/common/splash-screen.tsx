@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import Image from "next/image";
+import Image from 'next/image'
 
 /**
  * 品牌级全屏闪屏组件
@@ -21,9 +21,8 @@ export function SplashScreen() {
         <div
           className="absolute inset-0 opacity-[0.03] dark:opacity-[0.02]"
           style={{
-            backgroundImage:
-              "radial-gradient(circle, #294985 1px, transparent 1px)",
-            backgroundSize: "24px 24px",
+            backgroundImage: 'radial-gradient(circle, #294985 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
           }}
         />
       </div>
@@ -39,7 +38,7 @@ export function SplashScreen() {
             width={64}
             height={56}
             className="h-14 w-auto object-contain dark:hidden"
-            style={{ width: "auto" }}
+            style={{ width: 'auto' }}
             priority
           />
           {/* 深色 logo */}
@@ -49,7 +48,7 @@ export function SplashScreen() {
             width={64}
             height={56}
             className="hidden h-14 w-auto object-contain dark:block"
-            style={{ width: "auto" }}
+            style={{ width: 'auto' }}
             priority
           />
         </div>
@@ -57,19 +56,14 @@ export function SplashScreen() {
         {/* 品牌名称 */}
         <h1
           className="text-xl font-extrabold tracking-tight text-[#294985] dark:text-slate-100"
-          style={{ fontFamily: "var(--font-noto-sans-sc), system-ui" }}
+          style={{ fontFamily: 'var(--font-noto-sans-sc), system-ui' }}
         >
-          云枢{" "}
-          <span
-            className="font-bold"
-            style={{ fontFamily: "var(--font-brand), system-ui" }}
-          >
+          云枢{' '}
+          <span className="font-bold" style={{ fontFamily: 'var(--font-brand), system-ui' }}>
             CloudPivot
           </span>
         </h1>
-        <p className="text-muted-foreground mt-1.5 text-xs tracking-widest uppercase">
-          Inventory Management System
-        </p>
+        <p className="text-muted-foreground mt-1.5 text-xs tracking-widest uppercase">Inventory Management System</p>
 
         {/* 加载指示器 — 三段式脉冲进度条 */}
         <div className="mt-8 flex items-center gap-1.5">
@@ -85,5 +79,5 @@ export function SplashScreen() {
         </div>
       </div>
     </div>
-  );
+  )
 }

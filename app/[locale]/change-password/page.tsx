@@ -1,22 +1,15 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import {
-  ArrowRight,
-  Eye,
-  EyeOff,
-  Info,
-  KeyRound,
-  ShieldCheck,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { AppFooter } from "@/components/layout/app-footer";
-import { useAuth } from "@/components/providers/auth-provider";
+import { ArrowRight, Eye, EyeOff, Info, KeyRound, ShieldCheck } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { useState } from 'react'
+import { AppFooter } from '@/components/layout/app-footer'
+import { useAuth } from '@/components/providers/auth-provider'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
 
 /**
  * 首次登录修改密码页面
@@ -27,58 +20,58 @@ import { useAuth } from "@/components/providers/auth-provider";
  * - 改密成功后登出并跳转登录页
  */
 export default function ChangePasswordPage() {
-  const t = useTranslations("changePassword");
-  const { changePassword, logout } = useAuth();
+  const t = useTranslations('changePassword')
+  const { changePassword, logout } = useAuth()
 
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
 
   /** 密码校验 */
   const validate = (): boolean => {
     if (newPassword.length < 8) {
-      setError(t("tooShort"));
-      return false;
+      setError(t('tooShort'))
+      return false
     }
-    if (newPassword === "admin123") {
-      setError(t("sameAsDefault"));
-      return false;
+    if (newPassword === 'admin123') {
+      setError(t('sameAsDefault'))
+      return false
     }
     if (newPassword !== confirmPassword) {
-      setError(t("mismatch"));
-      return false;
+      setError(t('mismatch'))
+      return false
     }
-    setError("");
-    return true;
-  };
+    setError('')
+    return true
+  }
 
   /** 提交修改 */
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
+    e.preventDefault()
+    if (!validate()) return
 
-    setIsLoading(true);
-    setError("");
+    setIsLoading(true)
+    setError('')
 
     try {
-      await changePassword(newPassword);
+      await changePassword(newPassword)
       // 改密成功 → 登出并跳转登录页
-      logout();
+      logout()
     } catch (err) {
-      const message = err instanceof Error ? err.message : t("changeFailed");
-      setError(message);
+      const message = err instanceof Error ? err.message : t('changeFailed')
+      setError(message)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   /** 退出登录 */
   const handleLogout = () => {
-    logout();
-  };
+    logout()
+  }
 
   return (
     <div className="relative flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950">
@@ -89,9 +82,8 @@ export default function ChangePasswordPage() {
         <div
           className="absolute inset-0 opacity-[0.03] dark:opacity-[0.02]"
           style={{
-            backgroundImage:
-              "radial-gradient(circle, #294985 1px, transparent 1px)",
-            backgroundSize: "24px 24px",
+            backgroundImage: 'radial-gradient(circle, #294985 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
           }}
         />
       </div>
@@ -108,13 +100,11 @@ export default function ChangePasswordPage() {
                 </div>
                 <h1
                   className="text-xl font-extrabold tracking-tight text-[#294985] dark:text-slate-100"
-                  style={{ fontFamily: "var(--font-noto-sans-sc), system-ui" }}
+                  style={{ fontFamily: 'var(--font-noto-sans-sc), system-ui' }}
                 >
-                  {t("title")}
+                  {t('title')}
                 </h1>
-                <p className="text-muted-foreground mt-1.5 text-center text-sm">
-                  {t("subtitle")}
-                </p>
+                <p className="text-muted-foreground mt-1.5 text-center text-sm">{t('subtitle')}</p>
               </div>
 
               {/* 表单 */}
@@ -122,20 +112,19 @@ export default function ChangePasswordPage() {
                 {/* 新密码 */}
                 <div className="space-y-1.5">
                   <Label htmlFor="new-password">
-                    {t("newPassword")}{" "}
-                    <span className="text-destructive">*</span>
+                    {t('newPassword')} <span className="text-destructive">*</span>
                   </Label>
                   <div className="relative">
                     <KeyRound className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                     <Input
                       id="new-password"
-                      type={showNewPassword ? "text" : "password"}
+                      type={showNewPassword ? 'text' : 'password'}
                       value={newPassword}
-                      onChange={(e) => {
-                        setNewPassword(e.target.value);
-                        setError("");
+                      onChange={e => {
+                        setNewPassword(e.target.value)
+                        setError('')
                       }}
-                      placeholder={t("newPasswordPlaceholder")}
+                      placeholder={t('newPasswordPlaceholder')}
                       className="h-11 pr-11 pl-10"
                       autoComplete="new-password"
                       required
@@ -146,11 +135,7 @@ export default function ChangePasswordPage() {
                       className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 transition-colors"
                       tabIndex={-1}
                     >
-                      {showNewPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                 </div>
@@ -158,67 +143,45 @@ export default function ChangePasswordPage() {
                 {/* 确认密码 */}
                 <div className="space-y-1.5">
                   <Label htmlFor="confirm-password">
-                    {t("confirmPassword")}{" "}
-                    <span className="text-destructive">*</span>
+                    {t('confirmPassword')} <span className="text-destructive">*</span>
                   </Label>
                   <div className="relative">
                     <ShieldCheck className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                     <Input
                       id="confirm-password"
-                      type={showConfirmPassword ? "text" : "password"}
+                      type={showConfirmPassword ? 'text' : 'password'}
                       value={confirmPassword}
-                      onChange={(e) => {
-                        setConfirmPassword(e.target.value);
-                        setError("");
+                      onChange={e => {
+                        setConfirmPassword(e.target.value)
+                        setError('')
                       }}
-                      placeholder={t("confirmPasswordPlaceholder")}
-                      className={cn(
-                        "h-11 pr-11 pl-10",
-                        error &&
-                          "border-destructive focus-visible:ring-destructive/20"
-                      )}
+                      placeholder={t('confirmPasswordPlaceholder')}
+                      className={cn('h-11 pr-11 pl-10', error && 'border-destructive focus-visible:ring-destructive/20')}
                       autoComplete="new-password"
                       required
                     />
                     <button
                       type="button"
-                      onClick={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                      }
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 transition-colors"
                       tabIndex={-1}
                     >
-                      {showConfirmPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  {error && (
-                    <p className="text-destructive text-xs font-medium">
-                      {error}
-                    </p>
-                  )}
+                  {error && <p className="text-destructive text-xs font-medium">{error}</p>}
                 </div>
 
                 {/* 密码要求 */}
                 <div className="flex items-start gap-2.5 rounded-xl border border-blue-100 bg-blue-50/80 px-4 py-3 dark:border-blue-900/30 dark:bg-blue-950/30">
                   <Info className="mt-0.5 h-4 w-4 shrink-0 text-[#294985] dark:text-[#6b85c1]" />
-                  <p className="text-[13px] leading-relaxed text-[#294985] dark:text-[#8ba3d4]">
-                    {t("requirement")}
-                  </p>
+                  <p className="text-[13px] leading-relaxed text-[#294985] dark:text-[#8ba3d4]">{t('requirement')}</p>
                 </div>
 
                 {/* 按钮组 */}
                 <div className="flex gap-3 pt-1">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleLogout}
-                    className="h-12 flex-1"
-                  >
-                    {t("logout")}
+                  <Button type="button" variant="outline" onClick={handleLogout} className="h-12 flex-1">
+                    {t('logout')}
                   </Button>
                   <Button
                     type="submit"
@@ -229,7 +192,7 @@ export default function ChangePasswordPage() {
                       <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                     ) : (
                       <>
-                        {t("submit")}
+                        {t('submit')}
                         <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                       </>
                     )}
@@ -244,5 +207,5 @@ export default function ChangePasswordPage() {
       {/* 页脚 */}
       <AppFooter className="relative z-10" />
     </div>
-  );
+  )
 }

@@ -1,18 +1,18 @@
-"use client";
+'use client'
 
-import { useTranslations } from "next-intl";
-import { Construction } from "lucide-react";
+import { Construction } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 interface PagePlaceholderProps {
   /** 页面标题的 i18n 翻译键 */
-  titleKey: string;
+  titleKey: string
 }
 
 /**
  * 页面占位组件 — 开发中页面统一展示
  */
 export function PagePlaceholder({ titleKey }: PagePlaceholderProps) {
-  const t = useTranslations();
+  const t = useTranslations()
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center py-20">
@@ -22,11 +22,9 @@ export function PagePlaceholder({ titleKey }: PagePlaceholderProps) {
         </div>
         <div>
           <h2 className="text-foreground text-xl font-bold">{t(titleKey)}</h2>
-          <p className="text-muted-foreground mt-2 text-sm">
-            {t("common.developingDesc")}
-          </p>
+          <p className="text-muted-foreground mt-2 text-sm">{t('common.developingDesc')}</p>
         </div>
       </div>
     </div>
-  );
+  )
 }

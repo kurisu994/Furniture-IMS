@@ -1,31 +1,25 @@
-"use client";
+'use client'
 
-import { useTranslations } from "next-intl";
-import { useTheme } from "next-themes";
-import { Bell, Sun, Moon, Monitor, User, ChevronRight } from "lucide-react";
-import { usePathname, Link } from "@/i18n/navigation";
-import { navConfig } from "@/config/nav";
-import { LocaleSwitcher } from "./locale-switcher";
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  useSyncExternalStore,
-} from "react";
-import { SystemConfigKeys } from "@/lib/types/system-config";
-import { setSystemConfig } from "@/lib/tauri";
+import { Bell, ChevronRight, Monitor, Moon, Sun, User } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { useTheme } from 'next-themes'
+import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { navConfig } from '@/config/nav'
+import { Link, usePathname } from '@/i18n/navigation'
+import { setSystemConfig } from '@/lib/tauri'
+import { SystemConfigKeys } from '@/lib/types/system-config'
+import { LocaleSwitcher } from './locale-switcher'
 
 /** 主题选项配置 */
 const themeOptions = [
-  { value: "light", icon: Sun, labelKey: "header.themeLight" },
-  { value: "dark", icon: Moon, labelKey: "header.themeDark" },
-  { value: "system", icon: Monitor, labelKey: "header.themeSystem" },
-] as const;
+  { value: 'light', icon: Sun, labelKey: 'header.themeLight' },
+  { value: 'dark', icon: Moon, labelKey: 'header.themeDark' },
+  { value: 'system', icon: Monitor, labelKey: 'header.themeSystem' },
+] as const
 
 /** SSR/CSR 一致的挂载态订阅器 */
 function subscribeToMountedState() {
-  return () => {};
+  return () => {}
 }
 
 /** 用外部存储快照替代 effect 补 mounted，避免额外级联渲染 */
@@ -33,124 +27,109 @@ function useMounted() {
   return useSyncExternalStore(
     subscribeToMountedState,
     () => true,
-    () => false
-  );
+    () => false,
+  )
 }
 
 /** 根据当前路径查找面包屑链 */
 function useBreadcrumbs(): { titleKey: string; href?: string }[] {
-  const pathname = usePathname();
+  const pathname = usePathname()
 
-  if (pathname === "/" || pathname === "") {
-    return [{ titleKey: "nav.dashboard" }];
+  if (pathname === '/' || pathname === '') {
+    return [{ titleKey: 'nav.dashboard' }]
   }
 
   for (const item of navConfig) {
     if (!item.children) {
-      const href = item.href || "/";
+      const href = item.href || '/'
       if (pathname === href) {
-        return [
-          { titleKey: "nav.dashboard", href: "/" },
-          { titleKey: item.titleKey },
-        ];
+        return [{ titleKey: 'nav.dashboard', href: '/' }, { titleKey: item.titleKey }]
       }
-      continue;
+      continue
     }
 
     for (const child of item.children) {
       if (pathname === child.href) {
-        return [
-          { titleKey: "nav.dashboard", href: "/" },
-          { titleKey: item.titleKey },
-          { titleKey: child.titleKey },
-        ];
+        return [{ titleKey: 'nav.dashboard', href: '/' }, { titleKey: item.titleKey }, { titleKey: child.titleKey }]
       }
     }
   }
 
-  return [{ titleKey: "nav.dashboard", href: "/" }];
+  return [{ titleKey: 'nav.dashboard', href: '/' }]
 }
 
 /**
  * 主题切换下拉选择器
  */
 function ThemeSwitcher() {
-  const t = useTranslations();
-  const { theme, setTheme } = useTheme();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const t = useTranslations()
+  const { theme, setTheme } = useTheme()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
 
   // 点击外部关闭
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (ref.current && !ref.current.contains(event.target as Node)) {
-        setOpen(false);
+        setOpen(false)
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   // 解决 next-themes hydration mismatch：SSR 时 theme 为 undefined
-  const mounted = useMounted();
+  const mounted = useMounted()
 
   /** 切换主题并持久化 */
   const handleSwitch = useCallback(
     async (newTheme: string) => {
-      setTheme(newTheme);
-      setOpen(false);
+      setTheme(newTheme)
+      setOpen(false)
       try {
-        await setSystemConfig(SystemConfigKeys.THEME, newTheme);
+        await setSystemConfig(SystemConfigKeys.THEME, newTheme)
       } catch {
         // 持久化失败不影响前端体验
       }
     },
-    [setTheme]
-  );
+    [setTheme],
+  )
 
   /** 当前主题图标（未挂载时用 Sun 保证 SSR/CSR 一致） */
-  const CurrentIcon = !mounted
-    ? Sun
-    : theme === "dark"
-      ? Moon
-      : theme === "system"
-        ? Monitor
-        : Sun;
+  const CurrentIcon = !mounted ? Sun : theme === 'dark' ? Moon : theme === 'system' ? Monitor : Sun
 
   return (
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
         className="text-muted-foreground hover:bg-accent hover:text-accent-foreground flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
-        title={t("header.theme")}
+        title={t('header.theme')}
       >
         <CurrentIcon className="h-[18px] w-[18px]" />
       </button>
 
       {open && (
         <div className="border-border bg-popover absolute top-full right-0 mt-1 w-40 rounded-lg border p-1 shadow-lg">
-          {themeOptions.map((opt) => {
-            const Icon = opt.icon;
-            const isActive = theme === opt.value;
+          {themeOptions.map(opt => {
+            const Icon = opt.icon
+            const isActive = theme === opt.value
             return (
               <button
                 key={opt.value}
                 onClick={() => handleSwitch(opt.value)}
                 className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
-                  isActive
-                    ? "bg-accent text-accent-foreground font-medium"
-                    : "text-popover-foreground hover:bg-accent"
+                  isActive ? 'bg-accent text-accent-foreground font-medium' : 'text-popover-foreground hover:bg-accent'
                 }`}
               >
                 <Icon className="h-4 w-4" />
                 <span>{t(opt.labelKey)}</span>
               </button>
-            );
+            )
           })}
         </div>
       )}
     </div>
-  );
+  )
 }
 
 /**
@@ -159,21 +138,18 @@ function ThemeSwitcher() {
  * 包含动态面包屑、语言切换、主题切换、通知和用户信息
  */
 interface HeaderProps {
-  onToggleSidebar?: () => void;
+  onToggleSidebar?: () => void
 }
 
 export function Header({ onToggleSidebar }: HeaderProps) {
-  const t = useTranslations();
-  const breadcrumbs = useBreadcrumbs();
+  const t = useTranslations()
+  const breadcrumbs = useBreadcrumbs()
 
   return (
     <header className="border-border sticky top-0 z-20 flex h-14 items-center justify-between border-b bg-white px-4 backdrop-blur supports-backdrop-filter:bg-white/95 dark:bg-slate-950">
       {/* 左侧：菜单折叠与面包屑 */}
       <div className="flex flex-1 items-center gap-4">
-        <button
-          onClick={onToggleSidebar}
-          className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-        >
+        <button onClick={onToggleSidebar} className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="20"
@@ -192,26 +168,22 @@ export function Header({ onToggleSidebar }: HeaderProps) {
         </button>
         <nav className="hidden items-center gap-1.5 text-sm md:flex">
           {breadcrumbs.map((crumb, idx) => {
-            const isLast = idx === breadcrumbs.length - 1;
+            const isLast = idx === breadcrumbs.length - 1
             return (
               <React.Fragment key={crumb.titleKey}>
-                {idx > 0 && (
-                  <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
-                )}
+                {idx > 0 && <ChevronRight className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />}
                 {isLast ? (
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">
-                    {t(crumb.titleKey)}
-                  </span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">{t(crumb.titleKey)}</span>
                 ) : (
                   <Link
-                    href={crumb.href || "/"}
+                    href={crumb.href || '/'}
                     className="text-slate-500 transition-colors hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
                   >
                     {t(crumb.titleKey)}
                   </Link>
                 )}
               </React.Fragment>
-            );
+            )
           })}
         </nav>
       </div>
@@ -253,12 +225,8 @@ export function Header({ onToggleSidebar }: HeaderProps) {
         {/* 用户信息 */}
         <button className="hidden items-center gap-3 rounded-lg py-1 pr-1 pl-2 text-left transition-colors hover:bg-slate-50 sm:flex dark:hover:bg-slate-900">
           <div className="flex flex-col">
-            <span className="text-sm leading-none font-bold text-slate-800 dark:text-slate-100">
-              Admin User
-            </span>
-            <span className="mt-1 text-[10px] font-semibold tracking-wider text-slate-400">
-              SUPER ADMINISTRATOR
-            </span>
+            <span className="text-sm leading-none font-bold text-slate-800 dark:text-slate-100">Admin User</span>
+            <span className="mt-1 text-[10px] font-semibold tracking-wider text-slate-400">SUPER ADMINISTRATOR</span>
           </div>
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-500 dark:border-slate-700 dark:bg-slate-800">
             <User className="h-4 w-4" />
@@ -266,5 +234,5 @@ export function Header({ onToggleSidebar }: HeaderProps) {
         </button>
       </div>
     </header>
-  );
+  )
 }

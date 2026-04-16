@@ -62,6 +62,11 @@ pub fn run() {
             commands::material::get_material_by_id,
             commands::material::save_material,
             commands::material::toggle_material_status,
+            commands::category::get_category_tree,
+            commands::category::create_category,
+            commands::category::update_category,
+            commands::category::delete_category,
+            commands::category::update_category_order,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,17 +1,17 @@
-import { NextIntlClientProvider } from "next-intl";
-import { getMessages, setRequestLocale } from "next-intl/server";
-import { locales } from "@/i18n/config";
-import { ThemeProvider } from "@/components/providers/theme-provider";
-import { AuthProvider } from "@/components/providers/auth-provider";
-import { DisplayPreferencesProvider } from "@/components/providers/display-preferences-provider";
-import { AppLayout } from "@/components/layout/app-layout";
-import { Toaster } from "@/components/ui/sonner";
+import { NextIntlClientProvider } from 'next-intl'
+import { getMessages, setRequestLocale } from 'next-intl/server'
+import { AppLayout } from '@/components/layout/app-layout'
+import { AuthProvider } from '@/components/providers/auth-provider'
+import { DisplayPreferencesProvider } from '@/components/providers/display-preferences-provider'
+import { ThemeProvider } from '@/components/providers/theme-provider'
+import { Toaster } from '@/components/ui/sonner'
+import { locales } from '@/i18n/config'
 
 /**
  * 为 SSG 模式生成所有语言的静态页面
  */
 export function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
+  return locales.map(locale => ({ locale }))
 }
 
 /**
@@ -24,16 +24,10 @@ export function generateStaticParams() {
  * - DisplayPreferencesProvider（显示偏好：紧凑视图 / 大字体 / 侧边栏自动收起）
  * - AppLayout（侧边栏 + 顶栏 + 主内容区）
  */
-export default async function LocaleLayout({
-  children,
-  params,
-}: {
-  children: React.ReactNode;
-  params: Promise<{ locale: string }>;
-}) {
-  const { locale } = await params;
-  setRequestLocale(locale);
-  const messages = await getMessages();
+export default async function LocaleLayout({ children, params }: { children: React.ReactNode; params: Promise<{ locale: string }> }) {
+  const { locale } = await params
+  setRequestLocale(locale)
+  const messages = await getMessages()
 
   return (
     <NextIntlClientProvider messages={messages}>
@@ -46,5 +40,5 @@ export default async function LocaleLayout({
       </ThemeProvider>
       <Toaster />
     </NextIntlClientProvider>
-  );
+  )
 }

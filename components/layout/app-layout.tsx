@@ -1,23 +1,23 @@
-"use client";
+'use client'
 
-import { useEffect, useState, useSyncExternalStore } from "react";
-import { usePathname } from "@/i18n/navigation";
-import { Sidebar } from "./sidebar";
-import { Header } from "./header";
-import { AppFooter } from "./app-footer";
-import { cn } from "@/lib/utils";
-import { useDisplayPreferences } from "@/components/providers/display-preferences-provider";
-import { SplashScreen } from "@/components/common/splash-screen";
+import { useEffect, useState, useSyncExternalStore } from 'react'
+import { SplashScreen } from '@/components/common/splash-screen'
+import { useDisplayPreferences } from '@/components/providers/display-preferences-provider'
+import { usePathname } from '@/i18n/navigation'
+import { cn } from '@/lib/utils'
+import { AppFooter } from './app-footer'
+import { Header } from './header'
+import { Sidebar } from './sidebar'
 
 /** 侧边栏自动收起的窗口宽度阈值（px），使用 1280px (Tailwind xl) */
-const AUTO_COLLAPSE_BREAKPOINT = 1280;
+const AUTO_COLLAPSE_BREAKPOINT = 1280
 
 interface SidebarCollapseStore {
-  getSnapshot: () => boolean;
-  getServerSnapshot: () => boolean;
-  subscribe: (listener: () => void) => () => void;
-  toggle: () => void;
-  setAutoCollapseEnabled: (enabled: boolean) => void;
+  getSnapshot: () => boolean
+  getServerSnapshot: () => boolean
+  subscribe: (listener: () => void) => () => void
+  toggle: () => void
+  setAutoCollapseEnabled: (enabled: boolean) => void
 }
 
 /**
@@ -26,94 +26,92 @@ interface SidebarCollapseStore {
  * 2. 自动收起开启时，在跨越断点时覆盖为窗口对应状态；
  * 3. 设置项切换时无需在 effect 中直接 setState。
  */
-function createSidebarCollapseStore(
-  initialAutoCollapseEnabled: boolean
-): SidebarCollapseStore {
-  let autoCollapseEnabled = initialAutoCollapseEnabled;
-  let collapsed = false;
-  let lastIsSmall = false;
-  let initialized = false;
-  const listeners = new Set<() => void>();
+function createSidebarCollapseStore(initialAutoCollapseEnabled: boolean): SidebarCollapseStore {
+  let autoCollapseEnabled = initialAutoCollapseEnabled
+  let collapsed = false
+  let lastIsSmall = false
+  let initialized = false
+  const listeners = new Set<() => void>()
 
-  const getIsSmallViewport = () => window.innerWidth < AUTO_COLLAPSE_BREAKPOINT;
+  const getIsSmallViewport = () => window.innerWidth < AUTO_COLLAPSE_BREAKPOINT
 
   const notify = () => {
-    listeners.forEach((listener) => listener());
-  };
+    listeners.forEach(listener => listener())
+  }
 
   const ensureInitialized = () => {
-    if (initialized || typeof window === "undefined") {
-      return;
+    if (initialized || typeof window === 'undefined') {
+      return
     }
 
-    lastIsSmall = getIsSmallViewport();
-    collapsed = autoCollapseEnabled ? lastIsSmall : false;
-    initialized = true;
-  };
+    lastIsSmall = getIsSmallViewport()
+    collapsed = autoCollapseEnabled ? lastIsSmall : false
+    initialized = true
+  }
 
   const setCollapsed = (nextCollapsed: boolean) => {
-    ensureInitialized();
+    ensureInitialized()
     if (collapsed === nextCollapsed) {
-      return;
+      return
     }
 
-    collapsed = nextCollapsed;
-    notify();
-  };
+    collapsed = nextCollapsed
+    notify()
+  }
 
   const handleResize = () => {
-    ensureInitialized();
+    ensureInitialized()
 
-    const currentIsSmall = getIsSmallViewport();
+    const currentIsSmall = getIsSmallViewport()
     if (currentIsSmall === lastIsSmall) {
-      return;
+      return
     }
 
-    lastIsSmall = currentIsSmall;
+    lastIsSmall = currentIsSmall
 
     if (autoCollapseEnabled) {
-      setCollapsed(currentIsSmall);
+      setCollapsed(currentIsSmall)
     }
-  };
+  }
 
   return {
     getSnapshot: () => {
-      ensureInitialized();
-      return collapsed;
+      ensureInitialized()
+      return collapsed
     },
     getServerSnapshot: () => false,
-    subscribe: (listener) => {
-      ensureInitialized();
-      listeners.add(listener);
+    subscribe: listener => {
+      ensureInitialized()
+      listeners.add(listener)
 
-      if (typeof window !== "undefined" && listeners.size === 1) {
-        window.addEventListener("resize", handleResize);
+      if (typeof window !== 'undefined' && listeners.size === 1) {
+        window.addEventListener('resize', handleResize)
       }
 
       return () => {
-        listeners.delete(listener);
-        if (typeof window !== "undefined" && listeners.size === 0) {
-          window.removeEventListener("resize", handleResize);
+        listeners.delete(listener)
+        if (typeof window !== 'undefined' && listeners.size === 0) {
+          window.removeEventListener('resize', handleResize)
         }
-      };
+      }
     },
     toggle: () => {
-      setCollapsed(!collapsed);
+      setCollapsed(!collapsed)
     },
-    setAutoCollapseEnabled: (enabled) => {
-      ensureInitialized();
+    setAutoCollapseEnabled: enabled => {
+      ensureInitialized()
 
       if (autoCollapseEnabled === enabled) {
-        return;
+        return
       }
 
-      autoCollapseEnabled = enabled;
+      autoCollapseEnabled = enabled
 
       if (autoCollapseEnabled) {
-        setCollapsed(lastIsSmall);
+        setCollapsed(lastIsSmall)
       }
     },
-  };
+  }
 }
 
 function AppLayoutShell({
@@ -121,9 +119,9 @@ function AppLayoutShell({
   sidebarCollapsed,
   onToggleSidebar,
 }: {
-  children: React.ReactNode;
-  sidebarCollapsed: boolean;
-  onToggleSidebar: () => void;
+  children: React.ReactNode
+  sidebarCollapsed: boolean
+  onToggleSidebar: () => void
 }) {
   return (
     <div className="bg-background flex h-screen overflow-hidden">
@@ -131,55 +129,33 @@ function AppLayoutShell({
       <Sidebar collapsed={sidebarCollapsed} onToggle={onToggleSidebar} />
 
       {/* 主内容区 */}
-      <div
-        className={cn(
-          "flex flex-1 flex-col transition-all duration-200 ease-in-out",
-          sidebarCollapsed ? "ml-16" : "ml-60"
-        )}
-      >
+      <div className={cn('flex flex-1 flex-col transition-all duration-200 ease-in-out', sidebarCollapsed ? 'ml-16' : 'ml-60')}>
         {/* 顶部工具栏 */}
         <Header onToggleSidebar={onToggleSidebar} />
 
         {/* 页面内容主体（单独滚动） */}
-        <main className="flex-1 overflow-y-auto bg-slate-50/50 p-6 dark:bg-slate-950/50">
-          {children}
-        </main>
+        <main className="flex-1 overflow-y-auto bg-slate-50/50 p-6 dark:bg-slate-950/50">{children}</main>
 
         {/* 固定在底部的页脚（不参与滚动） */}
         <AppFooter />
       </div>
     </div>
-  );
+  )
 }
 
-function ManagedAppLayout({
-  children,
-  sidebarAutoCollapse,
-}: {
-  children: React.ReactNode;
-  sidebarAutoCollapse: boolean;
-}) {
-  const [store] = useState(() =>
-    createSidebarCollapseStore(sidebarAutoCollapse)
-  );
-  const sidebarCollapsed = useSyncExternalStore(
-    store.subscribe,
-    store.getSnapshot,
-    store.getServerSnapshot
-  );
+function ManagedAppLayout({ children, sidebarAutoCollapse }: { children: React.ReactNode; sidebarAutoCollapse: boolean }) {
+  const [store] = useState(() => createSidebarCollapseStore(sidebarAutoCollapse))
+  const sidebarCollapsed = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getServerSnapshot)
 
   useEffect(() => {
-    store.setAutoCollapseEnabled(sidebarAutoCollapse);
-  }, [sidebarAutoCollapse, store]);
+    store.setAutoCollapseEnabled(sidebarAutoCollapse)
+  }, [sidebarAutoCollapse, store])
 
   return (
-    <AppLayoutShell
-      sidebarCollapsed={sidebarCollapsed}
-      onToggleSidebar={store.toggle}
-    >
+    <AppLayoutShell sidebarCollapsed={sidebarCollapsed} onToggleSidebar={store.toggle}>
       {children}
     </AppLayoutShell>
-  );
+  )
 }
 
 /**
@@ -189,22 +165,18 @@ function ManagedAppLayout({
  * 支持侧边栏自动收起（当启用且窗口宽度 < 1024px 时自动折叠）
  */
 export function AppLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const { sidebarAutoCollapse, isLoading } = useDisplayPreferences();
+  const pathname = usePathname()
+  const { sidebarAutoCollapse, isLoading } = useDisplayPreferences()
 
   /** 认证相关页面（登录、改密码、向导等）无需主布局，直接渲染 */
-  const authRoutes = ["/login", "/change-password", "/setup-wizard"];
+  const authRoutes = ['/login', '/change-password', '/setup-wizard']
   if (authRoutes.includes(pathname)) {
-    return <>{children}</>;
+    return <>{children}</>
   }
 
   if (isLoading) {
-    return <SplashScreen />;
+    return <SplashScreen />
   }
 
-  return (
-    <ManagedAppLayout sidebarAutoCollapse={sidebarAutoCollapse}>
-      {children}
-    </ManagedAppLayout>
-  );
+  return <ManagedAppLayout sidebarAutoCollapse={sidebarAutoCollapse}>{children}</ManagedAppLayout>
 }

@@ -1,24 +1,19 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import Image from "next/image";
-import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/navigation";
-import { locales, localeNames, localeFlags, type Locale } from "@/i18n/config";
-import { ArrowRight, Eye, EyeOff, Info, Lock, User } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
-import { AppFooter } from "@/components/layout/app-footer";
-import { useAuth } from "@/components/providers/auth-provider";
+import { ArrowRight, Eye, EyeOff, Info, Lock, User } from 'lucide-react'
+import Image from 'next/image'
+import { useTranslations } from 'next-intl'
+import { useState } from 'react'
+import { AppFooter } from '@/components/layout/app-footer'
+import { useAuth } from '@/components/providers/auth-provider'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
+import { type Locale, localeFlags, localeNames, locales } from '@/i18n/config'
+import { useRouter } from '@/i18n/navigation'
 
 /**
  * 登录页面组件
@@ -31,44 +26,44 @@ import { useAuth } from "@/components/providers/auth-provider";
  * - 登录失败提示（含锁定信息）
  */
 export default function LoginPage() {
-  const t = useTranslations("login");
-  const router = useRouter();
-  const { login } = useAuth();
+  const t = useTranslations('login')
+  const router = useRouter()
+  const { login } = useAuth()
 
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [selectedLocale, setSelectedLocale] = useState<Locale>("zh");
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
+  const [selectedLocale, setSelectedLocale] = useState<Locale>('zh')
+  const [isLoading, setIsLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   /** 处理登录提交 */
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage("");
-    setIsLoading(true);
+    e.preventDefault()
+    setErrorMessage('')
+    setIsLoading(true)
 
     try {
-      const result = await login(username, password);
+      const result = await login(username, password)
 
       if (result.success) {
         if (result.mustChangePassword) {
           // 首次登录 → 强制改密
-          router.push("/change-password");
+          router.push('/change-password')
         } else {
-          router.push("/");
+          router.push('/')
         }
       } else {
         // 登录失败，显示错误
-        setErrorMessage(result.error || t("loginFailed"));
+        setErrorMessage(result.error || t('loginFailed'))
       }
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : t("loginFailed"));
+      setErrorMessage(err instanceof Error ? err.message : t('loginFailed'))
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <div className="relative flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950">
@@ -79,9 +74,8 @@ export default function LoginPage() {
         <div
           className="absolute inset-0 opacity-[0.03] dark:opacity-[0.02]"
           style={{
-            backgroundImage:
-              "radial-gradient(circle, #294985 1px, transparent 1px)",
-            backgroundSize: "24px 24px",
+            backgroundImage: 'radial-gradient(circle, #294985 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
           }}
         />
       </div>
@@ -114,19 +108,14 @@ export default function LoginPage() {
                 </div>
                 <h1
                   className="text-xl font-extrabold tracking-tight text-[#294985] dark:text-slate-100"
-                  style={{ fontFamily: "var(--font-noto-sans-sc), system-ui" }}
+                  style={{ fontFamily: 'var(--font-noto-sans-sc), system-ui' }}
                 >
-                  云枢{" "}
-                  <span
-                    className="font-bold"
-                    style={{ fontFamily: "var(--font-brand), system-ui" }}
-                  >
+                  云枢{' '}
+                  <span className="font-bold" style={{ fontFamily: 'var(--font-brand), system-ui' }}>
                     (CloudPivot IMS)
                   </span>
                 </h1>
-                <p className="text-muted-foreground mt-1.5 text-sm">
-                  {t("welcome")}
-                </p>
+                <p className="text-muted-foreground mt-1.5 text-sm">{t('welcome')}</p>
               </div>
 
               {/* 错误提示 */}
@@ -141,10 +130,7 @@ export default function LoginPage() {
                 {/* 用户名 */}
                 <div className="space-y-1.5">
                   <Label htmlFor="login-username">
-                    {t("username")}{" "}
-                    <span className="text-muted-foreground font-normal">
-                      (Username)
-                    </span>
+                    {t('username')} <span className="text-muted-foreground font-normal">(Username)</span>
                   </Label>
                   <div className="relative">
                     <User className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
@@ -152,11 +138,11 @@ export default function LoginPage() {
                       id="login-username"
                       type="text"
                       value={username}
-                      onChange={(e) => {
-                        setUsername(e.target.value);
-                        setErrorMessage("");
+                      onChange={e => {
+                        setUsername(e.target.value)
+                        setErrorMessage('')
                       }}
-                      placeholder={t("usernamePlaceholder")}
+                      placeholder={t('usernamePlaceholder')}
                       className="h-11 pl-10"
                       autoComplete="username"
                       required
@@ -167,22 +153,19 @@ export default function LoginPage() {
                 {/* 密码 */}
                 <div className="space-y-1.5">
                   <Label htmlFor="login-password">
-                    {t("password")}{" "}
-                    <span className="text-muted-foreground font-normal">
-                      (Password)
-                    </span>
+                    {t('password')} <span className="text-muted-foreground font-normal">(Password)</span>
                   </Label>
                   <div className="relative">
                     <Lock className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                     <Input
                       id="login-password"
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        setErrorMessage("");
+                      onChange={e => {
+                        setPassword(e.target.value)
+                        setErrorMessage('')
                       }}
-                      placeholder={t("passwordPlaceholder")}
+                      placeholder={t('passwordPlaceholder')}
                       className="h-11 pr-11 pl-10"
                       autoComplete="current-password"
                       required
@@ -193,11 +176,7 @@ export default function LoginPage() {
                       className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 transition-colors"
                       tabIndex={-1}
                     >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                 </div>
@@ -205,29 +184,19 @@ export default function LoginPage() {
                 {/* 语言选择 */}
                 <div className="space-y-1.5">
                   <Label htmlFor="login-language">
-                    {t("language")}{" "}
-                    <span className="text-muted-foreground font-normal">
-                      (Language)
-                    </span>
+                    {t('language')} <span className="text-muted-foreground font-normal">(Language)</span>
                   </Label>
-                  <Select
-                    value={selectedLocale}
-                    onValueChange={(v) => setSelectedLocale(v as Locale)}
-                  >
+                  <Select value={selectedLocale} onValueChange={v => setSelectedLocale(v as Locale)}>
                     <SelectTrigger id="login-language" className="h-11 w-full">
                       <span className="flex items-center gap-2">
-                        <span className="text-base leading-none">
-                          {localeFlags[selectedLocale]}
-                        </span>
+                        <span className="text-base leading-none">{localeFlags[selectedLocale]}</span>
                         {localeNames[selectedLocale]}
                       </span>
                     </SelectTrigger>
                     <SelectContent>
-                      {locales.map((locale) => (
+                      {locales.map(locale => (
                         <SelectItem key={locale} value={locale}>
-                          <span className="text-base leading-none">
-                            {localeFlags[locale]}
-                          </span>
+                          <span className="text-base leading-none">{localeFlags[locale]}</span>
                           {localeNames[locale]}
                         </SelectItem>
                       ))}
@@ -237,18 +206,9 @@ export default function LoginPage() {
 
                 {/* 记住我 */}
                 <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="login-remember"
-                    checked={rememberMe}
-                    onCheckedChange={(checked) =>
-                      setRememberMe(checked as boolean)
-                    }
-                  />
-                  <Label
-                    htmlFor="login-remember"
-                    className="cursor-pointer font-normal"
-                  >
-                    {t("rememberMe")}
+                  <Checkbox id="login-remember" checked={rememberMe} onCheckedChange={checked => setRememberMe(checked as boolean)} />
+                  <Label htmlFor="login-remember" className="cursor-pointer font-normal">
+                    {t('rememberMe')}
                   </Label>
                 </div>
 
@@ -262,7 +222,7 @@ export default function LoginPage() {
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                   ) : (
                     <>
-                      {t("submit")}
+                      {t('submit')}
                       <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                     </>
                   )}
@@ -275,9 +235,9 @@ export default function LoginPage() {
           <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-blue-100 bg-blue-50/80 px-4 py-3.5 dark:border-blue-900/30 dark:bg-blue-950/30">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-[#294985] dark:text-[#6b85c1]" />
             <p className="text-[13px] leading-relaxed text-[#294985] dark:text-[#8ba3d4]">
-              {t("hint", {
-                username: "admin",
-                password: "admin123",
+              {t('hint', {
+                username: 'admin',
+                password: 'admin123',
               })}
             </p>
           </div>
@@ -287,5 +247,5 @@ export default function LoginPage() {
       {/* 页脚 */}
       <AppFooter className="relative z-10" />
     </div>
-  );
+  )
 }

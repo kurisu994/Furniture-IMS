@@ -1,5 +1,5 @@
-import { getRequestConfig } from "next-intl/server";
-import { defaultLocale, locales, type Locale } from "./config";
+import { getRequestConfig } from 'next-intl/server'
+import { defaultLocale, type Locale, locales } from './config'
 
 /**
  * 加载指定语言的所有翻译分片并合并为完整的 messages 对象。
@@ -14,25 +14,23 @@ async function loadMessages(locale: Locale) {
     import(`../messages/${locale}/settings.json`),
     import(`../messages/${locale}/setup-wizard.json`),
     import(`../messages/${locale}/materials.json`),
-  ]);
+    import(`../messages/${locale}/categories.json`),
+  ])
 
   // 将所有分片的顶层键展开合并为一个扁平对象
-  return modules.reduce(
-    (merged, mod) => ({ ...merged, ...mod.default }),
-    {} as Record<string, unknown>
-  );
+  return modules.reduce((merged, mod) => ({ ...merged, ...mod.default }), {} as Record<string, unknown>)
 }
 
 /** next-intl 请求级配置 — 动态加载翻译文件 */
 export default getRequestConfig(async ({ requestLocale }) => {
-  let locale = (await requestLocale) as Locale;
+  let locale = (await requestLocale) as Locale
 
   if (!locale || !locales.includes(locale)) {
-    locale = defaultLocale;
+    locale = defaultLocale
   }
 
   return {
     locale,
     messages: await loadMessages(locale),
-  };
-});
+  }
+})

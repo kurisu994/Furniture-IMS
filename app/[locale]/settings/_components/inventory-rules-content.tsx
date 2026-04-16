@@ -1,60 +1,44 @@
-"use client";
+'use client'
 
-import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Warehouse, QrCode } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { QrCode, Warehouse } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 /**
  * 默认仓映射设置
  */
 function DefaultWarehouseMapping() {
-  const t = useTranslations("settings.inventoryRules");
+  const t = useTranslations('settings.inventoryRules')
 
   return (
     <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950">
       <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50/50 px-6 py-4 dark:border-slate-800 dark:bg-slate-900/50">
         <Warehouse className="text-primary size-5" />
-        <h2 className="font-bold text-slate-800 dark:text-slate-100">
-          {t("defaultWarehouseMapping")}
-        </h2>
+        <h2 className="font-bold text-slate-800 dark:text-slate-100">{t('defaultWarehouseMapping')}</h2>
       </div>
       <div className="overflow-x-auto p-0">
         <table className="w-full border-collapse text-left">
           <thead>
             <tr className="bg-slate-50/50 text-[11px] font-bold tracking-wider text-slate-500 uppercase dark:bg-slate-900/50 dark:text-slate-400">
-              <th className="border-b border-slate-100 px-6 py-4 dark:border-slate-800">
-                {t("materialType")}
-              </th>
-              <th className="border-b border-slate-100 px-6 py-4 dark:border-slate-800">
-                {t("defaultWarehouse")}
-              </th>
-              <th className="border-b border-slate-100 px-6 py-4 dark:border-slate-800">
-                {t("description")}
-              </th>
+              <th className="border-b border-slate-100 px-6 py-4 dark:border-slate-800">{t('materialType')}</th>
+              <th className="border-b border-slate-100 px-6 py-4 dark:border-slate-800">{t('defaultWarehouse')}</th>
+              <th className="border-b border-slate-100 px-6 py-4 dark:border-slate-800">{t('description')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-sm dark:divide-slate-800">
             {/* 原材料 */}
             <tr className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
-              <td className="px-6 py-4 font-bold text-slate-700 dark:text-slate-300">
-                {t("rawMaterials")}
-              </td>
+              <td className="px-6 py-4 font-bold text-slate-700 dark:text-slate-300">{t('rawMaterials')}</td>
               <td className="px-6 py-4">
                 <Select
                   defaultValue="raw"
                   items={[
-                    { value: "raw", label: "原材料仓" },
-                    { value: "outsource", label: "委外仓" },
+                    { value: 'raw', label: '原材料仓' },
+                    { value: 'outsource', label: '委外仓' },
                   ]}
                 >
                   <SelectTrigger className="h-10 w-full max-w-[240px] bg-slate-50 dark:bg-slate-900/50">
@@ -66,21 +50,17 @@ function DefaultWarehouseMapping() {
                   </SelectContent>
                 </Select>
               </td>
-              <td className="px-6 py-4 text-slate-500 dark:text-slate-400">
-                {t("rawMaterialsDesc")}
-              </td>
+              <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{t('rawMaterialsDesc')}</td>
             </tr>
             {/* 半成品 */}
             <tr className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
-              <td className="px-6 py-4 font-bold text-slate-700 dark:text-slate-300">
-                {t("semiFinished")}
-              </td>
+              <td className="px-6 py-4 font-bold text-slate-700 dark:text-slate-300">{t('semiFinished')}</td>
               <td className="px-6 py-4">
                 <Select
                   defaultValue="semi"
                   items={[
-                    { value: "semi", label: "半成品仓" },
-                    { value: "workshop", label: "车间仓" },
+                    { value: 'semi', label: '半成品仓' },
+                    { value: 'workshop', label: '车间仓' },
                   ]}
                 >
                   <SelectTrigger className="h-10 w-full max-w-[240px] bg-slate-50 dark:bg-slate-900/50">
@@ -92,21 +72,17 @@ function DefaultWarehouseMapping() {
                   </SelectContent>
                 </Select>
               </td>
-              <td className="px-6 py-4 text-slate-500 dark:text-slate-400">
-                {t("semiFinishedDesc")}
-              </td>
+              <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{t('semiFinishedDesc')}</td>
             </tr>
             {/* 成品 */}
             <tr className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
-              <td className="px-6 py-4 font-bold text-slate-700 dark:text-slate-300">
-                {t("finishedGoods")}
-              </td>
+              <td className="px-6 py-4 font-bold text-slate-700 dark:text-slate-300">{t('finishedGoods')}</td>
               <td className="px-6 py-4">
                 <Select
                   defaultValue="finished"
                   items={[
-                    { value: "finished", label: "成品仓" },
-                    { value: "inspect", label: "待检仓" },
+                    { value: 'finished', label: '成品仓' },
+                    { value: 'inspect', label: '待检仓' },
                   ]}
                 >
                   <SelectTrigger className="h-10 w-full max-w-[240px] bg-slate-50 dark:bg-slate-900/50">
@@ -118,103 +94,84 @@ function DefaultWarehouseMapping() {
                   </SelectContent>
                 </Select>
               </td>
-              <td className="px-6 py-4 text-slate-500 dark:text-slate-400">
-                {t("finishedGoodsDesc")}
-              </td>
+              <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{t('finishedGoodsDesc')}</td>
             </tr>
           </tbody>
         </table>
       </div>
     </section>
-  );
+  )
 }
 
 /**
  * 批次策略设置
  */
 function BatchStrategySection() {
-  const t = useTranslations("settings.inventoryRules");
+  const t = useTranslations('settings.inventoryRules')
 
   return (
     <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950">
       <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50/50 px-6 py-4 dark:border-slate-800 dark:bg-slate-900/50">
         <QrCode className="text-primary size-5" />
-        <h2 className="font-bold text-slate-800 dark:text-slate-100">
-          {t("batchStrategy")}
-        </h2>
+        <h2 className="font-bold text-slate-800 dark:text-slate-100">{t('batchStrategy')}</h2>
       </div>
       <div className="p-8">
         <div className="grid grid-cols-1 gap-x-12 gap-y-8 md:grid-cols-2">
           {/* 批次编号规则 */}
           <div className="space-y-1.5">
-            <Label className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-              {t("batchNumberRule")}
-            </Label>
-            <Input
-              defaultValue="LOT-YYYYMMDD-XXX"
-              className="h-10 bg-slate-50 dark:bg-slate-900/50"
-            />
-            <p className="text-[11px] text-slate-400">
-              {t("batchNumberRuleHint")}
-            </p>
+            <Label className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">{t('batchNumberRule')}</Label>
+            <Input defaultValue="LOT-YYYYMMDD-XXX" className="h-10 bg-slate-50 dark:bg-slate-900/50" />
+            <p className="text-[11px] text-slate-400">{t('batchNumberRuleHint')}</p>
           </div>
 
           {/* 出库分配策略 */}
           <div className="space-y-1.5">
-            <Label className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-              {t("outboundStrategy")}
-            </Label>
+            <Label className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">{t('outboundStrategy')}</Label>
             <Select
               defaultValue="fifo"
               items={[
-                { value: "fifo", label: t("fifo") },
-                { value: "lifo", label: t("lifo") },
-                { value: "fefo", label: t("fefo") },
+                { value: 'fifo', label: t('fifo') },
+                { value: 'lifo', label: t('lifo') },
+                { value: 'fefo', label: t('fefo') },
               ]}
             >
               <SelectTrigger className="h-10 bg-slate-50 dark:bg-slate-900/50">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="fifo">{t("fifo")}</SelectItem>
-                <SelectItem value="lifo">{t("lifo")}</SelectItem>
-                <SelectItem value="fefo">{t("fefo")}</SelectItem>
+                <SelectItem value="fifo">{t('fifo')}</SelectItem>
+                <SelectItem value="lifo">{t('lifo')}</SelectItem>
+                <SelectItem value="fefo">{t('fefo')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* 预留批次策略 */}
           <div className="space-y-1.5">
-            <Label className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-              {t("reservedBatchStrategy")}
-            </Label>
+            <Label className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">{t('reservedBatchStrategy')}</Label>
             <Select
               defaultValue="fifo_reserve"
               items={[
-                { value: "fifo_reserve", label: t("fifoReserve") },
-                { value: "manual_reserve", label: t("manualReserve") },
+                { value: 'fifo_reserve', label: t('fifoReserve') },
+                { value: 'manual_reserve', label: t('manualReserve') },
               ]}
             >
               <SelectTrigger className="h-10 bg-slate-50 dark:bg-slate-900/50">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="fifo_reserve">{t("fifoReserve")}</SelectItem>
-                <SelectItem value="manual_reserve">
-                  {t("manualReserve")}
-                </SelectItem>
+                <SelectItem value="fifo_reserve">{t('fifoReserve')}</SelectItem>
+                <SelectItem value="manual_reserve">{t('manualReserve')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* 单据仓库模式 */}
           <div className="space-y-1.5">
-            <Label className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-              {t("documentWarehouseMode")}
-            </Label>
+            <Label className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">{t('documentWarehouseMode')}</Label>
             <Input
               readOnly
-              value={t("orderLevelSingleWarehouse")}
+              value={t('orderLevelSingleWarehouse')}
               className="h-10 cursor-not-allowed bg-slate-100 text-slate-500 dark:bg-slate-900/30 dark:text-slate-500"
             />
           </div>
@@ -224,45 +181,35 @@ function BatchStrategySection() {
         <div className="mt-8 border-t border-slate-50 pt-8 dark:border-slate-800">
           <label className="group flex cursor-pointer items-start gap-3">
             <div className="relative flex items-center pt-0.5">
-              <Checkbox
-                defaultChecked
-                className="h-5 w-5 rounded border-slate-300"
-              />
+              <Checkbox defaultChecked className="h-5 w-5 rounded border-slate-300" />
             </div>
             <div className="flex flex-col">
               <span className="group-hover:text-primary text-sm font-bold text-slate-700 transition-colors dark:text-slate-300">
-                {t("mandatoryBatchTitle")}
+                {t('mandatoryBatchTitle')}
               </span>
-              <span className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                {t("mandatoryBatchDesc")}
-              </span>
+              <span className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t('mandatoryBatchDesc')}</span>
             </div>
           </label>
         </div>
       </div>
     </section>
-  );
+  )
 }
 
 /**
  * 底部操作按钮栏
  */
 function ActionButtons() {
-  const t = useTranslations("settings.inventoryRules");
+  const t = useTranslations('settings.inventoryRules')
 
   return (
     <div className="mt-4 flex items-center justify-end gap-3">
-      <Button
-        variant="outline"
-        className="h-10 px-6 font-bold text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
-      >
-        {t("cancel")}
+      <Button variant="outline" className="h-10 px-6 font-bold text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800">
+        {t('cancel')}
       </Button>
-      <Button className="bg-primary h-10 px-10 font-bold text-white transition-opacity hover:opacity-90">
-        {t("saveSettings")}
-      </Button>
+      <Button className="bg-primary h-10 px-10 font-bold text-white transition-opacity hover:opacity-90">{t('saveSettings')}</Button>
     </div>
-  );
+  )
 }
 
 /** 库存规则设置主内容 */
@@ -278,5 +225,5 @@ export function InventoryRulesContent() {
       {/* 底部操作按钮 */}
       <ActionButtons />
     </div>
-  );
+  )
 }

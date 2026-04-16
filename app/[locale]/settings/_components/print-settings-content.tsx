@@ -1,33 +1,18 @@
-"use client";
+'use client'
 
-import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Languages,
-  FileText,
-  Eye,
-  Printer,
-  RotateCcw,
-  Save,
-  Image as ImageIcon,
-  Grid2X2,
-} from "lucide-react";
+import { Eye, FileText, Grid2X2, Image as ImageIcon, Languages, Printer, RotateCcw, Save } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 /**
  * 打印语言设置模块
  */
 function PrintLanguageCard() {
-  const t = useTranslations("settings.printSettings");
+  const t = useTranslations('settings.printSettings')
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
@@ -36,45 +21,39 @@ function PrintLanguageCard() {
           <Languages className="size-5" />
         </div>
         <div>
-          <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-            {t("printLanguage")}
-          </h2>
-          <p className="text-xs text-slate-400">{t("languageDesc")}</p>
+          <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">{t('printLanguage')}</h2>
+          <p className="text-xs text-slate-400">{t('languageDesc')}</p>
         </div>
       </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="space-y-1.5 md:col-span-2">
-          <Label className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-            {t("languageMode")}
-          </Label>
+          <Label className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">{t('languageMode')}</Label>
           <Select
             defaultValue="system"
             items={[
-              { value: "system", label: t("systemDefault") },
-              { value: "single", label: t("singleLanguage") },
-              { value: "bilingual", label: t("bilingual") },
+              { value: 'system', label: t('systemDefault') },
+              { value: 'single', label: t('singleLanguage') },
+              { value: 'bilingual', label: t('bilingual') },
             ]}
           >
             <SelectTrigger className="h-10 bg-slate-50 dark:bg-slate-900/50">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="system">{t("systemDefault")}</SelectItem>
-              <SelectItem value="single">{t("singleLanguage")}</SelectItem>
-              <SelectItem value="bilingual">{t("bilingual")}</SelectItem>
+              <SelectItem value="system">{t('systemDefault')}</SelectItem>
+              <SelectItem value="single">{t('singleLanguage')}</SelectItem>
+              <SelectItem value="bilingual">{t('bilingual')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-1.5">
-          <Label className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-            {t("primaryLanguage")}
-          </Label>
+          <Label className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">{t('primaryLanguage')}</Label>
           <Select
             defaultValue="zh"
             items={[
-              { value: "zh", label: "简体中文" },
-              { value: "en", label: "English" },
-              { value: "vi", label: "Tiếng Việt" },
+              { value: 'zh', label: '简体中文' },
+              { value: 'en', label: 'English' },
+              { value: 'vi', label: 'Tiếng Việt' },
             ]}
           >
             <SelectTrigger className="h-10 bg-slate-50 dark:bg-slate-900/50">
@@ -88,15 +67,13 @@ function PrintLanguageCard() {
           </Select>
         </div>
         <div className="space-y-1.5">
-          <Label className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-            {t("secondaryLanguage")}
-          </Label>
+          <Label className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">{t('secondaryLanguage')}</Label>
           <Select
             defaultValue="en"
             items={[
-              { value: "en", label: "English" },
-              { value: "vi", label: "Tiếng Việt" },
-              { value: "none", label: "无" },
+              { value: 'en', label: 'English' },
+              { value: 'vi', label: 'Tiếng Việt' },
+              { value: 'none', label: '无' },
             ]}
           >
             <SelectTrigger className="h-10 bg-slate-50 dark:bg-slate-900/50">
@@ -111,14 +88,14 @@ function PrintLanguageCard() {
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 /**
  * 纸张与边距设置模块
  */
 function PaperAndMarginsCard() {
-  const t = useTranslations("settings.printSettings");
+  const t = useTranslations('settings.printSettings')
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
@@ -128,10 +105,8 @@ function PaperAndMarginsCard() {
             <FileText className="size-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-              {t("paperAndMargins")}
-            </h2>
-            <p className="text-xs text-slate-400">{t("paperAndMarginsDesc")}</p>
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">{t('paperAndMargins')}</h2>
+            <p className="text-xs text-slate-400">{t('paperAndMarginsDesc')}</p>
           </div>
         </div>
         <div className="flex rounded-lg bg-slate-100 p-1 dark:bg-slate-900">
@@ -139,26 +114,18 @@ function PaperAndMarginsCard() {
             variant="ghost"
             className="text-primary hover:text-primary h-7 bg-white px-4 text-xs font-bold shadow-sm dark:bg-slate-800 dark:text-slate-100 dark:hover:text-slate-100"
           >
-            {t("standardSize")}
+            {t('standardSize')}
           </Button>
-          <Button
-            variant="ghost"
-            className="h-7 px-4 text-xs font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-          >
-            {t("customSize")}
+          <Button variant="ghost" className="h-7 px-4 text-xs font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">
+            {t('customSize')}
           </Button>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
         <div className="col-span-2 space-y-1.5">
-          <Label className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-            {t("presetSpec")}
-          </Label>
+          <Label className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">{t('presetSpec')}</Label>
           <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant="outline"
-              className="border-primary bg-primary/5 text-primary h-10 border-2 text-sm font-bold shadow-none"
-            >
+            <Button variant="outline" className="border-primary bg-primary/5 text-primary h-10 border-2 text-sm font-bold shadow-none">
               A4 (210x297mm)
             </Button>
             <Button
@@ -170,83 +137,47 @@ function PaperAndMarginsCard() {
           </div>
         </div>
         <div className="space-y-1.5">
-          <Label className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-            {t("widthMm")}
-          </Label>
-          <Input
-            type="number"
-            defaultValue={210}
-            className="h-10 bg-slate-50 dark:bg-slate-900/50"
-          />
+          <Label className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">{t('widthMm')}</Label>
+          <Input type="number" defaultValue={210} className="h-10 bg-slate-50 dark:bg-slate-900/50" />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-            {t("heightMm")}
-          </Label>
-          <Input
-            type="number"
-            defaultValue={297}
-            className="h-10 bg-slate-50 dark:bg-slate-900/50"
-          />
+          <Label className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">{t('heightMm')}</Label>
+          <Input type="number" defaultValue={297} className="h-10 bg-slate-50 dark:bg-slate-900/50" />
         </div>
       </div>
       <div className="mt-8 border-t border-slate-50 pt-6 dark:border-slate-800/50">
         <h3 className="mb-4 flex items-center gap-2 text-[11px] font-bold tracking-wider text-slate-400 uppercase">
           <Grid2X2 className="size-3.5" />
-          {t("marginsTitle")}
+          {t('marginsTitle')}
         </h3>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <div className="relative space-y-1">
-            <Label className="ml-1 text-[10px] text-slate-400">
-              {t("top")}
-            </Label>
-            <Input
-              type="number"
-              defaultValue={10}
-              className="h-10 bg-slate-50 dark:bg-slate-900/50"
-            />
+            <Label className="ml-1 text-[10px] text-slate-400">{t('top')}</Label>
+            <Input type="number" defaultValue={10} className="h-10 bg-slate-50 dark:bg-slate-900/50" />
           </div>
           <div className="relative space-y-1">
-            <Label className="ml-1 text-[10px] text-slate-400">
-              {t("bottom")}
-            </Label>
-            <Input
-              type="number"
-              defaultValue={10}
-              className="h-10 bg-slate-50 dark:bg-slate-900/50"
-            />
+            <Label className="ml-1 text-[10px] text-slate-400">{t('bottom')}</Label>
+            <Input type="number" defaultValue={10} className="h-10 bg-slate-50 dark:bg-slate-900/50" />
           </div>
           <div className="relative space-y-1">
-            <Label className="ml-1 text-[10px] text-slate-400">
-              {t("left")}
-            </Label>
-            <Input
-              type="number"
-              defaultValue={15}
-              className="h-10 bg-slate-50 dark:bg-slate-900/50"
-            />
+            <Label className="ml-1 text-[10px] text-slate-400">{t('left')}</Label>
+            <Input type="number" defaultValue={15} className="h-10 bg-slate-50 dark:bg-slate-900/50" />
           </div>
           <div className="relative space-y-1">
-            <Label className="ml-1 text-[10px] text-slate-400">
-              {t("right")}
-            </Label>
-            <Input
-              type="number"
-              defaultValue={15}
-              className="h-10 bg-slate-50 dark:bg-slate-900/50"
-            />
+            <Label className="ml-1 text-[10px] text-slate-400">{t('right')}</Label>
+            <Input type="number" defaultValue={15} className="h-10 bg-slate-50 dark:bg-slate-900/50" />
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 /**
  * 显示项设置模块
  */
 function DisplayItemsCard() {
-  const t = useTranslations("settings.printSettings");
+  const t = useTranslations('settings.printSettings')
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
@@ -255,74 +186,54 @@ function DisplayItemsCard() {
           <Eye className="size-5" />
         </div>
         <div>
-          <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-            {t("displayItems")}
-          </h2>
-          <p className="text-xs text-slate-400">{t("displayItemsDesc")}</p>
+          <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">{t('displayItems')}</h2>
+          <p className="text-xs text-slate-400">{t('displayItemsDesc')}</p>
         </div>
       </div>
       <div className="space-y-3">
         {/* Print Logo */}
         <label className="group flex cursor-pointer items-center rounded-xl border border-slate-100 p-4 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900/50">
-          <Checkbox
-            defaultChecked
-            className="h-5 w-5 rounded border-slate-300"
-          />
+          <Checkbox defaultChecked className="h-5 w-5 rounded border-slate-300" />
           <div className="ml-4">
-            <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
-              {t("printLogo")}
-            </p>
-            <p className="text-[11px] text-slate-500">{t("printLogoDesc")}</p>
+            <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{t('printLogo')}</p>
+            <p className="text-[11px] text-slate-500">{t('printLogoDesc')}</p>
           </div>
         </label>
         {/* Print Company Info */}
         <label className="group flex cursor-pointer items-center rounded-xl border border-slate-100 p-4 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900/50">
-          <Checkbox
-            defaultChecked
-            className="h-5 w-5 rounded border-slate-300"
-          />
+          <Checkbox defaultChecked className="h-5 w-5 rounded border-slate-300" />
           <div className="ml-4">
-            <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
-              {t("printCompanyInfo")}
-            </p>
-            <p className="text-[11px] text-slate-500">
-              {t("printCompanyInfoDesc")}
-            </p>
+            <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{t('printCompanyInfo')}</p>
+            <p className="text-[11px] text-slate-500">{t('printCompanyInfoDesc')}</p>
           </div>
         </label>
         {/* Show Date and Page */}
         <label className="group flex cursor-pointer items-center rounded-xl border border-slate-100 p-4 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900/50">
           <Checkbox className="h-5 w-5 rounded border-slate-300" />
           <div className="ml-4">
-            <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
-              {t("printDateAndPage")}
-            </p>
-            <p className="text-[11px] text-slate-500">
-              {t("printDateAndPageDesc")}
-            </p>
+            <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{t('printDateAndPage')}</p>
+            <p className="text-[11px] text-slate-500">{t('printDateAndPageDesc')}</p>
           </div>
         </label>
       </div>
     </div>
-  );
+  )
 }
 
 /**
  * 实时预览与重置模块
  */
 function RealtimePreviewModule() {
-  const t = useTranslations("settings.printSettings");
+  const t = useTranslations('settings.printSettings')
 
   return (
     <div className="relative flex min-h-full flex-col items-center overflow-hidden rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-inner">
       <div className="mb-8 flex w-full items-center justify-between">
         <h3 className="flex items-center gap-2 text-[11px] font-bold tracking-widest text-slate-400 uppercase">
           <span className="bg-primary h-2 w-2 animate-pulse rounded-full" />
-          {t("realTimePreview")}
+          {t('realTimePreview')}
         </h3>
-        <span className="rounded border border-slate-700 bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-400">
-          {t("scale100")}
-        </span>
+        <span className="rounded border border-slate-700 bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-400">{t('scale100')}</span>
       </div>
 
       {/* Simulated Preview Box */}
@@ -333,9 +244,7 @@ function RealtimePreviewModule() {
             <ImageIcon className="size-6 text-slate-300" />
           </div>
           <div className="text-right">
-            <h4 className="text-[10px] font-black text-slate-900">
-              {t("salesOrder")}
-            </h4>
+            <h4 className="text-[10px] font-black text-slate-900">{t('salesOrder')}</h4>
             <p className="font-mono text-[8px] text-slate-400">SO20240001</p>
           </div>
         </div>
@@ -361,15 +270,13 @@ function RealtimePreviewModule() {
 
         {/* Stamp Overlay */}
         <div className="absolute right-8 bottom-10 flex h-12 w-24 rotate-15 items-center justify-center rounded-full border-2 border-dashed border-red-200 opacity-40">
-          <span className="text-[8px] font-bold tracking-widest text-red-500 uppercase">
-            {t("stamped")}
-          </span>
+          <span className="text-[8px] font-bold tracking-widest text-red-500 uppercase">{t('stamped')}</span>
         </div>
 
         {/* Footer info */}
         <div className="absolute right-6 bottom-4 left-6 flex items-center justify-between border-t border-slate-50 pt-2 text-[7px] text-slate-300">
-          <span>{t("printTime")}: 2024-05-20 14:30</span>
-          <span>{t("pageCount")}</span>
+          <span>{t('printTime')}: 2024-05-20 14:30</span>
+          <span>{t('pageCount')}</span>
         </div>
       </div>
 
@@ -379,34 +286,34 @@ function RealtimePreviewModule() {
           className="flex-1 gap-2 border-slate-700 bg-transparent text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-slate-100"
         >
           <Printer className="size-4" />
-          {t("printTestPage")}
+          {t('printTestPage')}
         </Button>
         <Button
           variant="outline"
           className="flex-1 gap-2 border-slate-700 bg-transparent text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-slate-100"
         >
           <RotateCcw className="size-4" />
-          {t("resetDefaults")}
+          {t('resetDefaults')}
         </Button>
       </div>
     </div>
-  );
+  )
 }
 
 /**
  * 底部操作按钮栏
  */
 function ActionButtons() {
-  const t = useTranslations("settings.printSettings");
+  const t = useTranslations('settings.printSettings')
 
   return (
     <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
       <Button className="bg-primary flex h-10 items-center gap-2 px-10 font-bold text-white transition-opacity hover:opacity-90">
         <Save className="size-4" />
-        {t("saveAllSettings")}
+        {t('saveAllSettings')}
       </Button>
     </div>
-  );
+  )
 }
 
 /** 打印设置主内容 */
@@ -429,5 +336,5 @@ export function PrintSettingsContent() {
 
       <ActionButtons />
     </div>
-  );
+  )
 }

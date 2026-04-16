@@ -1,0 +1,27 @@
+{
+  "categories": {
+    "title": "Category Management",
+    "addCategory": "Add Category",
+    "editCategory": "Edit Category",
+    "deleteCategory": "Delete Category",
+    "categoryName": "Category Name",
+    "parentCategory": "Parent Category",
+    "sortOrder": "Sort Order",
+    "remark": "Remark",
+    "noParent": "None (Top Level)",
+    "nameRequired": "Please enter category name",
+    "saveSuccess": "Category saved successfully",
+    "deleteSuccess": "Category deleted successfully",
+    "deleteConfirm": "Are you sure you want to delete category \"{name}\"?",
+    "deleteConfirmDesc": "This action cannot be undone. Please confirm there are no associated materials or sub-categories.",
+    "hasMaterials": "This category has associated materials and cannot be deleted",
+    "hasChildren": "This category has sub-categories, please delete them first",
+    "emptyState": "No category data",
+    "emptyStateDesc": "Click \"Add Category\" to create the first category",
+    "dragHint": "Drag to adjust category order and hierarchy",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "expandAll": "Expand All",
+    "collapseAll": "Collapse All"
+  }
+}

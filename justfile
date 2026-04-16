@@ -36,21 +36,21 @@ build-debug:
 # 运行全部代码检查（前端 + 后端）
 lint: lint-web lint-rust
 
-# ESLint + TypeScript 类型检查
+# Biome check + TypeScript 类型检查
 lint-web:
     pnpm lint
-    pnpm exec tsc --noEmit
+    pnpm typecheck
 
 # cargo clippy
 lint-rust:
     cd src-tauri && cargo clippy --all-targets --all-features -- -D warnings
 
-# 格式化全部代码（prettier + cargo fmt）
+# 格式化全部代码（biome + cargo fmt）
 fmt: fmt-web fmt-rust
 
-# prettier 格式化前端代码
+# biome 格式化前端代码
 fmt-web:
-    pnpm exec prettier --write "app/**/*.{ts,tsx,css,json}" "components/**/*.{ts,tsx,css,json}" "lib/**/*.{ts,tsx,css,json}" "config/**/*.{ts,tsx,css,json}"
+    pnpm format
 
 # cargo fmt 格式化 Rust 代码
 fmt-rust:
