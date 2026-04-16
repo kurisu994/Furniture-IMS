@@ -109,6 +109,6 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: "CloudPivot IMS ${{ github.ref_name }}"
           releaseBody: ${{ steps.changelog.outputs.notes }}
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: --target ${{ matrix.target }}
