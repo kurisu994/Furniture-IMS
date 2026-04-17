@@ -10,6 +10,14 @@
 
 ### 新增
 
+- **客户管理模块**：实现完整的客户档案 CRUD 管理功能
+  - 后端：新增 `customer.rs` IPC 命令模块（7 个命令），支持关键词/类型/等级/国家动态筛选、分页查询、编码自动生成（CUS-YYYY-NNN）、删除保护（五表关联检查）
+  - 前端列表页：关键词搜索 + 客户类型/等级/国家三维筛选 + 分页，使用 BusinessListTableShell 骨架（10 列 + sticky 首列）
+  - 编辑弹窗：新增/编辑共用 Dialog，三分区表单（基本信息/结算信息/其他信息），编辑模式编码只读，前端校验（电话/邮箱格式）
+  - 详情弹窗：KPI 卡片（销售总额/应收余额/已收金额）+ 联系信息条 + Tabs 切换（销售记录/应收对账）
+  - 后端校验：国际电话格式、邮箱格式、枚举值、数值范围、字符串规范化（trim + 空转 NULL + email 小写）
+  - 应收余额：列表页通过 LEFT JOIN receivables 实时聚合显示
+  - 国际化：customers 命名空间 138 个翻译键，覆盖中/越/英三语
 - **业务列表表格骨架**：新增 `BusinessListTableShell` 等公共薄封装，统一物料、供应商等业务列表的横向滚动、固定首列、分页栏、加载态和空态
   - 固定首列：统一 `BUSINESS_LIST_STICKY_HEAD_CLASS` / `BUSINESS_LIST_STICKY_CELL_CLASS`，避免各页面重复手写 sticky 样式
   - 状态行：新增 `BusinessListTableLoadingRows` / `BusinessListTableEmptyRow`，让加载态和空态保持在同一张表格结构内

@@ -107,7 +107,7 @@ gantt
 
 > **目标**：搭建可运行的项目骨架，**从第一行代码就使用 i18n 和多币种基础设施**，避免后续返工。
 
-> **📊 进度**（截至 2026-04-17）：**17/21 项完成，2 项部分完成**（约 95%）。Rust 后端核心已就绪：数据库迁移框架 + 45 张表 DDL + 种子数据 + bcrypt 认证 + 31 个 IPC 命令（含系统配置/物料/分类/供应商 CRUD）。前端认证全流程（登录页 + 改密页 + AuthProvider 路由守卫）、Tauri IPC 封装、多币种格式化工具、系统配置类型和**首次使用向导**均已完成。系统配置相关 IPC 命令（get/set_system_configs + setup_create_warehouses）也已实现。**剩余**：Repository trait 抽象（1.5 仅完成连接池部分）、汇率 CRUD（1.10 仅完成前端格式化）和 CI 搭建（1.19）。另外，首页看板 UI 原型（含 7 个图表组件 + mock 数据）和深浅主题 CSS 变量体系已提前搭建完成，不在原计划内。
+> **📊 进度**（截至 2026-04-17）：**17/21 项完成，2 项部分完成**（约 95%）。Rust 后端核心已就绪：数据库迁移框架 + 45 张表 DDL + 种子数据 + bcrypt 认证 + 38 个 IPC 命令（含系统配置/物料/分类/供应商/客户 CRUD）。前端认证全流程（登录页 + 改密页 + AuthProvider 路由守卫）、Tauri IPC 封装、多币种格式化工具、系统配置类型和**首次使用向导**均已完成。系统配置相关 IPC 命令（get/set_system_configs + setup_create_warehouses）也已实现。**剩余**：Repository trait 抽象（1.5 仅完成连接池部分）、汇率 CRUD（1.10 仅完成前端格式化）和 CI 搭建（1.19）。另外，首页看板 UI 原型（含 7 个图表组件 + mock 数据）和深浅主题 CSS 变量体系已提前搭建完成，不在原计划内。
 
 #### 任务清单
 
@@ -128,7 +128,7 @@ gantt
 | 1.12  | 前端整体布局组件（侧边栏+顶栏+语言切换器）                                                                                                                                                           | 2d   | Layout 组件                              | ✅ 已完成                                                                            |
 | 1.13  | 前端 App Router 路由配置                                                                                                                                                                             | 1d   | app/[locale]/                            | ✅ 已完成                                                                            |
 | 1.14  | 封装 Tauri IPC 调用                                                                                                                                                                                  | 0.5d | lib/tauri.ts                             | ✅ 已完成（泛型 invoke + 全部认证命令 + isTauriEnv 降级）                            |
-| 1.15  | 验证前后端 IPC 通信（ping-pong 测试）                                                                                                                                                                | 0.5d | —                                        | ✅ 已完成（31 个 IPC 命令已注册，含系统配置/物料/分类/供应商 CRUD）                  |
+| 1.15  | 验证前后端 IPC 通信（ping-pong 测试）                                                                                                                                                                | 0.5d | —                                        | ✅ 已完成（38 个 IPC 命令已注册，含系统配置/物料/分类/供应商/客户 CRUD）                  |
 | 1.16  | **用户认证** — Rust 端 bcrypt + `session_version` + 登录/登出 Command                                                                                                                                | 1.5d | users 表 + auth 模块                     | ✅ 已完成（auth.rs 237 行，含 5 次失败锁定 15 分钟）                                 |
 | 1.17  | **登录页面** — 登录表单 + 内置管理员 `admin/admin123` 提示 + 记住我（系统钥匙串）+ 首次强制改密                                                                                                      | 1.5d | 登录页组件                               | ✅ 已完成（login/page.tsx 294 行 + change-password/page.tsx 240 行）                 |
 | 1.18  | **认证守卫** — 路由守卫 + 本地会话失效处理（v1.0 不做权限判断，全部放行）                                                                                                                            | 0.5d | AuthProvider                             | ✅ 已完成（auth-provider.tsx 235 行，含 localStorage 持久化 + session_version 验证） |
@@ -161,7 +161,7 @@ gantt
 
 > **目标**：完成所有基础数据的 CRUD 功能，所有 UI 文案使用 `t()` 函数。
 
-> **📊 进度**（截至 2026-04-17）：**8/15 项完成**（约 55%）。物料管理（Rust CRUD + 列表页 + 编辑弹窗）、分类管理（Rust 树结构 CRUD + 树形列表 + 编辑弹窗 + 拖拽排序）、供应商管理（Rust CRUD + 列表筛选分页 + 编辑弹窗 + 物料关联 Tab + 详情弹窗 + 删除）和系统设置基础（全部 8 个子页面）均已完成。**剩余**：客户管理（2.8-2.9）、仓库管理（2.10）、单位管理（2.10a）、BOM 管理（2.11-2.12）、通用组件抽取（2.13）、物料导入导出（2.16）。
+> **📊 进度**（截至 2026-04-17）：**10/15 项完成**（约 65%）。物料管理（Rust CRUD + 列表页 + 编辑弹窗）、分类管理（Rust 树结构 CRUD + 树形列表 + 编辑弹窗 + 拖拽排序）、供应商管理（Rust CRUD + 列表筛选分页 + 编辑弹窗 + 物料关联 Tab + 详情弹窗 + 删除）、客户管理（Rust CRUD 7 个 IPC 命令 + 列表筛选分页 + 编辑弹窗 + 详情弹窗 + 删除保护 + 编码自动生成 + 三语翻译）和系统设置基础（全部 8 个子页面）均已完成。**剩余**：仓库管理（2.10）、单位管理（2.10a）、BOM 管理（2.11-2.12）、通用组件抽取（2.13）、物料导入导出（2.16）。
 
 #### 任务清单
 
@@ -174,8 +174,8 @@ gantt
 | 2.5   | **分类管理** — 树形列表页 + 编辑弹窗                                  | 1.5d | P0     | 2.4     | ✅ 已完成（react-arborist 树形 + 拖拽排序 + 编辑弹窗）                       |
 | 2.6   | **供应商管理** — Rust CRUD（含供应物料关联）                          | 1.5d | P0     | 1.\*    | ✅ 已完成（11 个 IPC 命令：CRUD + 详情 + 物料关联 + 编码生成）               |
 | 2.7   | **供应商管理** — 列表页 + 编辑弹窗 + 物料关联 Tab                     | 2d   | P0     | 2.6     | ✅ 已完成（列表筛选分页 + 编辑弹窗 + 详情弹窗 + 物料关联 + 删除）            |
-| 2.8   | **客户管理** — Rust CRUD                                              | 1d   | P0     | 1.\*    | ⬜ 未开始                                                                   |
-| 2.9   | **客户管理** — 列表页 + 编辑弹窗                                      | 1.5d | P0     | 2.8     | ⬜ 未开始                                                                   |
+| 2.8   | **客户管理** — Rust CRUD                                              | 1d   | P0     | 1.\*    | ✅ 已完成（7 个 IPC 命令：get_customers/get_customer_by_id/get_customer_detail/save_customer/delete_customer/toggle_customer_status/generate_customer_code） |
+| 2.9   | **客户管理** — 列表页 + 编辑弹窗                                      | 1.5d | P0     | 2.8     | ✅ 已完成（列表筛选分页 + 编辑弹窗 + 详情弹窗 + 删除保护 + 编码自动生成）            |
 | 2.10  | **仓库管理** — Rust CRUD + 前端页面（含默认仓映射）                   | 2d   | P0     | 1.\*    | ⬜ 未开始                                                                   |
 | 2.10a | **单位管理** — Rust CRUD + 前端列表/编辑页面（预置单位 + 自定义单位） | 1d   | P0     | 1.\*    | ⬜ 未开始                                                                   |
 | 2.11  | **BOM 管理** — Rust 层（含成本核算、需求展算、**物料反查功能**）      | 2d   | P1     | 2.1     | ⬜ 未开始                                                                   |
@@ -189,7 +189,7 @@ gantt
 
 #### 验收标准
 
-- [x] 物料、分类、供应商~~、客户、仓库~~均可正常增删改查（客户/仓库/单位待实现）
+- [x] 物料、分类、供应商、客户~~、仓库~~均可正常增删改查（仓库/单位待实现）
 - [x] **供应商支持关联供应物料**（报价、交货周期、首选标记）
 - [ ] 分类树支持多级展示和拖拽排序
 - [ ] 物料可关联分类，成品可创建 BOM
@@ -472,7 +472,7 @@ main           ← 稳定发布分支
 
 ```
 src-tauri/src/
-├── lib.rs          # Tauri Builder — 日志 + 数据库初始化 + 管理员初始化 + IPC 注册（31 个命令）
+├── lib.rs          # Tauri Builder — 日志 + 数据库初始化 + 管理员初始化 + IPC 注册（38 个命令）
 ├── main.rs         # 入口
 ├── auth.rs         # 认证模块（登录/改密/管理员初始化，bcrypt + session_version + 锁定）
 ├── error.rs        # 统一错误类型（AppError: Database/Sqlx/Auth/Business/Io）
@@ -480,7 +480,8 @@ src-tauri/src/
 │   ├── mod.rs      # 基础命令：ping / get_db_version / login / change_password / get_user_info / get/set_system_configs / setup_create_warehouses
 │   ├── material.rs # 物料 CRUD：get_materials / get_material_by_id / save_material / toggle_material_status / get_categories / get_units
 │   ├── category.rs # 分类 CRUD：get_category_tree / create_category / update_category / delete_category / update_category_order
-│   └── supplier.rs # 供应商 CRUD：get_suppliers / get_supplier_by_id / get_supplier_detail / save_supplier / delete_supplier / toggle_supplier_status / generate_supplier_code / get_supplier_categories / get_material_reference_options / save_supplier_material / delete_supplier_material
+│   ├── supplier.rs # 供应商 CRUD：get_suppliers / get_supplier_by_id / get_supplier_detail / save_supplier / delete_supplier / toggle_supplier_status / generate_supplier_code / get_supplier_categories / get_material_reference_options / save_supplier_material / delete_supplier_material
+│   └── customer.rs # 客户 CRUD：get_customers / get_customer_by_id / get_customer_detail / save_customer / delete_customer / toggle_customer_status / generate_customer_code
 ├── db/             # 数据访问层 — 连接池 + 迁移
 │   ├── mod.rs      # SQLite 连接池初始化 + PRAGMA 配置（WAL 模式）
 │   └── migration.rs# 自管理迁移框架（include_str! 内嵌 SQL，版本化执行）
@@ -493,9 +494,10 @@ src-tauri/src/
 ### 4.5 前端分层
 
 ```
-app/[locale]/       # 页面路由 — Next.js App Router + i18n（27 个路由，8 个已实现，15 个占位，4 个功能页）
+app/[locale]/       # 页面路由 — Next.js App Router + i18n（27 个路由，9 个已实现，14 个占位，4 个功能页）
   _components/      # 看板子组件（dashboard-content.tsx + dashboard/ 下 7 个图表组件）
   suppliers/        # 供应商管理（列表+筛选+分页+编辑弹窗+详情弹窗+物料关联）
+  customers/        # 客户管理（列表+筛选+分页+编辑弹窗+详情弹窗+应收对账）
   materials/        # 物料管理（列表+筛选+分页+编辑弹窗）
   categories/       # 分类管理（树形列表+拖拽排序+编辑弹窗）
   settings/         # 系统设置（8 个子页面：企业信息/外观/编码规则/库存规则/打印/汇率/数据管理/操作日志）
@@ -518,7 +520,7 @@ lib/
 └── types/
     └── system-config.ts # 系统配置键名枚举（50+）+ TypeScript 类型
 stores/             # 全局状态 — Zustand store（已安装，待使用）
-messages/           # i18n 翻译文件（按域拆分 8 个文件/语言，共 720 行/语言，涵盖 auth/categories/common/dashboard/materials/settings/setup-wizard/suppliers 8 域）
+messages/           # i18n 翻译文件（按域拆分 9 个文件/语言，约 860 行/语言，涵盖 auth/categories/common/customers/dashboard/materials/settings/setup-wizard/suppliers 9 域）
 ```
 
 > 表单管理使用 `react-hook-form` + `zod` 验证，处理采购/销售/定制单等复杂嵌套表单。
@@ -584,7 +586,7 @@ jobs:
 | 里程碑                   | 预计完成        | 核心交付                                                                                                                                                                 | 状态              |
 | ------------------------ | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------- |
 | M1：脚手架就绪           | 第 4 周         | 项目骨架 + 数据库 + 布局 + **i18n + 多币种/舍入规则基础 + 配置模型 + 本地会话认证**                                                                                      | 🔶 进行中（~85%） |
-| M2：基础数据完成         | 第 7.5 周       | 物料/分类/供应商(**含物料关联**)/客户/仓库/**默认仓映射**/BOM(**含物料反查**)/**编码规则/库存规则基础设置**                                                              | ⬜ 未开始         |
+| M2：基础数据完成         | 第 7.5 周       | 物料/分类/供应商(**含物料关联**)/客户/仓库/**默认仓映射**/BOM(**含物料反查**)/**编码规则/库存规则基础设置**                                                              | 🔶 进行中（~65%） |
 | M2.5：采购+库存基础      | 第 11.5 周      | 采购全流程 + 库存基础能力联调通过                                                                                                                                        | ⬜ 未开始         |
 | M3：销售+定制单+库存高级 | 第 17.5-18.5 周 | 销售/**单头仓库规则**/库存高级(盘点+调拨)/预警/**批次追溯**/**原材料预留 + 成品预留链路**/**期初库存导入**/**操作日志**/**定制单管理**/**生产工单(承接预留+领料+完工)**/ | ⬜ 未开始         |
 | M4：财务报表 + 补货      | 第 21-22 周     | 应收应付/**智能补货**/报表/**标准/实际毛利**/看板                                                                                                                        | ⬜ 未开始         |
