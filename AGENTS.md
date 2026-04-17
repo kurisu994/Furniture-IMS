@@ -98,7 +98,7 @@ just icon                  # 基于 app-icon.png 生成全平台图标 (macOS/iO
 
 常用但尚未安装的组件（按需 add）：
 
-- 布局类：`dialog` `drawer` `sheet` `accordion` `collapsible`
+- 布局类：`dialog` `accordion` `collapsible`
 - 表单类：`form` `field` `textarea` `combobox` `input-otp`
 - 数据展示：`pagination` `avatar` `tooltip` `hover-card` `skeleton` `empty`
 - 交互类：`dropdown-menu` `context-menu` `popover` `alert-dialog` `command`
@@ -106,8 +106,8 @@ just icon                  # 基于 app-icon.png 生成全平台图标 (macOS/iO
 - 反馈类：`sonner`（toast 通知）`spinner` `alert`
 
 > **示例**：需要表格时用 `pnpm shadcn add table`，需要弹窗用 `pnpm shadcn add dialog`，  
-> 需要侧边抽屉用 `pnpm shadcn add sheet`，需要 toast 通知用 `pnpm shadcn add sonner`。  
-> **不要**手写 Modal/Drawer/Toast 等基础 UI。
+> 需要 toast 通知用 `pnpm shadcn add sonner`。  
+> **不要**手写 Modal/Toast 等基础 UI。所有编辑、详情操作统一使用 Dialog 弹窗，不使用 Drawer/Sheet 抽屉面板。
 
 ### 业务列表表格骨架（⚠️ 重要）
 
@@ -326,7 +326,7 @@ export default async function Page({
 - **Rust 数据库层**：sqlx + SQLite 连接池、WAL PRAGMA、自管理迁移框架、45 张表 DDL + 种子数据
 - **用户认证（全栈）**：登录页 / 改密页 UI、AuthProvider 路由守卫、Rust 后端 bcrypt 认证 + 锁定 + session_version
 - **IPC 通信**：ping / get_db_version / login / change_password / get_user_info + 分类/物料/供应商 CRUD
-- **供应商管理（全栈）**：列表筛选分页 + Sheet 表单 + 后端 6 个 IPC 命令 + 编码自动生成
+- **供应商管理（全栈）**：列表筛选分页 + Dialog 弹窗表单 + 后端 6 个 IPC 命令 + 编码自动生成
 - **前端工具库**：Tauri IPC 封装、多币种格式化、系统配置类型定义
 - App Router 路由骨架：23 个业务路由目录
 
