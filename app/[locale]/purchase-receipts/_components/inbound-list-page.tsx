@@ -75,16 +75,23 @@ export function InboundListPage({ onNewInbound, onNewFreeInbound }: InboundListP
     }
   }, [])
 
-  useEffect(() => { void loadOrders() }, [loadOrders])
-  useEffect(() => { void loadPendingPOs() }, [loadPendingPOs])
+  useEffect(() => {
+    void loadOrders()
+  }, [loadOrders])
+  useEffect(() => {
+    void loadPendingPOs()
+  }, [loadPendingPOs])
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
-  const statusItems = useMemo(() => [
-    { value: 'all', label: t('allStatuses') },
-    { value: 'draft', label: t('statusDraft') },
-    { value: 'confirmed', label: t('statusConfirmed') },
-  ], [t])
+  const statusItems = useMemo(
+    () => [
+      { value: 'all', label: t('allStatuses') },
+      { value: 'draft', label: t('statusDraft') },
+      { value: 'confirmed', label: t('statusConfirmed') },
+    ],
+    [t],
+  )
 
   const handleSearch = () => {
     setCurrentPage(1)
@@ -108,11 +115,12 @@ export function InboundListPage({ onNewInbound, onNewFreeInbound }: InboundListP
   }
 
   // 从采购单入库的下拉选项
-  const poItems = useMemo(() =>
-    pendingPOs.map(po => ({
-      value: String(po.id),
-      label: `${po.orderNo} - ${po.supplierName}`,
-    })),
+  const poItems = useMemo(
+    () =>
+      pendingPOs.map(po => ({
+        value: String(po.id),
+        label: `${po.orderNo} - ${po.supplierName}`,
+      })),
     [pendingPOs],
   )
 
@@ -156,9 +164,15 @@ export function InboundListPage({ onNewInbound, onNewFreeInbound }: InboundListP
           </div>
           <div className="w-[140px]">
             <Select value={draftStatus} onValueChange={v => v && setDraftStatus(v)} items={statusItems}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {statusItems.map(item => (<SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>))}
+                {statusItems.map(item => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -168,10 +182,12 @@ export function InboundListPage({ onNewInbound, onNewFreeInbound }: InboundListP
             <Input type="date" value={draftDateTo} onChange={e => setDraftDateTo(e.target.value)} className="w-[140px]" />
           </div>
           <Button variant="outline" size="sm" onClick={handleReset}>
-            <RotateCcw data-icon="inline-start" />{tc('reset')}
+            <RotateCcw data-icon="inline-start" />
+            {tc('reset')}
           </Button>
           <Button size="sm" onClick={handleSearch}>
-            <Search data-icon="inline-start" />{tc('search')}
+            <Search data-icon="inline-start" />
+            {tc('search')}
           </Button>
         </div>
       </div>
@@ -181,7 +197,9 @@ export function InboundListPage({ onNewInbound, onNewFreeInbound }: InboundListP
         {poItems.length > 0 && (
           <Select
             value=""
-            onValueChange={v => { if (v) onNewInbound(Number(v)) }}
+            onValueChange={v => {
+              if (v) onNewInbound(Number(v))
+            }}
             items={poItems}
           >
             <SelectTrigger className="w-[360px]">
@@ -189,13 +207,16 @@ export function InboundListPage({ onNewInbound, onNewFreeInbound }: InboundListP
             </SelectTrigger>
             <SelectContent>
               {poItems.map(item => (
-                <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
         )}
         <Button variant="outline" onClick={() => toast.info(t('exportComingSoon'))}>
-          <Download data-icon="inline-start" />{t('exportData')}
+          <Download data-icon="inline-start" />
+          {t('exportData')}
         </Button>
       </div>
 
@@ -208,9 +229,15 @@ export function InboundListPage({ onNewInbound, onNewFreeInbound }: InboundListP
             <div className="flex flex-wrap items-center gap-3 sm:gap-4">
               <span className="font-medium">{t('totalRecords', { count: total })}</span>
               <Select value={pageSize.toString()} onValueChange={v => v && onPageSizeChange(parseInt(v))} items={pageSizeItems}>
-                <SelectTrigger className="h-7 w-[120px] text-xs"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-7 w-[120px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  {pageSizeItems.map(item => (<SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>))}
+                  {pageSizeItems.map(item => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -239,19 +266,15 @@ export function InboundListPage({ onNewInbound, onNewFreeInbound }: InboundListP
           ) : (
             items.map(order => (
               <TableRow key={order.id} className="group">
-                <TableCell className={`font-mono text-xs font-medium ${BUSINESS_LIST_STICKY_CELL_CLASS}`}>
-                  {order.orderNo}
+                <TableCell className={`font-mono text-xs font-medium ${BUSINESS_LIST_STICKY_CELL_CLASS}`}>{order.orderNo}</TableCell>
+                <TableCell className="font-mono text-xs">{order.purchaseOrderNo ?? '—'}</TableCell>
+                <TableCell>
+                  <div className="truncate">{order.supplierName ?? '—'}</div>
                 </TableCell>
-                <TableCell className="font-mono text-xs">
-                  {order.purchaseOrderNo ?? '—'}
-                </TableCell>
-                <TableCell><div className="truncate">{order.supplierName ?? '—'}</div></TableCell>
                 <TableCell className="text-sm">{order.inboundDate}</TableCell>
                 <TableCell className="text-sm">{inboundTypeLabel(order.inboundType)}</TableCell>
                 <TableCell className="text-sm">{order.warehouseName}</TableCell>
-                <TableCell className="text-right font-medium">
-                  {formatAmount(order.totalAmount, order.currency as 'VND' | 'CNY' | 'USD')}
-                </TableCell>
+                <TableCell className="text-right font-medium">{formatAmount(order.totalAmount, order.currency as 'VND' | 'CNY' | 'USD')}</TableCell>
                 <TableCell>
                   <Badge variant={order.status === 'confirmed' ? 'default' : 'secondary'} className="text-xs">
                     {order.status === 'confirmed' ? t('statusConfirmed') : t('statusDraft')}
@@ -271,6 +294,11 @@ export function InboundListPage({ onNewInbound, onNewFreeInbound }: InboundListP
   )
 
   // 分页回调（在组件内部使用）
-  function onPageChange(p: number) { setCurrentPage(p) }
-  function onPageSizeChange(s: number) { setPageSize(s); setCurrentPage(1) }
+  function onPageChange(p: number) {
+    setCurrentPage(p)
+  }
+  function onPageSizeChange(s: number) {
+    setPageSize(s)
+    setCurrentPage(1)
+  }
 }

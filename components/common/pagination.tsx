@@ -41,7 +41,9 @@ export function PaginationControls({ currentPage, totalPages, onPageChange }: Pa
       </Button>
       {buildPageNumbers(currentPage, totalPages).map((p, idx) =>
         p === '...' ? (
-          <span key={`dots-${idx}`} className="text-muted-foreground/50 px-2">…</span>
+          <span key={`dots-${idx}`} className="text-muted-foreground/50 px-2">
+            …
+          </span>
         ) : (
           <Button
             key={p}

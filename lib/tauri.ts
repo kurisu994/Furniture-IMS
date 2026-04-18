@@ -2008,9 +2008,7 @@ export interface SupplierMaterialForPurchase {
 }
 
 /** 获取采购单列表 */
-export async function getPurchaseOrders(
-  filter: PurchaseOrderFilter,
-): Promise<PaginatedResponse<PurchaseOrderListItem>> {
+export async function getPurchaseOrders(filter: PurchaseOrderFilter): Promise<PaginatedResponse<PurchaseOrderListItem>> {
   if (isTauriEnv()) {
     return invoke<PaginatedResponse<PurchaseOrderListItem>>('get_purchase_orders', { filter })
   }
@@ -2056,9 +2054,7 @@ export async function deletePurchaseOrder(id: number): Promise<void> {
 }
 
 /** 获取供应商物料报价（采购单选择供应商后快速带出） */
-export async function getSupplierMaterialsForPurchase(
-  supplierId: number,
-): Promise<SupplierMaterialForPurchase[]> {
+export async function getSupplierMaterialsForPurchase(supplierId: number): Promise<SupplierMaterialForPurchase[]> {
   if (isTauriEnv()) {
     return invoke<SupplierMaterialForPurchase[]>('get_supplier_materials_for_purchase', {
       supplierId,
@@ -2066,7 +2062,6 @@ export async function getSupplierMaterialsForPurchase(
   }
   return []
 }
-
 
 // ================================================================
 // 采购入库
@@ -2158,9 +2153,7 @@ export async function getPendingInboundItems(purchaseId: number): Promise<Pendin
 }
 
 /** 获取入库单列表 */
-export async function getInboundOrders(
-  filter: InboundOrderFilter,
-): Promise<PaginatedResponse<InboundOrderListItem>> {
+export async function getInboundOrders(filter: InboundOrderFilter): Promise<PaginatedResponse<InboundOrderListItem>> {
   if (isTauriEnv()) {
     return invoke<PaginatedResponse<InboundOrderListItem>>('get_inbound_orders', { filter })
   }
@@ -2174,7 +2167,6 @@ export async function saveAndConfirmInbound(params: SaveInboundOrderParams): Pro
   }
   return Date.now()
 }
-
 
 // ================================================================
 // 采购退货
@@ -2258,9 +2250,7 @@ export async function getReturnableInboundItems(inboundId: number): Promise<Retu
 }
 
 /** 获取采购退货列表 */
-export async function getPurchaseReturns(
-  filter: PurchaseReturnFilter,
-): Promise<PaginatedResponse<PurchaseReturnListItem>> {
+export async function getPurchaseReturns(filter: PurchaseReturnFilter): Promise<PaginatedResponse<PurchaseReturnListItem>> {
   if (isTauriEnv()) {
     return invoke<PaginatedResponse<PurchaseReturnListItem>>('get_purchase_returns', { filter })
   }

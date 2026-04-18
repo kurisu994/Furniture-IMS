@@ -221,10 +221,7 @@ pub async fn record_transaction(
 // ================================================================
 
 /// 生成批次号：LOT-YYYYMMDD-XXX
-pub async fn generate_lot_no(
-    tx: &mut SqliteConnection,
-    date: &str,
-) -> Result<String, AppError> {
+pub async fn generate_lot_no(tx: &mut SqliteConnection, date: &str) -> Result<String, AppError> {
     let date_part = date.replace('-', "");
     let prefix = format!("LOT-{}-", date_part);
 
@@ -272,7 +269,6 @@ pub fn convert_to_usd_cents(amount: i64, currency: &str, exchange_rate: f64) -> 
 pub fn unit_cost_to_usd(unit_price: i64, currency: &str, exchange_rate: f64) -> i64 {
     convert_to_usd_cents(unit_price, currency, exchange_rate)
 }
-
 
 // ================================================================
 // 库存扣减（出库/退货）
@@ -390,13 +386,12 @@ pub async fn decrease_lot_inventory(
     lot_id: i64,
     quantity: f64,
 ) -> Result<(), AppError> {
-    let current: Option<(f64,)> = sqlx::query_as(
-        "SELECT qty_on_hand FROM inventory_lots WHERE id = ?",
-    )
-    .bind(lot_id)
-    .fetch_optional(&mut *tx)
-    .await
-    .map_err(|e| AppError::Database(format!("查询批次库存失败: {}", e)))?;
+    let current: Option<(f64,)> =
+        sqlx::query_as("SELECT qty_on_hand FROM inventory_lots WHERE id = ?")
+            .bind(lot_id)
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(|e| AppError::Database(format!("查询批次库存失败: {}", e)))?;
 
     let on_hand = current.map(|c| c.0).unwrap_or(0.0);
     if on_hand < quantity {

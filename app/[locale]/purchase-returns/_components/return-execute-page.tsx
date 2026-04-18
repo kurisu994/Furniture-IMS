@@ -100,19 +100,22 @@ export function ReturnExecutePage({ inboundId, onBack }: ReturnExecutePageProps)
     }
   }, [inboundId, t])
 
-  useEffect(() => { void loadData() }, [loadData])
+  useEffect(() => {
+    void loadData()
+  }, [loadData])
 
   // 退货总金额
-  const returnTotal = useMemo(() =>
-    items.reduce((sum, item) => {
-      const qty = parseFloat(item.thisQty) || 0
-      return sum + Math.round(qty * item.unitPrice)
-    }, 0),
+  const returnTotal = useMemo(
+    () =>
+      items.reduce((sum, item) => {
+        const qty = parseFloat(item.thisQty) || 0
+        return sum + Math.round(qty * item.unitPrice)
+      }, 0),
     [items],
   )
 
   const updateItem = (key: string, field: 'thisQty' | 'remark', value: string) => {
-    setItems(prev => prev.map(item => item.key === key ? { ...item, [field]: value } : item))
+    setItems(prev => prev.map(item => (item.key === key ? { ...item, [field]: value } : item)))
   }
 
   // 确认退货
@@ -179,7 +182,8 @@ export function ReturnExecutePage({ inboundId, onBack }: ReturnExecutePageProps)
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={onBack}>
-            <ArrowLeft className="size-4" />{tc('back')}
+            <ArrowLeft className="size-4" />
+            {tc('back')}
           </Button>
           <h2 className="text-foreground text-xl font-bold">{t('newReturn')}</h2>
           {inboundInfo && (
@@ -218,7 +222,12 @@ export function ReturnExecutePage({ inboundId, onBack }: ReturnExecutePageProps)
           <div className="mt-4 grid grid-cols-2 gap-x-8 gap-y-3">
             <div>
               <Label className="text-xs">{t('returnReason')}</Label>
-              <Input value={returnReason} onChange={e => setReturnReason(e.target.value)} className="mt-1" placeholder={t('returnReasonPlaceholder')} />
+              <Input
+                value={returnReason}
+                onChange={e => setReturnReason(e.target.value)}
+                className="mt-1"
+                placeholder={t('returnReasonPlaceholder')}
+              />
             </div>
             <div>
               <Label className="text-xs">{t('remark')}</Label>
@@ -266,7 +275,9 @@ export function ReturnExecutePage({ inboundId, onBack }: ReturnExecutePageProps)
                     <TableRow key={item.key} className="group">
                       <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
                       <TableCell className="font-mono text-xs">{item.materialCode}</TableCell>
-                      <TableCell><div className="truncate font-medium">{item.materialName}</div></TableCell>
+                      <TableCell>
+                        <div className="truncate font-medium">{item.materialName}</div>
+                      </TableCell>
                       <TableCell className="text-muted-foreground truncate text-sm">{item.spec || '—'}</TableCell>
                       <TableCell className="text-sm">{item.unitName}</TableCell>
                       <TableCell className="text-right font-mono">{item.inboundQuantity}</TableCell>
@@ -283,9 +294,7 @@ export function ReturnExecutePage({ inboundId, onBack }: ReturnExecutePageProps)
                           step="0.01"
                         />
                       </TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {item.lotNo ?? '—'}
-                      </TableCell>
+                      <TableCell className="font-mono text-xs">{item.lotNo ?? '—'}</TableCell>
                       <TableCell className="text-right font-mono font-medium">
                         {inboundInfo && formatAmount(amount, inboundInfo.currency as 'VND' | 'CNY' | 'USD')}
                       </TableCell>
@@ -305,9 +314,7 @@ export function ReturnExecutePage({ inboundId, onBack }: ReturnExecutePageProps)
           <div className="text-destructive font-mono text-xl font-bold">
             {inboundInfo && formatAmount(returnTotal, inboundInfo.currency as 'VND' | 'CNY' | 'USD')}
           </div>
-          <p className="text-muted-foreground mt-1 text-xs">
-            {t('returnCostRecalcHint')}
-          </p>
+          <p className="text-muted-foreground mt-1 text-xs">{t('returnCostRecalcHint')}</p>
         </div>
       </div>
     </div>

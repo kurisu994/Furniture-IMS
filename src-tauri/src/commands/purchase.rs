@@ -137,7 +137,6 @@ pub struct PurchaseOrderFilter {
     pub page_size: u32,
 }
 
-
 // ================================================================
 // 校验与工具函数
 // ================================================================
@@ -185,10 +184,7 @@ fn validate_save_params(params: &SavePurchaseOrderParams) -> Result<(), AppError
             )));
         }
         if item.unit_price < 0 {
-            return Err(AppError::Business(format!(
-                "第 {} 行单价不能为负数",
-                i + 1
-            )));
+            return Err(AppError::Business(format!("第 {} 行单价不能为负数", i + 1)));
         }
         if item.conversion_rate_snapshot <= 0.0 {
             return Err(AppError::Business(format!(
@@ -203,7 +199,10 @@ fn validate_save_params(params: &SavePurchaseOrderParams) -> Result<(), AppError
 /// 生成采购单编号：PO-YYYYMMDD-XXX
 ///
 /// 在事务内执行，基于当天已有的最大序号 +1，保证同一天内唯一递增。
-async fn generate_order_no(tx: &mut sqlx::SqliteConnection, order_date: &str) -> Result<String, AppError> {
+async fn generate_order_no(
+    tx: &mut sqlx::SqliteConnection,
+    order_date: &str,
+) -> Result<String, AppError> {
     let date_part = order_date.replace('-', "");
     let prefix = format!("PO-{}-", date_part);
 
@@ -259,7 +258,6 @@ fn compute_amounts(params: &SavePurchaseOrderParams) -> (i64, i64, i64) {
 
     (total_amount, total_amount_base, payable_amount)
 }
-
 
 // ================================================================
 // IPC 命令
@@ -574,7 +572,6 @@ pub async fn get_purchase_order_detail(
     })
 }
 
-
 /// 保存采购单（新建/编辑）
 ///
 /// - 新建时自动生成单号，状态为草稿
@@ -630,9 +627,7 @@ pub async fn save_purchase_order(
         match current_status {
             None => return Err(AppError::Business("采购单不存在".to_string())),
             Some((status,)) if status != "draft" => {
-                return Err(AppError::Business(
-                    "仅草稿状态的采购单可以编辑".to_string(),
-                ));
+                return Err(AppError::Business("仅草稿状态的采购单可以编辑".to_string()));
             }
             _ => {}
         }
@@ -762,10 +757,7 @@ pub async fn save_purchase_order(
 ///
 /// 使用原子 UPDATE WHERE status = 'draft' 避免 TOCTOU 竞态。
 #[tauri::command]
-pub async fn approve_purchase_order(
-    db: State<'_, DbState>,
-    id: i64,
-) -> Result<(), AppError> {
+pub async fn approve_purchase_order(db: State<'_, DbState>, id: i64) -> Result<(), AppError> {
     let result = sqlx::query(
         r#"
         UPDATE purchase_orders SET
@@ -784,12 +776,11 @@ pub async fn approve_purchase_order(
 
     if result.rows_affected() == 0 {
         // 区分"不存在"和"状态不对"
-        let exists: Option<(i64,)> =
-            sqlx::query_as("SELECT id FROM purchase_orders WHERE id = ?")
-                .bind(id)
-                .fetch_optional(&db.pool)
-                .await
-                .map_err(|e| AppError::Database(format!("查询采购单失败: {}", e)))?;
+        let exists: Option<(i64,)> = sqlx::query_as("SELECT id FROM purchase_orders WHERE id = ?")
+            .bind(id)
+            .fetch_optional(&db.pool)
+            .await
+            .map_err(|e| AppError::Database(format!("查询采购单失败: {}", e)))?;
         if exists.is_none() {
             return Err(AppError::Business("采购单不存在".to_string()));
         }
@@ -803,19 +794,15 @@ pub async fn approve_purchase_order(
 ///
 /// 使用原子 UPDATE 避免 TOCTOU 竞态。仅草稿和已审核（且无关联入库单）状态可作废。
 #[tauri::command]
-pub async fn cancel_purchase_order(
-    db: State<'_, DbState>,
-    id: i64,
-) -> Result<(), AppError> {
+pub async fn cancel_purchase_order(db: State<'_, DbState>, id: i64) -> Result<(), AppError> {
     // 先检查是否有关联入库单（这个检查在作废场景下是安全的：
     // 即使并发创建了入库单，下面的原子 UPDATE 会因为状态已变为 partial_in 而失败）
-    let inbound_count: (i64,) = sqlx::query_as(
-        "SELECT COUNT(*) FROM inbound_orders WHERE purchase_id = ?",
-    )
-    .bind(id)
-    .fetch_one(&db.pool)
-    .await
-    .map_err(|e| AppError::Database(format!("查询关联入库单失败: {}", e)))?;
+    let inbound_count: (i64,) =
+        sqlx::query_as("SELECT COUNT(*) FROM inbound_orders WHERE purchase_id = ?")
+            .bind(id)
+            .fetch_one(&db.pool)
+            .await
+            .map_err(|e| AppError::Database(format!("查询关联入库单失败: {}", e)))?;
 
     if inbound_count.0 > 0 {
         return Err(AppError::Business(
@@ -840,12 +827,11 @@ pub async fn cancel_purchase_order(
     .map_err(|e| AppError::Database(format!("作废采购单失败: {}", e)))?;
 
     if result.rows_affected() == 0 {
-        let exists: Option<(i64,)> =
-            sqlx::query_as("SELECT id FROM purchase_orders WHERE id = ?")
-                .bind(id)
-                .fetch_optional(&db.pool)
-                .await
-                .map_err(|e| AppError::Database(format!("查询采购单失败: {}", e)))?;
+        let exists: Option<(i64,)> = sqlx::query_as("SELECT id FROM purchase_orders WHERE id = ?")
+            .bind(id)
+            .fetch_optional(&db.pool)
+            .await
+            .map_err(|e| AppError::Database(format!("查询采购单失败: {}", e)))?;
         if exists.is_none() {
             return Err(AppError::Business("采购单不存在".to_string()));
         }
@@ -859,10 +845,7 @@ pub async fn cancel_purchase_order(
 
 /// 删除采购单（仅草稿状态可删除）
 #[tauri::command]
-pub async fn delete_purchase_order(
-    db: State<'_, DbState>,
-    id: i64,
-) -> Result<(), AppError> {
+pub async fn delete_purchase_order(db: State<'_, DbState>, id: i64) -> Result<(), AppError> {
     let current: Option<(String,)> =
         sqlx::query_as("SELECT status FROM purchase_orders WHERE id = ?")
             .bind(id)
@@ -948,7 +931,6 @@ pub struct SupplierMaterialForPurchase {
     pub price_currency: String,
     pub lead_days: Option<i32>,
 }
-
 
 // ================================================================
 // 采购入库相关数据结构
@@ -1039,7 +1021,6 @@ pub struct PendingInboundItem {
     pub lot_tracking_mode: String,
 }
 
-
 // ================================================================
 // 采购入库 IPC 命令
 // ================================================================
@@ -1103,7 +1084,11 @@ pub async fn get_inbound_orders(
     let mut has_where = false;
     macro_rules! add_cond {
         ($q:expr) => {
-            if !has_where { $q.push(" WHERE "); } else { $q.push(" AND "); }
+            if !has_where {
+                $q.push(" WHERE ");
+            } else {
+                $q.push(" AND ");
+            }
         };
     }
 
@@ -1111,78 +1096,123 @@ pub async fn get_inbound_orders(
         if !keyword.trim().is_empty() {
             let kw = format!("%{}%", keyword.trim());
             add_cond!(&mut count_query);
-            count_query.push("(io.order_no LIKE "); count_query.push_bind(kw.clone());
-            count_query.push(" OR s.name LIKE "); count_query.push_bind(kw.clone()); count_query.push(")");
+            count_query.push("(io.order_no LIKE ");
+            count_query.push_bind(kw.clone());
+            count_query.push(" OR s.name LIKE ");
+            count_query.push_bind(kw.clone());
+            count_query.push(")");
             add_cond!(&mut data_query);
-            data_query.push("(io.order_no LIKE "); data_query.push_bind(kw.clone());
-            data_query.push(" OR s.name LIKE "); data_query.push_bind(kw); data_query.push(")");
+            data_query.push("(io.order_no LIKE ");
+            data_query.push_bind(kw.clone());
+            data_query.push(" OR s.name LIKE ");
+            data_query.push_bind(kw);
+            data_query.push(")");
             has_where = true;
         }
     }
 
     if let Some(pid) = filter.purchase_id {
         if pid > 0 {
-            add_cond!(&mut count_query); count_query.push("io.purchase_id = "); count_query.push_bind(pid);
-            add_cond!(&mut data_query); data_query.push("io.purchase_id = "); data_query.push_bind(pid);
+            add_cond!(&mut count_query);
+            count_query.push("io.purchase_id = ");
+            count_query.push_bind(pid);
+            add_cond!(&mut data_query);
+            data_query.push("io.purchase_id = ");
+            data_query.push_bind(pid);
             has_where = true;
         }
     }
 
     if let Some(sid) = filter.supplier_id {
         if sid > 0 {
-            add_cond!(&mut count_query); count_query.push("io.supplier_id = "); count_query.push_bind(sid);
-            add_cond!(&mut data_query); data_query.push("io.supplier_id = "); data_query.push_bind(sid);
+            add_cond!(&mut count_query);
+            count_query.push("io.supplier_id = ");
+            count_query.push_bind(sid);
+            add_cond!(&mut data_query);
+            data_query.push("io.supplier_id = ");
+            data_query.push_bind(sid);
             has_where = true;
         }
     }
 
     if let Some(wid) = filter.warehouse_id {
         if wid > 0 {
-            add_cond!(&mut count_query); count_query.push("io.warehouse_id = "); count_query.push_bind(wid);
-            add_cond!(&mut data_query); data_query.push("io.warehouse_id = "); data_query.push_bind(wid);
+            add_cond!(&mut count_query);
+            count_query.push("io.warehouse_id = ");
+            count_query.push_bind(wid);
+            add_cond!(&mut data_query);
+            data_query.push("io.warehouse_id = ");
+            data_query.push_bind(wid);
             has_where = true;
         }
     }
 
     if let Some(status) = &filter.status {
         if !status.trim().is_empty() {
-            add_cond!(&mut count_query); count_query.push("io.status = "); count_query.push_bind(status.trim().to_string());
-            add_cond!(&mut data_query); data_query.push("io.status = "); data_query.push_bind(status.trim().to_string());
+            add_cond!(&mut count_query);
+            count_query.push("io.status = ");
+            count_query.push_bind(status.trim().to_string());
+            add_cond!(&mut data_query);
+            data_query.push("io.status = ");
+            data_query.push_bind(status.trim().to_string());
             has_where = true;
         }
     }
 
     if let Some(df) = &filter.date_from {
         if !df.trim().is_empty() {
-            add_cond!(&mut count_query); count_query.push("io.inbound_date >= "); count_query.push_bind(df.trim().to_string());
-            add_cond!(&mut data_query); data_query.push("io.inbound_date >= "); data_query.push_bind(df.trim().to_string());
+            add_cond!(&mut count_query);
+            count_query.push("io.inbound_date >= ");
+            count_query.push_bind(df.trim().to_string());
+            add_cond!(&mut data_query);
+            data_query.push("io.inbound_date >= ");
+            data_query.push_bind(df.trim().to_string());
             has_where = true;
         }
     }
     if let Some(dt) = &filter.date_to {
         if !dt.trim().is_empty() {
-            add_cond!(&mut count_query); count_query.push("io.inbound_date <= "); count_query.push_bind(dt.trim().to_string());
-            add_cond!(&mut data_query); data_query.push("io.inbound_date <= "); data_query.push_bind(dt.trim().to_string());
-            #[allow(unused_assignments)] { has_where = true; }
+            add_cond!(&mut count_query);
+            count_query.push("io.inbound_date <= ");
+            count_query.push_bind(dt.trim().to_string());
+            add_cond!(&mut data_query);
+            data_query.push("io.inbound_date <= ");
+            data_query.push_bind(dt.trim().to_string());
+            #[allow(unused_assignments)]
+            {
+                has_where = true;
+            }
         }
     }
 
-    let total: (i64,) = count_query.build_query_as().fetch_one(&db.pool).await
+    let total: (i64,) = count_query
+        .build_query_as()
+        .fetch_one(&db.pool)
+        .await
         .map_err(|e| AppError::Database(format!("统计入库单数量失败: {}", e)))?;
 
     let page_size = filter.page_size.max(1);
     let page = filter.page.max(1);
     let offset = (page - 1) * page_size;
 
-    data_query.push(" ORDER BY io.id DESC LIMIT "); data_query.push_bind(page_size);
-    data_query.push(" OFFSET "); data_query.push_bind(offset);
+    data_query.push(" ORDER BY io.id DESC LIMIT ");
+    data_query.push_bind(page_size);
+    data_query.push(" OFFSET ");
+    data_query.push_bind(offset);
 
-    let items = data_query.build_query_as::<InboundOrderListItem>().fetch_all(&db.pool).await
+    let items = data_query
+        .build_query_as::<InboundOrderListItem>()
+        .fetch_all(&db.pool)
+        .await
         .map_err(|e| AppError::Database(format!("查询入库单列表失败: {}", e)))?;
 
-    Ok(PaginatedResponse { total: total.0, items, page, page_size })
+    Ok(PaginatedResponse {
+        total: total.0,
+        items,
+        page,
+        page_size,
+    })
 }
-
 
 /// 保存并确认入库单（核心事务）
 ///
@@ -1216,13 +1246,19 @@ pub async fn save_and_confirm_inbound(
             return Err(AppError::Business(format!("第 {} 行物料不能为空", i + 1)));
         }
         if item.quantity <= 0.0 {
-            return Err(AppError::Business(format!("第 {} 行入库数量必须大于 0", i + 1)));
+            return Err(AppError::Business(format!(
+                "第 {} 行入库数量必须大于 0",
+                i + 1
+            )));
         }
     }
 
     // 如果关联采购单，加载采购单信息用于费用分摊和校验
     // 注意：校验在事务内执行，避免 TOCTOU 竞态
-    let mut tx = db.pool.begin().await
+    let mut tx = db
+        .pool
+        .begin()
+        .await
         .map_err(|e| AppError::Database(format!("开启事务失败: {}", e)))?;
 
     let po_info = if let Some(purchase_id) = params.purchase_id {
@@ -1244,7 +1280,9 @@ pub async fn save_and_confirm_inbound(
         .ok_or_else(|| AppError::Business("关联的采购单不存在".to_string()))?;
 
         if po.0 != "approved" && po.0 != "partial_in" {
-            return Err(AppError::Business("采购单状态不允许入库（需已审核或部分入库）".to_string()));
+            return Err(AppError::Business(
+                "采购单状态不允许入库（需已审核或部分入库）".to_string(),
+            ));
         }
 
         // v1.0 校验仓库一致
@@ -1269,12 +1307,19 @@ pub async fn save_and_confirm_inbound(
     .map_err(|e| AppError::Database(format!("查询入库单号失败: {}", e)))?;
 
     let inbound_seq = max_inbound_no
-        .map(|no| no.trim_start_matches(&inbound_prefix).parse::<i64>().unwrap_or(0) + 1)
+        .map(|no| {
+            no.trim_start_matches(&inbound_prefix)
+                .parse::<i64>()
+                .unwrap_or(0)
+                + 1
+        })
         .unwrap_or(1);
     let inbound_no = format!("{}{:03}", inbound_prefix, inbound_seq);
 
     // 计算本次入库货款小计
-    let inbound_total: i64 = params.items.iter()
+    let inbound_total: i64 = params
+        .items
+        .iter()
         .map(|item| (item.quantity * item.unit_price as f64).round() as i64)
         .sum();
 
@@ -1287,8 +1332,11 @@ pub async fn save_and_confirm_inbound(
             // 判断是否为最后一笔入库
             // 检查本次入库后是否所有明细行都已完全入库
             let all_items_done = self::check_all_items_will_be_done(
-                &mut *tx, params.purchase_id.unwrap(), &params.items,
-            ).await?;
+                &mut *tx,
+                params.purchase_id.unwrap(),
+                &params.items,
+            )
+            .await?;
 
             if all_items_done {
                 // 最后一笔：倒挤法
@@ -1389,7 +1437,10 @@ pub async fn save_and_confirm_inbound(
                 if item.quantity > max_qty {
                     return Err(AppError::Business(format!(
                         "第 {} 行入库数量 {} 超过剩余可入库数量的 110%（剩余 {}，最大 {:.2}）",
-                        i + 1, item.quantity, remaining_qty, max_qty
+                        i + 1,
+                        item.quantity,
+                        remaining_qty,
+                        max_qty
                     )));
                 }
             }
@@ -1428,7 +1479,8 @@ pub async fn save_and_confirm_inbound(
         .map_err(|e| AppError::Database(format!("插入入库明细第 {} 行失败: {}", i + 1, e)))?;
 
         // 计算 USD 单位成本
-        let unit_cost_usd = inventory_ops::unit_cost_to_usd(item.unit_price, &currency, exchange_rate);
+        let unit_cost_usd =
+            inventory_ops::unit_cost_to_usd(item.unit_price, &currency, exchange_rate);
 
         // 更新库存（移动加权平均成本）
         let (before_qty, after_qty) = inventory_ops::increase_inventory(
@@ -1438,7 +1490,8 @@ pub async fn save_and_confirm_inbound(
             base_quantity,
             unit_cost_usd,
             &params.inbound_date,
-        ).await?;
+        )
+        .await?;
 
         // 查询物料批次追踪模式
         let lot_mode: Option<(String,)> = sqlx::query_as(
@@ -1476,7 +1529,8 @@ pub async fn save_and_confirm_inbound(
                 item.trace_attrs_json.as_deref(),
                 base_quantity,
                 unit_cost_usd,
-            ).await?;
+            )
+            .await?;
 
             // 回写入库明细的批次号
             sqlx::query("UPDATE inbound_order_items SET lot_no = ? WHERE id = ?")
@@ -1508,7 +1562,8 @@ pub async fn save_and_confirm_inbound(
             Some(inbound_item_id),
             Some(&inbound_no),
             None,
-        ).await?;
+        )
+        .await?;
 
         // 更新采购单明细行已入库数量
         if let Some(poi_id) = item.purchase_order_item_id {
@@ -1528,7 +1583,8 @@ pub async fn save_and_confirm_inbound(
         update_purchase_order_status(&mut *tx, purchase_id).await?;
     }
 
-    tx.commit().await
+    tx.commit()
+        .await
         .map_err(|e| AppError::Database(format!("提交事务失败: {}", e)))?;
 
     Ok(inbound_id)
@@ -1599,7 +1655,6 @@ async fn update_purchase_order_status(
 
     Ok(())
 }
-
 
 // ================================================================
 // 采购退货相关数据结构
@@ -1682,7 +1737,6 @@ pub struct SavePurchaseReturnParams {
     pub items: Vec<SaveReturnItemParams>,
 }
 
-
 // ================================================================
 // 采购退货 IPC 命令
 // ================================================================
@@ -1757,64 +1811,108 @@ pub async fn get_purchase_returns(
 
     let mut has_where = false;
     macro_rules! add_cond {
-        ($q:expr) => { if !has_where { $q.push(" WHERE "); } else { $q.push(" AND "); } };
+        ($q:expr) => {
+            if !has_where {
+                $q.push(" WHERE ");
+            } else {
+                $q.push(" AND ");
+            }
+        };
     }
 
     if let Some(keyword) = &filter.keyword {
         if !keyword.trim().is_empty() {
             let kw = format!("%{}%", keyword.trim());
             add_cond!(&mut count_query);
-            count_query.push("(pr.return_no LIKE "); count_query.push_bind(kw.clone());
-            count_query.push(" OR s.name LIKE "); count_query.push_bind(kw.clone()); count_query.push(")");
+            count_query.push("(pr.return_no LIKE ");
+            count_query.push_bind(kw.clone());
+            count_query.push(" OR s.name LIKE ");
+            count_query.push_bind(kw.clone());
+            count_query.push(")");
             add_cond!(&mut data_query);
-            data_query.push("(pr.return_no LIKE "); data_query.push_bind(kw.clone());
-            data_query.push(" OR s.name LIKE "); data_query.push_bind(kw); data_query.push(")");
+            data_query.push("(pr.return_no LIKE ");
+            data_query.push_bind(kw.clone());
+            data_query.push(" OR s.name LIKE ");
+            data_query.push_bind(kw);
+            data_query.push(")");
             has_where = true;
         }
     }
     if let Some(sid) = filter.supplier_id {
         if sid > 0 {
-            add_cond!(&mut count_query); count_query.push("pr.supplier_id = "); count_query.push_bind(sid);
-            add_cond!(&mut data_query); data_query.push("pr.supplier_id = "); data_query.push_bind(sid);
+            add_cond!(&mut count_query);
+            count_query.push("pr.supplier_id = ");
+            count_query.push_bind(sid);
+            add_cond!(&mut data_query);
+            data_query.push("pr.supplier_id = ");
+            data_query.push_bind(sid);
             has_where = true;
         }
     }
     if let Some(status) = &filter.status {
         if !status.trim().is_empty() {
-            add_cond!(&mut count_query); count_query.push("pr.status = "); count_query.push_bind(status.trim().to_string());
-            add_cond!(&mut data_query); data_query.push("pr.status = "); data_query.push_bind(status.trim().to_string());
+            add_cond!(&mut count_query);
+            count_query.push("pr.status = ");
+            count_query.push_bind(status.trim().to_string());
+            add_cond!(&mut data_query);
+            data_query.push("pr.status = ");
+            data_query.push_bind(status.trim().to_string());
             has_where = true;
         }
     }
     if let Some(df) = &filter.date_from {
         if !df.trim().is_empty() {
-            add_cond!(&mut count_query); count_query.push("pr.return_date >= "); count_query.push_bind(df.trim().to_string());
-            add_cond!(&mut data_query); data_query.push("pr.return_date >= "); data_query.push_bind(df.trim().to_string());
+            add_cond!(&mut count_query);
+            count_query.push("pr.return_date >= ");
+            count_query.push_bind(df.trim().to_string());
+            add_cond!(&mut data_query);
+            data_query.push("pr.return_date >= ");
+            data_query.push_bind(df.trim().to_string());
             has_where = true;
         }
     }
     if let Some(dt) = &filter.date_to {
         if !dt.trim().is_empty() {
-            add_cond!(&mut count_query); count_query.push("pr.return_date <= "); count_query.push_bind(dt.trim().to_string());
-            add_cond!(&mut data_query); data_query.push("pr.return_date <= "); data_query.push_bind(dt.trim().to_string());
-            #[allow(unused_assignments)] { has_where = true; }
+            add_cond!(&mut count_query);
+            count_query.push("pr.return_date <= ");
+            count_query.push_bind(dt.trim().to_string());
+            add_cond!(&mut data_query);
+            data_query.push("pr.return_date <= ");
+            data_query.push_bind(dt.trim().to_string());
+            #[allow(unused_assignments)]
+            {
+                has_where = true;
+            }
         }
     }
 
-    let total: (i64,) = count_query.build_query_as().fetch_one(&db.pool).await
+    let total: (i64,) = count_query
+        .build_query_as()
+        .fetch_one(&db.pool)
+        .await
         .map_err(|e| AppError::Database(format!("统计退货单数量失败: {}", e)))?;
 
     let page_size = filter.page_size.max(1);
     let page = filter.page.max(1);
     let offset = (page - 1) * page_size;
 
-    data_query.push(" ORDER BY pr.id DESC LIMIT "); data_query.push_bind(page_size);
-    data_query.push(" OFFSET "); data_query.push_bind(offset);
+    data_query.push(" ORDER BY pr.id DESC LIMIT ");
+    data_query.push_bind(page_size);
+    data_query.push(" OFFSET ");
+    data_query.push_bind(offset);
 
-    let items = data_query.build_query_as::<PurchaseReturnListItem>().fetch_all(&db.pool).await
+    let items = data_query
+        .build_query_as::<PurchaseReturnListItem>()
+        .fetch_all(&db.pool)
+        .await
         .map_err(|e| AppError::Database(format!("查询退货单列表失败: {}", e)))?;
 
-    Ok(PaginatedResponse { total: total.0, items, page, page_size })
+    Ok(PaginatedResponse {
+        total: total.0,
+        items,
+        page,
+        page_size,
+    })
 }
 
 /// 保存并确认采购退货单（核心事务）
@@ -1843,7 +1941,10 @@ pub async fn save_and_confirm_purchase_return(
     }
     for (i, item) in params.items.iter().enumerate() {
         if item.quantity <= 0.0 {
-            return Err(AppError::Business(format!("第 {} 行退货数量必须大于 0", i + 1)));
+            return Err(AppError::Business(format!(
+                "第 {} 行退货数量必须大于 0",
+                i + 1
+            )));
         }
     }
 
@@ -1859,7 +1960,10 @@ pub async fn save_and_confirm_purchase_return(
 
     let (supplier_id, currency, exchange_rate, warehouse_id) = inbound_info;
 
-    let mut tx = db.pool.begin().await
+    let mut tx = db
+        .pool
+        .begin()
+        .await
         .map_err(|e| AppError::Database(format!("开启事务失败: {}", e)))?;
 
     // 生成退货单号
@@ -1879,12 +1983,15 @@ pub async fn save_and_confirm_purchase_return(
     let return_no = format!("{}{:03}", prefix, next_seq);
 
     // 计算退货总金额
-    let total_amount: i64 = params.items.iter()
+    let total_amount: i64 = params
+        .items
+        .iter()
         .map(|item| (item.quantity * item.unit_price as f64).round() as i64)
         .sum();
 
     // USD 折算
-    let total_amount_base = inventory_ops::convert_to_usd_cents(total_amount, &currency, exchange_rate);
+    let total_amount_base =
+        inventory_ops::convert_to_usd_cents(total_amount, &currency, exchange_rate);
 
     // 插入退货单头
     let return_id: i64 = sqlx::query_scalar(
@@ -1941,19 +2048,22 @@ pub async fn save_and_confirm_purchase_return(
         .await
         .unwrap_or(0.0);
 
-        let inbound_qty: f64 = sqlx::query_scalar(
-            "SELECT quantity FROM inbound_order_items WHERE id = ?",
-        )
-        .bind(item.source_inbound_item_id)
-        .fetch_one(&mut *tx)
-        .await
-        .unwrap_or(0.0);
+        let inbound_qty: f64 =
+            sqlx::query_scalar("SELECT quantity FROM inbound_order_items WHERE id = ?")
+                .bind(item.source_inbound_item_id)
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap_or(0.0);
 
         let returnable_qty = inbound_qty - already_returned;
         if item.quantity > returnable_qty {
             return Err(AppError::Business(format!(
                 "第 {} 行退货数量 {} 超过可退数量 {:.2}（入库 {}，已退 {}）",
-                i + 1, item.quantity, returnable_qty, inbound_qty, already_returned
+                i + 1,
+                item.quantity,
+                returnable_qty,
+                inbound_qty,
+                already_returned
             )));
         }
 
@@ -1983,17 +2093,28 @@ pub async fn save_and_confirm_purchase_return(
         .await
         .map_err(|e| AppError::Database(format!("插入退货明细第 {} 行失败: {}", i + 1, e)))?;
 
-        let unit_cost_usd = inventory_ops::unit_cost_to_usd(item.unit_price, &currency, exchange_rate);
+        let unit_cost_usd =
+            inventory_ops::unit_cost_to_usd(item.unit_price, &currency, exchange_rate);
 
         // 扣减库存
         let (before_qty, after_qty, _avg_cost) = inventory_ops::decrease_inventory(
-            &mut *tx, item.material_id, warehouse_id, base_quantity, &params.return_date,
-        ).await?;
+            &mut *tx,
+            item.material_id,
+            warehouse_id,
+            base_quantity,
+            &params.return_date,
+        )
+        .await?;
 
         // 退货成本回调：重新计算移动加权平均成本
         inventory_ops::recalc_avg_cost_after_return(
-            &mut *tx, item.material_id, warehouse_id, base_quantity, unit_cost_usd,
-        ).await?;
+            &mut *tx,
+            item.material_id,
+            warehouse_id,
+            base_quantity,
+            unit_cost_usd,
+        )
+        .await?;
 
         // 扣减批次库存
         if let Some(lid) = item.lot_id {
@@ -2017,10 +2138,12 @@ pub async fn save_and_confirm_purchase_return(
             None,
             Some(&return_no),
             params.return_reason.as_deref(),
-        ).await?;
+        )
+        .await?;
     }
 
-    tx.commit().await
+    tx.commit()
+        .await
         .map_err(|e| AppError::Database(format!("提交事务失败: {}", e)))?;
 
     Ok(return_id)

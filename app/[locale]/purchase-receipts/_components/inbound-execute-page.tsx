@@ -11,16 +11,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatAmount } from '@/lib/currency'
-import type {
-  PendingInboundItem,
-  PurchaseOrderDetail,
-  SaveInboundOrderParams,
-} from '@/lib/tauri'
-import {
-  getPendingInboundItems,
-  getPurchaseOrderDetail,
-  saveAndConfirmInbound,
-} from '@/lib/tauri'
+import type { PendingInboundItem, PurchaseOrderDetail, SaveInboundOrderParams } from '@/lib/tauri'
+import { getPendingInboundItems, getPurchaseOrderDetail, saveAndConfirmInbound } from '@/lib/tauri'
 
 // ================================================================
 // 类型
@@ -86,10 +78,7 @@ export function InboundExecutePage({ purchaseId, onBack }: InboundExecutePagePro
     if (!purchaseId) return
     setLoading(true)
     try {
-      const [detail, pendingItems] = await Promise.all([
-        getPurchaseOrderDetail(purchaseId),
-        getPendingInboundItems(purchaseId),
-      ])
+      const [detail, pendingItems] = await Promise.all([getPurchaseOrderDetail(purchaseId), getPendingInboundItems(purchaseId)])
       setPoDetail(detail)
 
       if (pendingItems.length === 0) {
@@ -127,18 +116,21 @@ export function InboundExecutePage({ purchaseId, onBack }: InboundExecutePagePro
     }
   }, [purchaseId, t])
 
-  useEffect(() => { void loadData() }, [loadData])
+  useEffect(() => {
+    void loadData()
+  }, [loadData])
 
   // ================================================================
   // 计算
   // ================================================================
 
   /** 本次入库货款小计 */
-  const inboundTotal = useMemo(() =>
-    items.reduce((sum, item) => {
-      const qty = parseFloat(item.thisQty) || 0
-      return sum + Math.round(qty * item.unitPrice)
-    }, 0),
+  const inboundTotal = useMemo(
+    () =>
+      items.reduce((sum, item) => {
+        const qty = parseFloat(item.thisQty) || 0
+        return sum + Math.round(qty * item.unitPrice)
+      }, 0),
     [items],
   )
 
@@ -147,7 +139,7 @@ export function InboundExecutePage({ purchaseId, onBack }: InboundExecutePagePro
   // ================================================================
 
   const updateItem = (key: string, field: keyof InboundItemRow, value: string) => {
-    setItems(prev => prev.map(item => item.key === key ? { ...item, [field]: value } : item))
+    setItems(prev => prev.map(item => (item.key === key ? { ...item, [field]: value } : item)))
   }
 
   // ================================================================
@@ -266,11 +258,15 @@ export function InboundExecutePage({ purchaseId, onBack }: InboundExecutePagePro
             </div>
             <div>
               <Label className="text-muted-foreground text-xs">{t('warehouse')}</Label>
-              <div className="font-medium">{poDetail.warehouseName} <span className="text-muted-foreground text-xs">({t('warehouseLocked')})</span></div>
+              <div className="font-medium">
+                {poDetail.warehouseName} <span className="text-muted-foreground text-xs">({t('warehouseLocked')})</span>
+              </div>
             </div>
             <div>
               <Label className="text-muted-foreground text-xs">{t('currency')}</Label>
-              <div className="font-medium">{poDetail.currency} (1 USD = {poDetail.exchangeRate})</div>
+              <div className="font-medium">
+                {poDetail.currency} (1 USD = {poDetail.exchangeRate})
+              </div>
             </div>
             <div>
               <Label className="text-xs">{t('inboundDate')}</Label>
@@ -375,9 +371,7 @@ export function InboundExecutePage({ purchaseId, onBack }: InboundExecutePagePro
             <div className="text-primary font-mono text-xl font-bold">
               {poDetail && formatAmount(inboundTotal, poDetail.currency as 'VND' | 'CNY' | 'USD')}
             </div>
-            <p className="text-muted-foreground mt-1 text-xs">
-              {t('feeAutoAllocate')}
-            </p>
+            <p className="text-muted-foreground mt-1 text-xs">{t('feeAutoAllocate')}</p>
           </div>
           <div className="col-span-2 lg:col-span-2">
             <Label className="text-xs">{t('remark')}</Label>

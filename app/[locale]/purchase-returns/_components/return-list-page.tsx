@@ -72,22 +72,30 @@ export function ReturnListPage({ onNewReturn }: ReturnListPageProps) {
     }
   }, [])
 
-  useEffect(() => { void loadReturns() }, [loadReturns])
-  useEffect(() => { void loadInbounds() }, [loadInbounds])
+  useEffect(() => {
+    void loadReturns()
+  }, [loadReturns])
+  useEffect(() => {
+    void loadInbounds()
+  }, [loadInbounds])
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
-  const statusItems = useMemo(() => [
-    { value: 'all', label: t('allStatuses') },
-    { value: 'draft', label: t('statusDraft') },
-    { value: 'confirmed', label: t('statusConfirmed') },
-  ], [t])
+  const statusItems = useMemo(
+    () => [
+      { value: 'all', label: t('allStatuses') },
+      { value: 'draft', label: t('statusDraft') },
+      { value: 'confirmed', label: t('statusConfirmed') },
+    ],
+    [t],
+  )
 
-  const inboundItems = useMemo(() =>
-    confirmedInbounds.map(io => ({
-      value: String(io.id),
-      label: `${io.orderNo} - ${io.supplierName ?? ''}`,
-    })),
+  const inboundItems = useMemo(
+    () =>
+      confirmedInbounds.map(io => ({
+        value: String(io.id),
+        label: `${io.orderNo} - ${io.supplierName ?? ''}`,
+      })),
     [confirmedInbounds],
   )
 
@@ -104,7 +112,10 @@ export function ReturnListPage({ onNewReturn }: ReturnListPageProps) {
   }
 
   const handleReset = () => {
-    setDraftKeyword(''); setDraftStatus('all'); setDraftDateFrom(''); setDraftDateTo('')
+    setDraftKeyword('')
+    setDraftStatus('all')
+    setDraftDateFrom('')
+    setDraftDateTo('')
     setCurrentPage(1)
     setFilters({ page: 1, pageSize })
   }
@@ -128,13 +139,27 @@ export function ReturnListPage({ onNewReturn }: ReturnListPageProps) {
           <div className="min-w-[220px] flex-1">
             <div className="relative">
               <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-              <Input value={draftKeyword} onChange={e => setDraftKeyword(e.target.value)} placeholder={t('searchPlaceholder')} className="pl-9" onKeyDown={e => e.key === 'Enter' && handleSearch()} />
+              <Input
+                value={draftKeyword}
+                onChange={e => setDraftKeyword(e.target.value)}
+                placeholder={t('searchPlaceholder')}
+                className="pl-9"
+                onKeyDown={e => e.key === 'Enter' && handleSearch()}
+              />
             </div>
           </div>
           <div className="w-[140px]">
             <Select value={draftStatus} onValueChange={v => v && setDraftStatus(v)} items={statusItems}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{statusItems.map(item => (<SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>))}</SelectContent>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {statusItems.map(item => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
           <div className="flex items-center gap-2">
@@ -142,23 +167,42 @@ export function ReturnListPage({ onNewReturn }: ReturnListPageProps) {
             <span className="text-muted-foreground text-sm">~</span>
             <Input type="date" value={draftDateTo} onChange={e => setDraftDateTo(e.target.value)} className="w-[140px]" />
           </div>
-          <Button variant="outline" size="sm" onClick={handleReset}><RotateCcw data-icon="inline-start" />{tc('reset')}</Button>
-          <Button size="sm" onClick={handleSearch}><Search data-icon="inline-start" />{tc('search')}</Button>
+          <Button variant="outline" size="sm" onClick={handleReset}>
+            <RotateCcw data-icon="inline-start" />
+            {tc('reset')}
+          </Button>
+          <Button size="sm" onClick={handleSearch}>
+            <Search data-icon="inline-start" />
+            {tc('search')}
+          </Button>
         </div>
       </div>
 
       {/* 操作栏 */}
       <div className="flex flex-wrap items-center gap-3">
         {inboundItems.length > 0 && (
-          <Select value="" onValueChange={v => { if (v) onNewReturn(Number(v)) }} items={inboundItems}>
+          <Select
+            value=""
+            onValueChange={v => {
+              if (v) onNewReturn(Number(v))
+            }}
+            items={inboundItems}
+          >
             <SelectTrigger className="w-[360px]">
               <SelectValue placeholder={t('selectInboundOrder')} />
             </SelectTrigger>
-            <SelectContent>{inboundItems.map(item => (<SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>))}</SelectContent>
+            <SelectContent>
+              {inboundItems.map(item => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         )}
         <Button variant="outline" onClick={() => toast.info(t('exportComingSoon'))}>
-          <Download data-icon="inline-start" />{t('exportData')}
+          <Download data-icon="inline-start" />
+          {t('exportData')}
         </Button>
       </div>
 
@@ -171,8 +215,16 @@ export function ReturnListPage({ onNewReturn }: ReturnListPageProps) {
             <div className="flex flex-wrap items-center gap-3 sm:gap-4">
               <span className="font-medium">{t('totalRecords', { count: total })}</span>
               <Select value={pageSize.toString()} onValueChange={v => v && setPageSize(parseInt(v))} items={pageSizeItems}>
-                <SelectTrigger className="h-7 w-[120px] text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>{pageSizeItems.map(item => (<SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>))}</SelectContent>
+                <SelectTrigger className="h-7 w-[120px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {pageSizeItems.map(item => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
             <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
@@ -201,7 +253,9 @@ export function ReturnListPage({ onNewReturn }: ReturnListPageProps) {
               <TableRow key={item.id} className="group">
                 <TableCell className={`font-mono text-xs font-medium ${BUSINESS_LIST_STICKY_CELL_CLASS}`}>{item.returnNo}</TableCell>
                 <TableCell className="font-mono text-xs">{item.inboundOrderNo}</TableCell>
-                <TableCell><div className="truncate">{item.supplierName}</div></TableCell>
+                <TableCell>
+                  <div className="truncate">{item.supplierName}</div>
+                </TableCell>
                 <TableCell className="text-sm">{item.returnDate}</TableCell>
                 <TableCell className="text-right font-medium">{formatAmount(item.totalAmount, item.currency as 'VND' | 'CNY' | 'USD')}</TableCell>
                 <TableCell className="text-muted-foreground truncate text-sm">{item.returnReason ?? '—'}</TableCell>
@@ -211,7 +265,9 @@ export function ReturnListPage({ onNewReturn }: ReturnListPageProps) {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="icon-sm" onClick={() => toast.info(tc('developing'))} title={t('details')}><Eye className="size-3.5" /></Button>
+                  <Button variant="ghost" size="icon-sm" onClick={() => toast.info(tc('developing'))} title={t('details')}>
+                    <Eye className="size-3.5" />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))

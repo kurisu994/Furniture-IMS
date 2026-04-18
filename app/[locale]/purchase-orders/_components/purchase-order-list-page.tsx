@@ -8,14 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { PurchaseOrderFilter, PurchaseOrderListItem, SupplierListItem, WarehouseItem } from '@/lib/tauri'
-import {
-  approvePurchaseOrder,
-  cancelPurchaseOrder,
-  deletePurchaseOrder,
-  getPurchaseOrders,
-  getSuppliers,
-  getWarehouses,
-} from '@/lib/tauri'
+import { approvePurchaseOrder, cancelPurchaseOrder, deletePurchaseOrder, getPurchaseOrders, getSuppliers, getWarehouses } from '@/lib/tauri'
 import { PurchaseOrderTable } from './purchase-order-table'
 
 /** 采购单状态选项 */
@@ -72,10 +65,7 @@ export function PurchaseOrderListPage({ onEdit, onNew }: PurchaseOrderListPagePr
 
   const loadOptions = useCallback(async () => {
     try {
-      const [supplierResult, warehouseResult] = await Promise.all([
-        getSuppliers({ page: 1, pageSize: 999 }),
-        getWarehouses(false),
-      ])
+      const [supplierResult, warehouseResult] = await Promise.all([getSuppliers({ page: 1, pageSize: 999 }), getWarehouses(false)])
       setSuppliers(supplierResult.items)
       setWarehouses(warehouseResult)
     } catch (error) {
@@ -83,8 +73,12 @@ export function PurchaseOrderListPage({ onEdit, onNew }: PurchaseOrderListPagePr
     }
   }, [])
 
-  useEffect(() => { void loadOrders() }, [loadOrders])
-  useEffect(() => { void loadOptions() }, [loadOptions])
+  useEffect(() => {
+    void loadOrders()
+  }, [loadOrders])
+  useEffect(() => {
+    void loadOptions()
+  }, [loadOptions])
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
@@ -183,25 +177,43 @@ export function PurchaseOrderListPage({ onEdit, onNew }: PurchaseOrderListPagePr
           </div>
           <div className="w-[180px]">
             <Select value={draftSupplierId} onValueChange={v => v && setDraftSupplierId(v)} items={supplierItems}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {supplierItems.map(item => (<SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>))}
+                {supplierItems.map(item => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div className="w-[140px]">
             <Select value={draftStatus} onValueChange={v => v && setDraftStatus(v)} items={statusItems}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {statusItems.map(item => (<SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>))}
+                {statusItems.map(item => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div className="w-[160px]">
             <Select value={draftWarehouseId} onValueChange={v => v && setDraftWarehouseId(v)} items={warehouseItems}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {warehouseItems.map(item => (<SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>))}
+                {warehouseItems.map(item => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -211,10 +223,12 @@ export function PurchaseOrderListPage({ onEdit, onNew }: PurchaseOrderListPagePr
             <Input type="date" value={draftDateTo} onChange={e => setDraftDateTo(e.target.value)} className="w-[140px]" />
           </div>
           <Button variant="outline" size="sm" onClick={handleReset}>
-            <RotateCcw data-icon="inline-start" />{tc('reset')}
+            <RotateCcw data-icon="inline-start" />
+            {tc('reset')}
           </Button>
           <Button size="sm" onClick={handleSearch}>
-            <Search data-icon="inline-start" />{tc('search')}
+            <Search data-icon="inline-start" />
+            {tc('search')}
           </Button>
         </div>
       </div>
@@ -222,10 +236,12 @@ export function PurchaseOrderListPage({ onEdit, onNew }: PurchaseOrderListPagePr
       {/* 操作栏 */}
       <div className="flex items-center gap-3">
         <Button onClick={onNew}>
-          <Plus data-icon="inline-start" />{t('addOrder')}
+          <Plus data-icon="inline-start" />
+          {t('addOrder')}
         </Button>
         <Button variant="outline" onClick={() => toast.info(t('exportComingSoon'))}>
-          <Download data-icon="inline-start" />{t('exportData')}
+          <Download data-icon="inline-start" />
+          {t('exportData')}
         </Button>
       </div>
 
@@ -238,7 +254,10 @@ export function PurchaseOrderListPage({ onEdit, onNew }: PurchaseOrderListPagePr
         pageSize={pageSize}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
-        onPageSizeChange={s => { setPageSize(s); setCurrentPage(1) }}
+        onPageSizeChange={s => {
+          setPageSize(s)
+          setCurrentPage(1)
+        }}
         onEdit={order => onEdit(order.id)}
         onApprove={handleApprove}
         onCancel={handleCancel}

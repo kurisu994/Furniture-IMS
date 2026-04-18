@@ -12,20 +12,8 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatAmount } from '@/lib/currency'
-import type {
-  PurchaseOrderDetail,
-  SavePurchaseOrderParams,
-  SupplierListItem,
-  SupplierMaterialForPurchase,
-  WarehouseItem,
-} from '@/lib/tauri'
-import {
-  getPurchaseOrderDetail,
-  getSuppliers,
-  getSupplierMaterialsForPurchase,
-  getWarehouses,
-  savePurchaseOrder,
-} from '@/lib/tauri'
+import type { PurchaseOrderDetail, SavePurchaseOrderParams, SupplierListItem, SupplierMaterialForPurchase, WarehouseItem } from '@/lib/tauri'
+import { getPurchaseOrderDetail, getSuppliers, getSupplierMaterialsForPurchase, getWarehouses, savePurchaseOrder } from '@/lib/tauri'
 
 // ================================================================
 // 类型定义
@@ -119,10 +107,7 @@ export function PurchaseOrderEditPage({ orderId, onBack }: PurchaseOrderEditPage
   /** 加载供应商和仓库选项 */
   const loadOptions = useCallback(async () => {
     try {
-      const [supplierResult, warehouseResult] = await Promise.all([
-        getSuppliers({ page: 1, pageSize: 999 }),
-        getWarehouses(false),
-      ])
+      const [supplierResult, warehouseResult] = await Promise.all([getSuppliers({ page: 1, pageSize: 999 }), getWarehouses(false)])
       setSuppliers(supplierResult.items)
       setWarehouses(warehouseResult)
     } catch (error) {
@@ -183,8 +168,12 @@ export function PurchaseOrderEditPage({ orderId, onBack }: PurchaseOrderEditPage
     }
   }, [])
 
-  useEffect(() => { void loadOptions() }, [loadOptions])
-  useEffect(() => { void loadDetail() }, [loadDetail])
+  useEffect(() => {
+    void loadOptions()
+  }, [loadOptions])
+  useEffect(() => {
+    void loadDetail()
+  }, [loadDetail])
 
   // 供应商变更时加载物料报价并带出币种
   useEffect(() => {
@@ -260,10 +249,22 @@ export function PurchaseOrderEditPage({ orderId, onBack }: PurchaseOrderEditPage
 
   const handleSave = async () => {
     // 基本校验
-    if (!supplierId) { toast.error(t('fieldRequired', { field: t('supplier') })); return }
-    if (!warehouseId) { toast.error(t('fieldRequired', { field: t('warehouse') })); return }
-    if (!orderDate) { toast.error(t('fieldRequired', { field: t('orderDate') })); return }
-    if (items.length === 0) { toast.error(t('pleaseAddItems')); return }
+    if (!supplierId) {
+      toast.error(t('fieldRequired', { field: t('supplier') }))
+      return
+    }
+    if (!warehouseId) {
+      toast.error(t('fieldRequired', { field: t('warehouse') }))
+      return
+    }
+    if (!orderDate) {
+      toast.error(t('fieldRequired', { field: t('orderDate') }))
+      return
+    }
+    if (items.length === 0) {
+      toast.error(t('pleaseAddItems'))
+      return
+    }
 
     setSaving(true)
     try {
@@ -306,20 +307,11 @@ export function PurchaseOrderEditPage({ orderId, onBack }: PurchaseOrderEditPage
   // 下拉选项
   // ================================================================
 
-  const supplierItems = useMemo(
-    () => suppliers.map(s => ({ value: String(s.id), label: `${s.name} [${s.code}]` })),
-    [suppliers],
-  )
+  const supplierItems = useMemo(() => suppliers.map(s => ({ value: String(s.id), label: `${s.name} [${s.code}]` })), [suppliers])
 
-  const warehouseItems = useMemo(
-    () => warehouses.map(w => ({ value: String(w.id), label: w.name })),
-    [warehouses],
-  )
+  const warehouseItems = useMemo(() => warehouses.map(w => ({ value: String(w.id), label: w.name })), [warehouses])
 
-  const currencyItems = useMemo(
-    () => CURRENCY_OPTIONS.map(c => ({ value: c.value, label: c.label })),
-    [],
-  )
+  const currencyItems = useMemo(() => CURRENCY_OPTIONS.map(c => ({ value: c.value, label: c.label })), [])
 
   // ================================================================
   // 渲染
@@ -342,9 +334,7 @@ export function PurchaseOrderEditPage({ orderId, onBack }: PurchaseOrderEditPage
             <ArrowLeft className="size-4" />
             {tc('back')}
           </Button>
-          <h2 className="text-foreground text-xl font-bold">
-            {isNew ? t('addOrder') : `${t('title')} - ${orderNo}`}
-          </h2>
+          <h2 className="text-foreground text-xl font-bold">{isNew ? t('addOrder') : `${t('title')} - ${orderNo}`}</h2>
           {!isNew && (
             <Badge variant={status === 'draft' ? 'secondary' : 'default'}>
               {t(`status${status.charAt(0).toUpperCase() + status.slice(1).replace('_', '')}` as any)}
@@ -352,7 +342,9 @@ export function PurchaseOrderEditPage({ orderId, onBack }: PurchaseOrderEditPage
           )}
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={onBack}>{tc('cancel')}</Button>
+          <Button variant="outline" onClick={onBack}>
+            {tc('cancel')}
+          </Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? tc('loading') : tc('save')}
           </Button>
@@ -371,7 +363,9 @@ export function PurchaseOrderEditPage({ orderId, onBack }: PurchaseOrderEditPage
               </SelectTrigger>
               <SelectContent>
                 {supplierItems.map(item => (
-                  <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -398,7 +392,9 @@ export function PurchaseOrderEditPage({ orderId, onBack }: PurchaseOrderEditPage
               </SelectTrigger>
               <SelectContent>
                 {warehouseItems.map(item => (
-                  <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -407,13 +403,24 @@ export function PurchaseOrderEditPage({ orderId, onBack }: PurchaseOrderEditPage
           {/* 结算币种 */}
           <div className="grid gap-2">
             <Label>{t('currency')}</Label>
-            <Select value={currency} onValueChange={v => { if (v) { setCurrency(v); if (v === 'USD') setExchangeRate('1') } }} items={currencyItems}>
+            <Select
+              value={currency}
+              onValueChange={v => {
+                if (v) {
+                  setCurrency(v)
+                  if (v === 'USD') setExchangeRate('1')
+                }
+              }}
+              items={currencyItems}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {currencyItems.map(item => (
-                  <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -527,15 +534,9 @@ export function PurchaseOrderEditPage({ orderId, onBack }: PurchaseOrderEditPage
                         min={0}
                       />
                     </TableCell>
-                    <TableCell className="text-right font-mono font-medium">
-                      {formatAmount(item.amount, currency as 'VND' | 'CNY' | 'USD')}
-                    </TableCell>
+                    <TableCell className="text-right font-mono font-medium">{formatAmount(item.amount, currency as 'VND' | 'CNY' | 'USD')}</TableCell>
                     <TableCell>
-                      <Input
-                        value={item.remark}
-                        onChange={e => updateItem(item.key, 'remark', e.target.value)}
-                        className="h-8 w-full text-sm"
-                      />
+                      <Input value={item.remark} onChange={e => updateItem(item.key, 'remark', e.target.value)} className="h-8 w-full text-sm" />
                     </TableCell>
                     <TableCell>
                       <Button variant="ghost" size="icon-sm" onClick={() => removeItem(item.key)}>
@@ -555,45 +556,23 @@ export function PurchaseOrderEditPage({ orderId, onBack }: PurchaseOrderEditPage
         <div className="grid grid-cols-2 gap-x-8 gap-y-4 lg:grid-cols-5">
           <div className="grid gap-1">
             <Label className="text-muted-foreground text-xs">{t('totalAmount')}</Label>
-            <div className="font-mono text-lg font-semibold">
-              {formatAmount(totalAmount, currency as 'VND' | 'CNY' | 'USD')}
-            </div>
+            <div className="font-mono text-lg font-semibold">{formatAmount(totalAmount, currency as 'VND' | 'CNY' | 'USD')}</div>
           </div>
           <div className="grid gap-1">
             <Label className="text-xs">{t('discountAmount')}</Label>
-            <Input
-              type="number"
-              value={discountAmount}
-              onChange={e => setDiscountAmount(e.target.value)}
-              className="h-8 font-mono"
-              min={0}
-            />
+            <Input type="number" value={discountAmount} onChange={e => setDiscountAmount(e.target.value)} className="h-8 font-mono" min={0} />
           </div>
           <div className="grid gap-1">
             <Label className="text-xs">{t('freightAmount')}</Label>
-            <Input
-              type="number"
-              value={freightAmount}
-              onChange={e => setFreightAmount(e.target.value)}
-              className="h-8 font-mono"
-              min={0}
-            />
+            <Input type="number" value={freightAmount} onChange={e => setFreightAmount(e.target.value)} className="h-8 font-mono" min={0} />
           </div>
           <div className="grid gap-1">
             <Label className="text-xs">{t('otherCharges')}</Label>
-            <Input
-              type="number"
-              value={otherCharges}
-              onChange={e => setOtherCharges(e.target.value)}
-              className="h-8 font-mono"
-              min={0}
-            />
+            <Input type="number" value={otherCharges} onChange={e => setOtherCharges(e.target.value)} className="h-8 font-mono" min={0} />
           </div>
           <div className="grid gap-1">
             <Label className="text-muted-foreground text-xs">{t('payableAmount')}</Label>
-            <div className="text-primary font-mono text-xl font-bold">
-              {formatAmount(payableAmount, currency as 'VND' | 'CNY' | 'USD')}
-            </div>
+            <div className="text-primary font-mono text-xl font-bold">{formatAmount(payableAmount, currency as 'VND' | 'CNY' | 'USD')}</div>
           </div>
         </div>
       </div>

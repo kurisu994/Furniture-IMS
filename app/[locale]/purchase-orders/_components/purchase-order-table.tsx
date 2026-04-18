@@ -141,7 +141,9 @@ export function PurchaseOrderTable({
               </SelectTrigger>
               <SelectContent>
                 {pageSizeItems.map(item => (
-                  <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -173,9 +175,7 @@ export function PurchaseOrderTable({
           orders.map(order => (
             <TableRow key={order.id} className="group">
               {/* 采购单号（固定首列） */}
-              <TableCell className={`font-mono text-xs font-medium ${BUSINESS_LIST_STICKY_CELL_CLASS}`}>
-                {order.orderNo}
-              </TableCell>
+              <TableCell className={`font-mono text-xs font-medium ${BUSINESS_LIST_STICKY_CELL_CLASS}`}>{order.orderNo}</TableCell>
 
               {/* 供应商 */}
               <TableCell>
@@ -187,20 +187,22 @@ export function PurchaseOrderTable({
 
               {/* 币种 */}
               <TableCell>
-                <Badge variant="outline" className="font-mono text-xs">{order.currency}</Badge>
+                <Badge variant="outline" className="font-mono text-xs">
+                  {order.currency}
+                </Badge>
               </TableCell>
 
               {/* 状态 */}
               <TableCell>
-                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_STYLES[order.status] || STATUS_STYLES.draft}`}>
+                <span
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_STYLES[order.status] || STATUS_STYLES.draft}`}
+                >
                   {t(STATUS_LABEL_KEYS[order.status] || 'statusDraft')}
                 </span>
               </TableCell>
 
               {/* 订单总金额 */}
-              <TableCell className="text-right font-medium">
-                {formatAmount(order.payableAmount, order.currency as 'VND' | 'CNY' | 'USD')}
-              </TableCell>
+              <TableCell className="text-right font-medium">{formatAmount(order.payableAmount, order.currency as 'VND' | 'CNY' | 'USD')}</TableCell>
 
               {/* 入库进度 */}
               <TableCell>
@@ -219,9 +221,7 @@ export function PurchaseOrderTable({
               <TableCell className="text-sm">{order.createdByName ?? '—'}</TableCell>
 
               {/* 操作 */}
-              <TableCell className="text-right">
-                {renderActions(order)}
-              </TableCell>
+              <TableCell className="text-right">{renderActions(order)}</TableCell>
             </TableRow>
           ))
         )}
