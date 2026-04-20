@@ -127,6 +127,21 @@ pub fn run() {
             commands::purchase::get_returnable_inbound_items,
             commands::purchase::get_purchase_returns,
             commands::purchase::save_and_confirm_purchase_return,
+            // 销售管理
+            commands::sales::get_sales_orders,
+            commands::sales::get_sales_order_detail,
+            commands::sales::save_sales_order,
+            commands::sales::approve_sales_order,
+            commands::sales::cancel_sales_order,
+            commands::sales::delete_sales_order,
+            // 销售出库
+            commands::sales::get_pending_outbound_items,
+            commands::sales::get_outbound_orders,
+            commands::sales::save_and_confirm_outbound,
+            // 销售退货
+            commands::sales::get_returnable_outbound_items,
+            commands::sales::get_sales_returns,
+            commands::sales::save_and_confirm_sales_return,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
