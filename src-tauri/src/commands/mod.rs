@@ -6,6 +6,7 @@
 pub mod bom;
 pub mod category;
 pub mod customer;
+pub mod inventory;
 pub mod inventory_ops;
 pub mod material;
 pub mod purchase;

@@ -142,6 +142,22 @@ pub fn run() {
             commands::sales::get_returnable_outbound_items,
             commands::sales::get_sales_returns,
             commands::sales::save_and_confirm_sales_return,
+            // 库存管理
+            commands::inventory::get_inventory_list,
+            commands::inventory::get_inventory_detail,
+            commands::inventory::get_inventory_transactions,
+            // 库存盘点
+            commands::inventory::get_stock_checks,
+            commands::inventory::get_stock_check_detail,
+            commands::inventory::create_stock_check,
+            commands::inventory::update_stock_check_items,
+            commands::inventory::confirm_stock_check,
+            // 库存调拨
+            commands::inventory::get_transfers,
+            commands::inventory::get_transfer_detail,
+            commands::inventory::save_transfer,
+            commands::inventory::confirm_transfer,
+            commands::inventory::delete_transfer,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
