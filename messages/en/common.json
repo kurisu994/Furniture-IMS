@@ -49,6 +49,7 @@
     "stockChecks": "Stock Checks",
     "stockTransfers": "Stock Transfers",
     "customOrders": "Custom Orders",
+    "productionOrders": "Production Orders",
     "replenishment": "Smart Replenishment",
     "finance": "Finance",
     "payables": "Accounts Payable",

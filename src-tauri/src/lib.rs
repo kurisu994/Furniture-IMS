@@ -168,6 +168,17 @@ pub fn run() {
             commands::custom_order::create_custom_bom,
             commands::custom_order::calculate_custom_cost,
             commands::custom_order::convert_to_sales_order,
+            // 生产工单
+            commands::production_order::get_production_orders,
+            commands::production_order::get_production_order_detail,
+            commands::production_order::save_production_order,
+            commands::production_order::delete_production_order,
+            commands::production_order::pick_materials,
+            commands::production_order::return_materials,
+            commands::production_order::start_production,
+            commands::production_order::complete_production,
+            commands::production_order::finish_production_order,
+            commands::production_order::cancel_production_order,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -28,6 +28,13 @@
   - **转销售单**：后端 1 个 IPC 命令，从已确认定制单创建草稿销售单（带入客户/币种/报价金额），自动关联
   - **前端列表页**：5 维筛选（关键词/客户/状态/定制类型/日期范围）+ 状态操作按钮 + BusinessListTableShell 骨架
   - **前端详情/编辑页**：头信息表单 + 配置明细表格（inline 编辑）+ 定制 BOM 管理区 + 原材料预留状态展示 + 报价信息汇总（成本/加价/报价/预估毛利）
+- **生产工单模块（全栈）**：实现工单全生命周期：创建 → 领料出库 → 生产中 → 完工入库 → 关闭/取消
+  - **工单 CRUD**：后端创建 3 张表（`production_orders`, `production_order_materials`, `production_completions`）并提供列表/详情/新建编辑/删除基础命令，支持关联标准 BOM 或定向从定制单下发
+  - **领料与退料**：后端 `pick_materials`/`return_materials` 命令，调用 `inventory_ops.rs`，支持按批次、仓库超领上限（120%）出仓。同时支持消耗定制单的特殊原材料预留库存
+  - **完工入库与成本联动**：后端 `complete_production` 命令，支持多次按批完工入库（存入成品仓），完工时自动基于已领料的动态加权成本平均摊入成品库存
+  - **状态流转**：前端交互与后端 `start_production`/`finish_production_order`/`cancel_production_order` 命令闭环，实现从草稿到完工各关键环节锁定保护
+  - **前端列表/详情页**：新增 `/production-orders` 路由，包含列表页 5 维状态过滤、详情页/执行态 UI 隔离、独立提供领料、退料、完工入库的数据弹窗表单
+  - 国际化与集成：支持中/越/英三语（`productionOrders` 命名空间），新增侧边栏 Hammer 图标导航入口
   - 国际化：customOrders 命名空间，覆盖中/越/英三语
 
 ---

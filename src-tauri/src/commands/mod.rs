@@ -10,6 +10,7 @@ pub mod customer;
 pub mod inventory;
 pub mod inventory_ops;
 pub mod material;
+pub mod production_order;
 pub mod purchase;
 pub mod sales;
 pub mod supplier;

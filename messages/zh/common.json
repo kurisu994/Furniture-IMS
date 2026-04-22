@@ -49,6 +49,7 @@
     "stockChecks": "库存盘点",
     "stockTransfers": "库存调拨",
     "customOrders": "定制单管理",
+    "productionOrders": "生产工单",
     "replenishment": "智能补货",
     "finance": "财务管理",
     "payables": "应付账款",

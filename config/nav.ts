@@ -10,6 +10,7 @@ import {
   DollarSign,
   FileText,
   FolderTree,
+  Hammer,
   Hash,
   Layers,
   LayoutDashboard,
@@ -139,6 +140,11 @@ export const navConfig: NavItem[] = [
     titleKey: 'nav.customOrders',
     href: '/custom-orders',
     icon: Palette,
+  },
+  {
+    titleKey: 'nav.productionOrders',
+    href: '/production-orders',
+    icon: Hammer,
   },
   {
     titleKey: 'nav.replenishment',
