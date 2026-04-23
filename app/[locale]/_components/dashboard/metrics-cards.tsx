@@ -2,12 +2,30 @@
 
 import { AlertTriangle, CreditCard, RefreshCw, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { useEffect, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { ensureReplenishmentRules, getReplenishmentSuggestions } from '@/lib/tauri'
 
 /** 看板主要指标卡片 */
 export function MetricsCards() {
   const t = useTranslations('dashboard')
+
+  const [replenishmentCount, setReplenishmentCount] = useState(0)
+  const [urgentDelta, setUrgentDelta] = useState(0)
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        await ensureReplenishmentRules()
+        const suggestions = await getReplenishmentSuggestions({})
+        setReplenishmentCount(suggestions.length)
+        setUrgentDelta(suggestions.filter(s => s.urgency === 'urgent').length)
+      } catch {
+        // 非 Tauri 环境下降级为 0
+      }
+    })()
+  }, [])
 
   return (
     <>
@@ -94,7 +112,10 @@ export function MetricsCards() {
           </div>
           <div>
             <p className="text-[11px] font-bold tracking-tight text-slate-500 uppercase">{t('replenishmentPending')}</p>
-            <p className="text-lg font-bold text-slate-800 dark:text-slate-200">{t('itemCount', { count: 8 })}</p>
+            <p className="text-lg font-bold text-slate-800 dark:text-slate-200">
+              {t('itemCount', { count: replenishmentCount })}
+              {urgentDelta > 0 && <span className="ml-2 text-sm font-normal text-red-600 dark:text-red-400">({urgentDelta} urgent)</span>}
+            </p>
           </div>
         </div>
       </div>

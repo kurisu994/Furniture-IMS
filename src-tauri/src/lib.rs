@@ -179,6 +179,14 @@ pub fn run() {
             commands::production_order::complete_production,
             commands::production_order::finish_production_order,
             commands::production_order::cancel_production_order,
+            // 智能补货
+            commands::replenishment::ensure_replenishment_rules,
+            commands::replenishment::get_replenishment_suggestions,
+            commands::replenishment::get_replenishment_rules,
+            commands::replenishment::update_replenishment_rule,
+            commands::replenishment::get_consumption_trend,
+            commands::replenishment::create_purchase_orders_from_suggestions,
+            commands::replenishment::ignore_suggestion,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
