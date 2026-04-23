@@ -1632,18 +1632,19 @@ pub async fn save_and_confirm_outbound(
             sqlx::query(
                 r#"
                 INSERT INTO receivables (
-                    customer_id, source_type, source_id, source_no,
-                    currency, exchange_rate,
-                    total_amount, paid_amount, status,
+                    customer_id, outbound_id, adjustment_type, order_no,
+                    receivable_date, currency, exchange_rate,
+                    receivable_amount, received_amount, status,
                     due_date, remark,
                     created_at, updated_at
-                ) VALUES (?, 'outbound', ?, ?, ?, ?, ?, 0, 'pending', NULL, NULL,
+                ) VALUES (?, ?, 'normal', ?, ?, ?, ?, ?, 0, 'unpaid', NULL, NULL,
                     datetime('now'), datetime('now'))
                 "#,
             )
             .bind(cid)
             .bind(outbound_id)
             .bind(&outbound_no)
+            .bind(&params.outbound_date)
             .bind(&currency)
             .bind(exchange_rate)
             .bind(receivable_amount)
@@ -2215,22 +2216,23 @@ pub async fn save_and_confirm_sales_return(
         sqlx::query(
             r#"
             INSERT INTO receivables (
-                customer_id, source_type, source_id, source_no,
-                currency, exchange_rate,
-                total_amount, paid_amount, status,
+                customer_id, return_id, adjustment_type, order_no,
+                receivable_date, currency, exchange_rate,
+                receivable_amount, received_amount, status,
                 due_date, remark,
                 created_at, updated_at
-            ) VALUES (?, 'sales_return', ?, ?, ?, ?, ?, 0, 'pending', NULL, ?,
+            ) VALUES (?, ?, 'return_offset', ?, ?, ?, ?, ?, 0, 'unpaid', NULL, ?,
                 datetime('now'), datetime('now'))
             "#,
         )
         .bind(customer_id)
         .bind(return_id)
         .bind(&return_no)
+        .bind(&params.return_date)
         .bind(&currency)
         .bind(exchange_rate)
         .bind(-total_amount) // 负数冲减
-        .bind(&params.return_reason)
+        .bind(&params.return_reason) // 备注使用退货原因
         .execute(&mut *tx)
         .await
         .map_err(|e| AppError::Database(format!("冲减应收账款失败: {}", e)))?;

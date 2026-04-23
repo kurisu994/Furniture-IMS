@@ -187,6 +187,13 @@ pub fn run() {
             commands::replenishment::get_consumption_trend,
             commands::replenishment::create_purchase_orders_from_suggestions,
             commands::replenishment::ignore_suggestion,
+            // 财务管理
+            commands::finance::get_payables,
+            commands::finance::get_payment_records,
+            commands::finance::record_payment,
+            commands::finance::get_receivables,
+            commands::finance::get_receipt_records,
+            commands::finance::record_receipt,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

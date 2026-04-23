@@ -1587,6 +1587,34 @@ pub async fn save_and_confirm_inbound(
         update_purchase_order_status(&mut *tx, purchase_id).await?;
     }
 
+    // 生成应付账款
+    if let Some(sid) = params.supplier_id {
+        if payable_amount > 0 {
+            sqlx::query(
+                r#"
+                INSERT INTO payables (
+                    supplier_id, inbound_id, adjustment_type, order_no,
+                    payable_date, currency, exchange_rate,
+                    payable_amount, paid_amount, status,
+                    due_date, remark,
+                    created_at, updated_at
+                ) VALUES (?, ?, 'normal', ?, ?, ?, ?, ?, 0, 'unpaid', NULL, NULL,
+                    datetime('now'), datetime('now'))
+                "#,
+            )
+            .bind(sid)
+            .bind(inbound_id)
+            .bind(&inbound_no)
+            .bind(&params.inbound_date)
+            .bind(&currency)
+            .bind(exchange_rate)
+            .bind(payable_amount)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| AppError::Database(format!("生成应付账款失败: {}", e)))?;
+        }
+    }
+
     tx.commit()
         .await
         .map_err(|e| AppError::Database(format!("提交事务失败: {}", e)))?;
@@ -2145,6 +2173,33 @@ pub async fn save_and_confirm_purchase_return(
             params.return_reason.as_deref(),
         )
         .await?;
+    }
+
+    // 冲减应付账款：在 payables 表中插入一条负数记录
+    if total_amount > 0 {
+        sqlx::query(
+            r#"
+            INSERT INTO payables (
+                supplier_id, return_id, adjustment_type, order_no,
+                payable_date, currency, exchange_rate,
+                payable_amount, paid_amount, status,
+                due_date, remark,
+                created_at, updated_at
+            ) VALUES (?, ?, 'return_offset', ?, ?, ?, ?, ?, 0, 'unpaid', NULL, ?,
+                datetime('now'), datetime('now'))
+            "#,
+        )
+        .bind(supplier_id)
+        .bind(return_id)
+        .bind(&return_no)
+        .bind(&params.return_date)
+        .bind(&currency)
+        .bind(exchange_rate)
+        .bind(-total_amount) // 负数冲减
+        .bind(&params.return_reason) // 备注使用退货原因
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| AppError::Database(format!("冲减应付账款失败: {}", e)))?;
     }
 
     tx.commit()
