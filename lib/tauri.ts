@@ -45,7 +45,6 @@ export function isTauriEnv(): boolean {
  */
 export async function invoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   if (!isTauriEnv()) {
-    console.warn(`[Tauri] 非 Tauri 环境，跳过命令: ${command}`, args)
     // 智能 mock 常见的数据结构，避免 dev-web 下页面崩溃
 
     // 1. 明确返回数组的命令
@@ -65,28 +64,21 @@ export async function invoke<T>(command: string, args?: Record<string, unknown>)
       return { items: [] } as unknown as T
     }
 
-    // 3. 分页列表命令，返回 { total: 0, items: [], page: 1, pageSize: 10 }
-    if (
-      command.includes('_orders') ||
-      command.includes('_list') ||
-      command.includes('_materials') ||
-      command === 'get_inventory_transactions' ||
-      command === 'get_inventory_counts' ||
-      command === 'get_inventory_transfers' ||
-      command === 'get_materials'
-    ) {
+    // 3. 详情查询与分页列表的混合探测策略
+    if (command.startsWith('get_') || command.includes('_list')) {
       if (args && ('filter' in args || 'page' in args)) {
-        return { total: 0, items: [], page: 1, pageSize: 10 } as unknown as T
+        return { total: 0, items: [], page: 1, pageSize: 10, page_size: 10 } as unknown as T
       }
-      return { total: 0, items: [] } as unknown as T
+      // 如果不是分页列表，默认当做返回空对象详情
+      return {} as unknown as T
     }
 
-    // 4. 详情查询命令，返回空对象
-    if (command.includes('get_') || command.includes('calculate_')) {
+    if (command.startsWith('calculate_')) {
       return {} as unknown as T
     }
 
     // 5. 其余写操作命令默认返回 null
+    console.warn(`[Tauri] 未匹配到 Mock 策略的命令: ${command}`, args)
     return null as unknown as T
   }
 
