@@ -12,6 +12,7 @@ import {
   BusinessListTableLoadingRows,
   BusinessListTableShell,
 } from '@/components/common/business-list-table'
+import { useAuth } from '@/components/providers/auth-provider'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
@@ -31,6 +32,7 @@ import {
   getConsumptionTrend,
   getReplenishmentRules,
   getReplenishmentSuggestions,
+  getSuppliers,
   ignoreSuggestion,
   updateReplenishmentRule,
 } from '@/lib/tauri'
@@ -51,6 +53,7 @@ const URGENCY_OPTIONS = [
 export function ReplenishmentPage() {
   const t = useTranslations('replenishment')
   const tc = useTranslations('common')
+  const { user } = useAuth()
 
   // 建议列表
   const [suggestions, setSuggestions] = useState<ReplenishmentSuggestion[]>([])
@@ -98,6 +101,9 @@ export function ReplenishmentPage() {
     preferred_supplier_id: null,
     is_enabled: true,
   })
+
+  // 供应商选项（策略编辑用）
+  const [supplierOptions, setSupplierOptions] = useState<{ value: string; label: string }[]>([])
 
   // 加载建议数据
   const loadSuggestions = useCallback(async () => {
@@ -183,7 +189,7 @@ export function ReplenishmentPage() {
     if (ids.length === 0) return
     setConfirmOrderOpen(false)
     try {
-      const result = await createPurchaseOrdersFromSuggestions(ids)
+      const result = await createPurchaseOrdersFromSuggestions(ids, user?.id, user?.display_name)
       if (result.errors.length === 0) {
         toast.success(t('createPoSuccess', { count: result.created_orders.length }))
       } else {
@@ -285,6 +291,14 @@ export function ReplenishmentPage() {
       preferred_supplier_id: rule.preferred_supplier_id,
       is_enabled: rule.is_enabled,
     })
+    // 加载供应商选项
+    if (supplierOptions.length === 0) {
+      getSuppliers({ page: 1, pageSize: 200 })
+        .then(res => {
+          setSupplierOptions([{ value: '', label: '-' }, ...res.items.map(s => ({ value: String(s.id), label: `${s.code} - ${s.name}` }))])
+        })
+        .catch(() => {})
+    }
     setEditRuleOpen(true)
   }
 
@@ -668,6 +682,25 @@ export function ReplenishmentPage() {
                 value={editForm.batch_multiple}
                 onChange={e => setEditForm(f => ({ ...f, batch_multiple: Number(e.target.value) }))}
               />
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <Label>{t('rule.preferredSupplier')}</Label>
+              <Select
+                value={editForm.preferred_supplier_id != null ? String(editForm.preferred_supplier_id) : ''}
+                onValueChange={v => setEditForm(f => ({ ...f, preferred_supplier_id: v ? Number(v) : null }))}
+                items={supplierOptions}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="-" />
+                </SelectTrigger>
+                <SelectContent>
+                  {supplierOptions.map(o => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center justify-between gap-4">
               <Label>{t('rule.enabled')}</Label>

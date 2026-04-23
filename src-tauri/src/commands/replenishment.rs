@@ -245,7 +245,12 @@ pub async fn get_replenishment_suggestions(
 ) -> Result<Vec<ReplenishmentSuggestion>, AppError> {
     let (default_analysis, default_lead, default_safety) = get_default_params(&db.pool).await;
 
+    // 获取当天日期（用于排除已处理的物料）
+    let today = chrono::Local::now().format("%Y-%m-%d").to_string();
+
     // 1. 查询所有启用物料 + 库存聚合 + 策略 + 首选供应商
+    //    使用 INNER JOIN replenishment_rules 确保只查有策略且已启用的物料
+    //    通过子查询排除当天已有 ignored/ordered 日志的物料
     let mut query = QueryBuilder::<'_, Sqlite>::new(
         r#"
         SELECT
@@ -270,6 +275,7 @@ pub async fn get_replenishment_suggestions(
             sm.supply_price AS pref_supply_price,
             sm.currency AS pref_supply_currency
         FROM materials m
+        JOIN replenishment_rules rr ON rr.material_id = m.id AND rr.is_enabled = 1
         LEFT JOIN categories c ON c.id = m.category_id
         LEFT JOIN units u ON u.id = m.base_unit_id
         LEFT JOIN (
@@ -279,11 +285,19 @@ pub async fn get_replenishment_suggestions(
             FROM inventory
             GROUP BY material_id
         ) inv ON inv.material_id = m.id
-        LEFT JOIN replenishment_rules rr ON rr.material_id = m.id AND rr.is_enabled = 1
         LEFT JOIN supplier_materials sm ON sm.supplier_id = rr.preferred_supplier_id
                                         AND sm.material_id = m.id
         LEFT JOIN suppliers ps ON ps.id = rr.preferred_supplier_id AND ps.is_enabled = 1
         WHERE m.is_enabled = 1
+          AND m.id NOT IN (
+              SELECT material_id FROM replenishment_logs
+              WHERE suggestion_date = "#,
+    );
+    query.push_bind(today.clone());
+    query.push(
+        r#"
+              AND status IN ('ignored', 'ordered')
+          )
         "#,
     );
 
@@ -345,8 +359,6 @@ pub async fn get_replenishment_suggestions(
     }
 
     // 3. 计算每个物料的补货建议
-    let today = chrono::Local::now().format("%Y-%m-%d").to_string();
-
     let mut suggestions: Vec<ReplenishmentSuggestion> = Vec::new();
 
     for row in &rows {
@@ -715,7 +727,11 @@ pub async fn get_consumption_trend(
 pub async fn create_purchase_orders_from_suggestions(
     db: State<'_, DbState>,
     material_ids: Vec<i64>,
+    user_id: Option<i64>,
+    user_name: Option<String>,
 ) -> Result<BulkCreatePoResult, AppError> {
+    let uid = user_id.unwrap_or(1);
+    let uname = user_name.unwrap_or_else(|| "admin".to_string());
     if material_ids.is_empty() {
         return Err(AppError::Business("请至少选择一个物料".to_string()));
     }
@@ -884,34 +900,31 @@ pub async fn create_purchase_orders_from_suggestions(
             }
         };
 
-        // 查询默认仓库（按物料类型取第一个物料的类型）
-        let material_type = &group_items[0].material_type;
-        let warehouse_id: Option<(i64,)> =
-            sqlx::query_as("SELECT warehouse_id FROM default_warehouses WHERE material_type = ?")
-                .bind(material_type)
-                .fetch_optional(&db.pool)
-                .await
-                .map_err(|e| AppError::Database(format!("查询默认仓库失败: {}", e)))?;
+        // 查询 fallback 仓库 ID（当物料类型无默认仓时使用）
+        let fallback_wh_id: Option<i64> = {
+            let any_wh: Option<(i64,)> =
+                sqlx::query_as("SELECT id FROM warehouses WHERE is_enabled = 1 LIMIT 1")
+                    .fetch_optional(&db.pool)
+                    .await
+                    .map_err(|e| AppError::Database(format!("查询仓库失败: {}", e)))?;
+            any_wh.map(|(id,)| id)
+        };
 
-        let wh_id = match warehouse_id {
-            Some((id,)) => id,
-            None => {
-                // Fallback: 取任意启用仓库
-                let any_wh: Option<(i64,)> =
-                    sqlx::query_as("SELECT id FROM warehouses WHERE is_enabled = 1 LIMIT 1")
-                        .fetch_optional(&db.pool)
-                        .await
-                        .map_err(|e| AppError::Database(format!("查询仓库失败: {}", e)))?;
-                match any_wh {
-                    Some((id,)) => id,
-                    None => {
-                        result
-                            .errors
-                            .push("系统中无可用仓库，无法生成采购单".to_string());
-                        continue;
-                    }
-                }
-            }
+        if fallback_wh_id.is_none() {
+            result
+                .errors
+                .push("系统中无可用仓库，无法生成采购单".to_string());
+            continue;
+        }
+
+        // 预查询所有物料类型对应的默认仓库
+        let wh_map: std::collections::HashMap<String, i64> = {
+            let wh_rows: Vec<(String, i64)> =
+                sqlx::query_as("SELECT material_type, warehouse_id FROM default_warehouses")
+                    .fetch_all(&db.pool)
+                    .await
+                    .map_err(|e| AppError::Database(format!("查询默认仓库映射失败: {}", e)))?;
+            wh_rows.into_iter().collect()
         };
 
         // 开始事务：生成采购单
@@ -961,6 +974,13 @@ pub async fn create_purchase_orders_from_suggestions(
                 ((total_amount as f64 / exchange_rate) * factor).round() as i64
             };
 
+            // 采购单头仓库：取第一个物料对应的默认仓（仅作为单头字段，明细行各自按类型取仓）
+            let head_wh_id = wh_map
+                .get(&group_items[0].material_type)
+                .copied()
+                .or(fallback_wh_id)
+                .unwrap();
+
             // 插入采购单头
             let order_id: i64 = sqlx::query_scalar(
                 r#"
@@ -974,7 +994,7 @@ pub async fn create_purchase_orders_from_suggestions(
                 ) VALUES (
                     ?, ?, ?, NULL, ?, ?, ?, 'draft',
                     ?, ?, 0, 0, 0, ?,
-                    '由补货看板自动生成', 1, 'admin',
+                    '由补货看板自动生成', ?, ?,
                     datetime('now'), datetime('now')
                 ) RETURNING id
                 "#,
@@ -982,12 +1002,14 @@ pub async fn create_purchase_orders_from_suggestions(
             .bind(&order_no)
             .bind(sid)
             .bind(&today)
-            .bind(wh_id)
+            .bind(head_wh_id)
             .bind(&supplier_currency)
             .bind(exchange_rate)
             .bind(total_amount)
             .bind(total_amount_base)
             .bind(total_amount) // payable_amount = total_amount（无折扣/运费）
+            .bind(uid)
+            .bind(&uname)
             .fetch_one(&mut *tx)
             .await
             .map_err(|e| AppError::Database(format!("创建采购单失败: {}", e)))?;
@@ -998,6 +1020,13 @@ pub async fn create_purchase_orders_from_suggestions(
                 let amount = (item.suggested_qty * price as f64).round() as i64;
                 let base_quantity = item.suggested_qty * item.conversion_rate;
                 let unit_name = item.unit_name.clone().unwrap_or_default();
+
+                // 按物料类型取对应默认仓库
+                let item_wh_id = wh_map
+                    .get(&item.material_type)
+                    .copied()
+                    .or(fallback_wh_id)
+                    .unwrap();
 
                 sqlx::query(
                     r#"
@@ -1019,7 +1048,7 @@ pub async fn create_purchase_orders_from_suggestions(
                 .bind(item.suggested_qty)
                 .bind(price)
                 .bind(amount)
-                .bind(wh_id)
+                .bind(item_wh_id)
                 .bind(i as i32)
                 .execute(&mut *tx)
                 .await
