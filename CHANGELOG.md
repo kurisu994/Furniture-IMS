@@ -36,6 +36,16 @@
   - **前端列表/详情页**：新增 `/production-orders` 路由，包含列表页 5 维状态过滤、详情页/执行态 UI 隔离、独立提供领料、退料、完工入库的数据弹窗表单
   - 国际化与集成：支持中/越/英三语（`productionOrders` 命名空间），新增侧边栏 Hammer 图标导航入口
   - 国际化：customOrders 命名空间，覆盖中/越/英三语
+- **智能补货模块（全栈）**：实现完整的补货策略配置 → 建议计算 → 一键采购全流程
+  - **补货策略引擎**：后端 2 个 IPC 命令（`ensure_replenishment_rules` 补齐策略 / `update_replenishment_rule` 更新策略），按物料维度配置分析天数、补货周期、安全天数、批量倍数和首选供应商
+  - **补货建议计算**：后端 1 个 IPC 命令（`get_replenishment_suggestions`），基于日均消耗（`sales_out` + `production_out`）× 补货周期，综合安全库存和可用库存，按批量倍数向上取整，并判定紧急度（urgent/warning/normal）
+  - **消耗趋势分析**：后端 1 个 IPC 命令（`get_consumption_trend`），按日聚合 90 天出库数据，前端使用 recharts AreaChart 可视化
+  - **一键生成采购单**：后端 1 个 IPC 命令（`create_purchase_orders_from_suggestions`），按供应商分组、独立事务生成草稿采购单，自动处理汇率和默认仓库映射
+  - **忽略建议**：后端 1 个 IPC 命令（`ignore_suggestion`），标记不需要补货的建议为已忽略
+  - **策略配置查询**：后端 1 个 IPC 命令（`get_replenishment_rules`），分页查询物料级别的策略配置
+  - **前端补货看板**：建议列表（紧急度行高亮 + Badge）+ 筛选区（关键词/紧急度/分类）+ 多选批量下单（确认弹窗）+ 消耗趋势图弹窗 + 策略配置弹窗（查看/编辑/启用禁用）
+  - **首页 KPI 联动**：首页看板“待补货”指标从 mock 改为实时查询补货建议数量
+  - 国际化：replenishment 命名空间（含 trend/rule 子空间），覆盖中/越/英三语
 
 ---
 
