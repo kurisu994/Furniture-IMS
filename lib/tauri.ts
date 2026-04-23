@@ -54,6 +54,19 @@ export async function invoke<T>(command: string, args?: Record<string, unknown>)
       'calculate_bom_demand',
       'reverse_lookup_material',
       'get_category_tree',
+      'get_warehouses',
+      'get_system_configs',
+      'get_supplier_categories',
+      'get_material_reference_options',
+      'get_default_warehouses',
+      'get_all_units',
+      'get_supplier_materials_for_purchase',
+      'get_pending_inbound_items',
+      'get_returnable_inbound_items',
+      'get_pending_outbound_items',
+      'get_returnable_outbound_items',
+      'get_replenishment_suggestions',
+      'get_consumption_trend',
     ]
     if (arrayCommands.includes(command)) {
       return [] as unknown as T
