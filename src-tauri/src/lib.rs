@@ -194,6 +194,11 @@ pub fn run() {
             commands::finance::get_receivables,
             commands::finance::get_receipt_records,
             commands::finance::record_receipt,
+            // 报表中心
+            commands::reports::get_inventory_report_summary,
+            commands::reports::get_inventory_aging_analysis,
+            commands::reports::get_inventory_slow_moving,
+            commands::reports::get_inventory_trend,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

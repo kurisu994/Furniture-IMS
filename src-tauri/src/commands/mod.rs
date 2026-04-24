@@ -14,6 +14,7 @@ pub mod material;
 pub mod production_order;
 pub mod purchase;
 pub mod replenishment;
+pub mod reports;
 pub mod sales;
 pub mod supplier;
 pub mod unit;
