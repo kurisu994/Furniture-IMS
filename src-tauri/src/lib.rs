@@ -199,6 +199,12 @@ pub fn run() {
             commands::reports::get_inventory_aging_analysis,
             commands::reports::get_inventory_slow_moving,
             commands::reports::get_inventory_trend,
+            commands::reports::get_purchase_report_summary,
+            commands::reports::get_purchase_supplier_ranking,
+            commands::reports::get_purchase_material_detail,
+            commands::reports::get_sales_report_summary,
+            commands::reports::get_sales_customer_ranking,
+            commands::reports::get_sales_material_detail,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

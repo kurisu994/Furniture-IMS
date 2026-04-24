@@ -3317,6 +3317,76 @@ export interface TrendFilter {
   warehouse_id?: number | null
 }
 
+/** 采购报表筛选 */
+export interface PurchaseReportFilter {
+  start_date?: string | null
+  end_date?: string | null
+  supplier_id?: number | null
+  warehouse_id?: number | null
+  keyword?: string | null
+  page: number
+  page_size: number
+}
+
+/** 销售报表筛选 */
+export interface SalesReportFilter {
+  start_date?: string | null
+  end_date?: string | null
+  customer_id?: number | null
+  warehouse_id?: number | null
+  keyword?: string | null
+  page: number
+  page_size: number
+}
+
+/** 业务报表 KPI */
+export interface BusinessReportStats {
+  total_amount: number
+  order_count: number
+  partner_count: number
+  material_count: number
+}
+
+/** 业务报表趋势点 */
+export interface BusinessTrendPoint {
+  date: string
+  amount: number
+  order_count: number
+}
+
+/** 往来单位排行项 */
+export interface PartnerRankItem {
+  partner_id: number
+  partner_code: string
+  partner_name: string
+  amount: number
+  order_count: number
+  ratio: number
+}
+
+/** 物料报表明细项 */
+export interface MaterialReportItem {
+  material_id: number
+  material_code: string
+  material_name: string
+  spec: string | null
+  unit_name: string
+  quantity: number
+  amount: number
+  avg_price: number
+}
+
+/** 业务报表响应 */
+export interface BusinessReportResponse<T> {
+  generated_at: string
+  stats: BusinessReportStats
+  trend: BusinessTrendPoint[]
+  items: T[]
+  total: number
+  page: number
+  page_size: number
+}
+
 // ---- 报表查询 ----
 
 /** 获取库存收发存汇总 */
@@ -3356,4 +3426,52 @@ export async function getInventoryTrend(filter: TrendFilter): Promise<InventoryT
     return { generated_at: new Date().toISOString(), points: [] }
   }
   return invoke<InventoryTrendResponse>('get_inventory_trend', { filter })
+}
+
+function emptyBusinessReport<T>(page: number, pageSize: number): BusinessReportResponse<T> {
+  return {
+    generated_at: new Date().toISOString(),
+    stats: { total_amount: 0, order_count: 0, partner_count: 0, material_count: 0 },
+    trend: [],
+    items: [],
+    total: 0,
+    page,
+    page_size: pageSize,
+  }
+}
+
+/** 获取采购汇总趋势 */
+export async function getPurchaseReportSummary(filter: PurchaseReportFilter): Promise<BusinessReportResponse<BusinessTrendPoint>> {
+  if (!isTauriEnv()) return emptyBusinessReport<BusinessTrendPoint>(filter.page, filter.page_size)
+  return invoke<BusinessReportResponse<BusinessTrendPoint>>('get_purchase_report_summary', { filter })
+}
+
+/** 获取供应商采购排行 */
+export async function getPurchaseSupplierRanking(filter: PurchaseReportFilter): Promise<BusinessReportResponse<PartnerRankItem>> {
+  if (!isTauriEnv()) return emptyBusinessReport<PartnerRankItem>(filter.page, filter.page_size)
+  return invoke<BusinessReportResponse<PartnerRankItem>>('get_purchase_supplier_ranking', { filter })
+}
+
+/** 获取采购物料明细 */
+export async function getPurchaseMaterialDetail(filter: PurchaseReportFilter): Promise<BusinessReportResponse<MaterialReportItem>> {
+  if (!isTauriEnv()) return emptyBusinessReport<MaterialReportItem>(filter.page, filter.page_size)
+  return invoke<BusinessReportResponse<MaterialReportItem>>('get_purchase_material_detail', { filter })
+}
+
+/** 获取销售汇总趋势 */
+export async function getSalesReportSummary(filter: SalesReportFilter): Promise<BusinessReportResponse<BusinessTrendPoint>> {
+  if (!isTauriEnv()) return emptyBusinessReport<BusinessTrendPoint>(filter.page, filter.page_size)
+  return invoke<BusinessReportResponse<BusinessTrendPoint>>('get_sales_report_summary', { filter })
+}
+
+/** 获取客户销售排行 */
+export async function getSalesCustomerRanking(filter: SalesReportFilter): Promise<BusinessReportResponse<PartnerRankItem>> {
+  if (!isTauriEnv()) return emptyBusinessReport<PartnerRankItem>(filter.page, filter.page_size)
+  return invoke<BusinessReportResponse<PartnerRankItem>>('get_sales_customer_ranking', { filter })
+}
+
+/** 获取销售物料明细 */
+export async function getSalesMaterialDetail(filter: SalesReportFilter): Promise<BusinessReportResponse<MaterialReportItem>> {
+  if (!isTauriEnv()) return emptyBusinessReport<MaterialReportItem>(filter.page, filter.page_size)
+  return invoke<BusinessReportResponse<MaterialReportItem>>('get_sales_material_detail', { filter })
 }

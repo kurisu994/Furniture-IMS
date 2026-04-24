@@ -6,6 +6,7 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+use sqlx::SqlitePool;
 use tauri::State;
 
 use crate::db::DbState;
@@ -140,6 +141,83 @@ pub struct TrendFilter {
     pub warehouse_id: Option<i64>,
 }
 
+/// 采购报表筛选
+#[derive(Debug, Clone, Deserialize)]
+pub struct PurchaseReportFilter {
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
+    pub supplier_id: Option<i64>,
+    pub warehouse_id: Option<i64>,
+    pub keyword: Option<String>,
+    pub page: u32,
+    pub page_size: u32,
+}
+
+/// 销售报表筛选
+#[derive(Debug, Clone, Deserialize)]
+pub struct SalesReportFilter {
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
+    pub customer_id: Option<i64>,
+    pub warehouse_id: Option<i64>,
+    pub keyword: Option<String>,
+    pub page: u32,
+    pub page_size: u32,
+}
+
+/// 业务报表 KPI
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct BusinessReportStats {
+    pub total_amount: i64,
+    pub order_count: i64,
+    pub partner_count: i64,
+    pub material_count: i64,
+}
+
+/// 报表趋势点
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+pub struct BusinessTrendPoint {
+    pub date: String,
+    pub amount: i64,
+    pub order_count: i64,
+}
+
+/// 往来单位排行项
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct PartnerRankItem {
+    pub partner_id: i64,
+    pub partner_code: String,
+    pub partner_name: String,
+    pub amount: i64,
+    pub order_count: i64,
+    pub ratio: f64,
+}
+
+/// 物料报表明细项
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct MaterialReportItem {
+    pub material_id: i64,
+    pub material_code: String,
+    pub material_name: String,
+    pub spec: Option<String>,
+    pub unit_name: String,
+    pub quantity: f64,
+    pub amount: i64,
+    pub avg_price: i64,
+}
+
+/// 业务报表响应
+#[derive(Debug, Serialize)]
+pub struct BusinessReportResponse<T> {
+    pub generated_at: String,
+    pub stats: BusinessReportStats,
+    pub trend: Vec<BusinessTrendPoint>,
+    pub items: Vec<T>,
+    pub total: i64,
+    pub page: u32,
+    pub page_size: u32,
+}
+
 // ================================================================
 // 内部辅助结构
 // ================================================================
@@ -192,6 +270,46 @@ struct DailyMovement {
 /// 获取当前时间字符串（ISO 8601）
 fn now_iso8601() -> String {
     chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string()
+}
+
+/// 将原币最小单位金额折算为 USD 最小单位金额。
+/// VND 原币按整数存储，CNY/USD 按分存储。
+#[cfg(test)]
+fn amount_to_usd_minor(amount: i64, currency: &str, exchange_rate: f64) -> i64 {
+    if exchange_rate <= 0.0 {
+        return 0;
+    }
+    if currency == "USD" {
+        amount
+    } else {
+        let factor = if currency == "VND" { 100.0 } else { 1.0 };
+        ((amount as f64 / exchange_rate) * factor).round() as i64
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::amount_to_usd_minor;
+
+    #[test]
+    fn amount_to_usd_minor_keeps_usd_minor_units() {
+        assert_eq!(amount_to_usd_minor(12_345, "USD", 1.0), 12_345);
+    }
+
+    #[test]
+    fn amount_to_usd_minor_converts_cny_minor_units() {
+        assert_eq!(amount_to_usd_minor(720, "CNY", 7.2), 100);
+    }
+
+    #[test]
+    fn amount_to_usd_minor_converts_vnd_integer_units() {
+        assert_eq!(amount_to_usd_minor(25_000, "VND", 25_000.0), 100);
+    }
+
+    #[test]
+    fn amount_to_usd_minor_handles_invalid_exchange_rate() {
+        assert_eq!(amount_to_usd_minor(12_345, "CNY", 0.0), 0);
+    }
 }
 
 // ================================================================
@@ -689,5 +807,528 @@ pub async fn get_inventory_trend(
     Ok(InventoryTrendResponse {
         generated_at: now_iso8601(),
         points,
+    })
+}
+
+// ================================================================
+// IPC 命令 5-10: 采购 / 销售报表
+// ================================================================
+
+fn default_report_dates(start_date: Option<&str>, end_date: Option<&str>) -> (String, String) {
+    let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
+    let first_of_month = chrono::Utc::now().format("%Y-%m-01").to_string();
+    (
+        start_date.unwrap_or(&first_of_month).to_string(),
+        end_date.unwrap_or(&today).to_string(),
+    )
+}
+
+fn page_offset(page: u32, page_size: u32) -> (u32, u32, u32) {
+    let page = page.max(1);
+    let page_size = page_size.max(1);
+    (page, page_size, (page - 1) * page_size)
+}
+
+async fn purchase_stats(
+    pool: &SqlitePool,
+    filter: &PurchaseReportFilter,
+    start_date: &str,
+    end_date: &str,
+) -> Result<BusinessReportStats, AppError> {
+    sqlx::query_as(
+        r#"
+        SELECT
+            COALESCE(SUM(CASE WHEN currency = 'USD' THEN payable_amount
+                              WHEN currency = 'VND' THEN CAST(ROUND(payable_amount * 100.0 / exchange_rate, 0) AS INTEGER)
+                              ELSE CAST(ROUND(payable_amount * 1.0 / exchange_rate, 0) AS INTEGER) END), 0) AS total_amount,
+            COUNT(DISTINCT id) AS order_count,
+            COUNT(DISTINCT supplier_id) AS partner_count,
+            COALESCE((
+                SELECT COUNT(DISTINCT ioi.material_id)
+                FROM inbound_orders io2
+                JOIN inbound_order_items ioi ON ioi.inbound_id = io2.id
+                LEFT JOIN materials m ON m.id = ioi.material_id
+                WHERE io2.status = 'confirmed' AND io2.inbound_type = 'purchase'
+                  AND io2.inbound_date BETWEEN ?1 AND ?2
+                  AND (?3 IS NULL OR io2.supplier_id = ?3)
+                  AND (?4 IS NULL OR io2.warehouse_id = ?4)
+                  AND (?5 IS NULL OR io2.order_no LIKE '%' || ?5 || '%' OR m.code LIKE '%' || ?5 || '%' OR m.name LIKE '%' || ?5 || '%')
+            ), 0) AS material_count
+        FROM inbound_orders io
+        WHERE io.status = 'confirmed' AND io.inbound_type = 'purchase'
+          AND io.inbound_date BETWEEN ?1 AND ?2
+          AND (?3 IS NULL OR io.supplier_id = ?3)
+          AND (?4 IS NULL OR io.warehouse_id = ?4)
+          AND (?5 IS NULL OR io.order_no LIKE '%' || ?5 || '%' OR EXISTS (
+              SELECT 1 FROM inbound_order_items ioi JOIN materials m ON m.id = ioi.material_id
+              WHERE ioi.inbound_id = io.id AND (m.code LIKE '%' || ?5 || '%' OR m.name LIKE '%' || ?5 || '%')
+          ))
+        "#,
+    )
+    .bind(start_date)
+    .bind(end_date)
+    .bind(filter.supplier_id)
+    .bind(filter.warehouse_id)
+    .bind(&filter.keyword)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| AppError::Database(format!("统计采购报表失败: {}", e)))
+}
+
+async fn sales_stats(
+    pool: &SqlitePool,
+    filter: &SalesReportFilter,
+    start_date: &str,
+    end_date: &str,
+) -> Result<BusinessReportStats, AppError> {
+    sqlx::query_as(
+        r#"
+        SELECT
+            COALESCE(SUM(CASE WHEN currency = 'USD' THEN receivable_amount
+                              WHEN currency = 'VND' THEN CAST(ROUND(receivable_amount * 100.0 / exchange_rate, 0) AS INTEGER)
+                              ELSE CAST(ROUND(receivable_amount * 1.0 / exchange_rate, 0) AS INTEGER) END), 0) AS total_amount,
+            COUNT(DISTINCT id) AS order_count,
+            COUNT(DISTINCT customer_id) AS partner_count,
+            COALESCE((
+                SELECT COUNT(DISTINCT ooi.material_id)
+                FROM outbound_orders oo2
+                JOIN outbound_order_items ooi ON ooi.outbound_id = oo2.id
+                LEFT JOIN materials m ON m.id = ooi.material_id
+                WHERE oo2.status = 'confirmed' AND oo2.outbound_type = 'sales'
+                  AND oo2.outbound_date BETWEEN ?1 AND ?2
+                  AND (?3 IS NULL OR oo2.customer_id = ?3)
+                  AND (?4 IS NULL OR oo2.warehouse_id = ?4)
+                  AND (?5 IS NULL OR oo2.order_no LIKE '%' || ?5 || '%' OR m.code LIKE '%' || ?5 || '%' OR m.name LIKE '%' || ?5 || '%')
+            ), 0) AS material_count
+        FROM outbound_orders oo
+        WHERE oo.status = 'confirmed' AND oo.outbound_type = 'sales'
+          AND oo.outbound_date BETWEEN ?1 AND ?2
+          AND (?3 IS NULL OR oo.customer_id = ?3)
+          AND (?4 IS NULL OR oo.warehouse_id = ?4)
+          AND (?5 IS NULL OR oo.order_no LIKE '%' || ?5 || '%' OR EXISTS (
+              SELECT 1 FROM outbound_order_items ooi JOIN materials m ON m.id = ooi.material_id
+              WHERE ooi.outbound_id = oo.id AND (m.code LIKE '%' || ?5 || '%' OR m.name LIKE '%' || ?5 || '%')
+          ))
+        "#,
+    )
+    .bind(start_date)
+    .bind(end_date)
+    .bind(filter.customer_id)
+    .bind(filter.warehouse_id)
+    .bind(&filter.keyword)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| AppError::Database(format!("统计销售报表失败: {}", e)))
+}
+
+#[tauri::command]
+pub async fn get_purchase_report_summary(
+    db: State<'_, DbState>,
+    filter: PurchaseReportFilter,
+) -> Result<BusinessReportResponse<BusinessTrendPoint>, AppError> {
+    let (start_date, end_date) =
+        default_report_dates(filter.start_date.as_deref(), filter.end_date.as_deref());
+    let stats = purchase_stats(&db.pool, &filter, &start_date, &end_date).await?;
+    let trend: Vec<BusinessTrendPoint> = sqlx::query_as(
+        r#"
+        SELECT
+            inbound_date AS date,
+            COALESCE(SUM(CASE WHEN currency = 'USD' THEN payable_amount
+                              WHEN currency = 'VND' THEN CAST(ROUND(payable_amount * 100.0 / exchange_rate, 0) AS INTEGER)
+                              ELSE CAST(ROUND(payable_amount * 1.0 / exchange_rate, 0) AS INTEGER) END), 0) AS amount,
+            COUNT(DISTINCT id) AS order_count
+        FROM inbound_orders io
+        WHERE io.status = 'confirmed' AND io.inbound_type = 'purchase'
+          AND io.inbound_date BETWEEN ?1 AND ?2
+          AND (?3 IS NULL OR io.supplier_id = ?3)
+          AND (?4 IS NULL OR io.warehouse_id = ?4)
+          AND (?5 IS NULL OR io.order_no LIKE '%' || ?5 || '%' OR EXISTS (
+              SELECT 1 FROM inbound_order_items ioi JOIN materials m ON m.id = ioi.material_id
+              WHERE ioi.inbound_id = io.id AND (m.code LIKE '%' || ?5 || '%' OR m.name LIKE '%' || ?5 || '%')
+          ))
+        GROUP BY inbound_date
+        ORDER BY inbound_date
+        "#,
+    )
+    .bind(&start_date)
+    .bind(&end_date)
+    .bind(filter.supplier_id)
+    .bind(filter.warehouse_id)
+    .bind(&filter.keyword)
+    .fetch_all(&db.pool)
+    .await
+    .map_err(|e| AppError::Database(format!("查询采购趋势失败: {}", e)))?;
+    let total = trend.len() as i64;
+    Ok(BusinessReportResponse {
+        generated_at: now_iso8601(),
+        stats,
+        trend: trend.clone(),
+        items: trend,
+        total,
+        page: 1,
+        page_size: total as u32,
+    })
+}
+
+#[tauri::command]
+pub async fn get_sales_report_summary(
+    db: State<'_, DbState>,
+    filter: SalesReportFilter,
+) -> Result<BusinessReportResponse<BusinessTrendPoint>, AppError> {
+    let (start_date, end_date) =
+        default_report_dates(filter.start_date.as_deref(), filter.end_date.as_deref());
+    let stats = sales_stats(&db.pool, &filter, &start_date, &end_date).await?;
+    let trend: Vec<BusinessTrendPoint> = sqlx::query_as(
+        r#"
+        SELECT
+            outbound_date AS date,
+            COALESCE(SUM(CASE WHEN currency = 'USD' THEN receivable_amount
+                              WHEN currency = 'VND' THEN CAST(ROUND(receivable_amount * 100.0 / exchange_rate, 0) AS INTEGER)
+                              ELSE CAST(ROUND(receivable_amount * 1.0 / exchange_rate, 0) AS INTEGER) END), 0) AS amount,
+            COUNT(DISTINCT id) AS order_count
+        FROM outbound_orders oo
+        WHERE oo.status = 'confirmed' AND oo.outbound_type = 'sales'
+          AND oo.outbound_date BETWEEN ?1 AND ?2
+          AND (?3 IS NULL OR oo.customer_id = ?3)
+          AND (?4 IS NULL OR oo.warehouse_id = ?4)
+          AND (?5 IS NULL OR oo.order_no LIKE '%' || ?5 || '%' OR EXISTS (
+              SELECT 1 FROM outbound_order_items ooi JOIN materials m ON m.id = ooi.material_id
+              WHERE ooi.outbound_id = oo.id AND (m.code LIKE '%' || ?5 || '%' OR m.name LIKE '%' || ?5 || '%')
+          ))
+        GROUP BY outbound_date
+        ORDER BY outbound_date
+        "#,
+    )
+    .bind(&start_date)
+    .bind(&end_date)
+    .bind(filter.customer_id)
+    .bind(filter.warehouse_id)
+    .bind(&filter.keyword)
+    .fetch_all(&db.pool)
+    .await
+    .map_err(|e| AppError::Database(format!("查询销售趋势失败: {}", e)))?;
+    let total = trend.len() as i64;
+    Ok(BusinessReportResponse {
+        generated_at: now_iso8601(),
+        stats,
+        trend: trend.clone(),
+        items: trend,
+        total,
+        page: 1,
+        page_size: total as u32,
+    })
+}
+
+#[tauri::command]
+pub async fn get_purchase_supplier_ranking(
+    db: State<'_, DbState>,
+    filter: PurchaseReportFilter,
+) -> Result<BusinessReportResponse<PartnerRankItem>, AppError> {
+    let (start_date, end_date) =
+        default_report_dates(filter.start_date.as_deref(), filter.end_date.as_deref());
+    let (page, page_size, offset) = page_offset(filter.page, filter.page_size);
+    let stats = purchase_stats(&db.pool, &filter, &start_date, &end_date).await?;
+    let total: (i64,) = sqlx::query_as(
+        r#"
+        SELECT COUNT(*) FROM (
+            SELECT io.supplier_id
+            FROM inbound_orders io
+            WHERE io.status = 'confirmed' AND io.inbound_type = 'purchase'
+              AND io.inbound_date BETWEEN ?1 AND ?2
+              AND (?3 IS NULL OR io.supplier_id = ?3)
+              AND (?4 IS NULL OR io.warehouse_id = ?4)
+              AND (?5 IS NULL OR io.order_no LIKE '%' || ?5 || '%' OR EXISTS (
+                  SELECT 1 FROM inbound_order_items ioi JOIN materials m ON m.id = ioi.material_id
+                  WHERE ioi.inbound_id = io.id AND (m.code LIKE '%' || ?5 || '%' OR m.name LIKE '%' || ?5 || '%')
+              ))
+            GROUP BY io.supplier_id
+        )
+        "#,
+    )
+    .bind(&start_date)
+    .bind(&end_date)
+    .bind(filter.supplier_id)
+    .bind(filter.warehouse_id)
+    .bind(&filter.keyword)
+    .fetch_one(&db.pool)
+    .await
+    .map_err(|e| AppError::Database(format!("统计供应商排行失败: {}", e)))?;
+
+    let items = sqlx::query_as(
+        r#"
+        SELECT
+            s.id AS partner_id,
+            s.code AS partner_code,
+            s.name AS partner_name,
+            COALESCE(SUM(CASE WHEN io.currency = 'USD' THEN io.payable_amount
+                              WHEN io.currency = 'VND' THEN CAST(ROUND(io.payable_amount * 100.0 / io.exchange_rate, 0) AS INTEGER)
+                              ELSE CAST(ROUND(io.payable_amount * 1.0 / io.exchange_rate, 0) AS INTEGER) END), 0) AS amount,
+            COUNT(DISTINCT io.id) AS order_count,
+            CASE WHEN ?6 = 0 THEN 0 ELSE COALESCE(SUM(CASE WHEN io.currency = 'USD' THEN io.payable_amount
+                              WHEN io.currency = 'VND' THEN CAST(ROUND(io.payable_amount * 100.0 / io.exchange_rate, 0) AS INTEGER)
+                              ELSE CAST(ROUND(io.payable_amount * 1.0 / io.exchange_rate, 0) AS INTEGER) END), 0) * 100.0 / ?6 END AS ratio
+        FROM inbound_orders io
+        JOIN suppliers s ON s.id = io.supplier_id
+        WHERE io.status = 'confirmed' AND io.inbound_type = 'purchase'
+          AND io.inbound_date BETWEEN ?1 AND ?2
+          AND (?3 IS NULL OR io.supplier_id = ?3)
+          AND (?4 IS NULL OR io.warehouse_id = ?4)
+          AND (?5 IS NULL OR io.order_no LIKE '%' || ?5 || '%' OR EXISTS (
+              SELECT 1 FROM inbound_order_items ioi JOIN materials m ON m.id = ioi.material_id
+              WHERE ioi.inbound_id = io.id AND (m.code LIKE '%' || ?5 || '%' OR m.name LIKE '%' || ?5 || '%')
+          ))
+        GROUP BY s.id, s.code, s.name
+        ORDER BY amount DESC
+        LIMIT ?7 OFFSET ?8
+        "#,
+    )
+    .bind(&start_date)
+    .bind(&end_date)
+    .bind(filter.supplier_id)
+    .bind(filter.warehouse_id)
+    .bind(&filter.keyword)
+    .bind(stats.total_amount)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&db.pool)
+    .await
+    .map_err(|e| AppError::Database(format!("查询供应商排行失败: {}", e)))?;
+
+    Ok(BusinessReportResponse {
+        generated_at: now_iso8601(),
+        stats,
+        trend: vec![],
+        items,
+        total: total.0,
+        page,
+        page_size,
+    })
+}
+
+#[tauri::command]
+pub async fn get_sales_customer_ranking(
+    db: State<'_, DbState>,
+    filter: SalesReportFilter,
+) -> Result<BusinessReportResponse<PartnerRankItem>, AppError> {
+    let (start_date, end_date) =
+        default_report_dates(filter.start_date.as_deref(), filter.end_date.as_deref());
+    let (page, page_size, offset) = page_offset(filter.page, filter.page_size);
+    let stats = sales_stats(&db.pool, &filter, &start_date, &end_date).await?;
+    let total: (i64,) = sqlx::query_as(
+        r#"
+        SELECT COUNT(*) FROM (
+            SELECT oo.customer_id
+            FROM outbound_orders oo
+            WHERE oo.status = 'confirmed' AND oo.outbound_type = 'sales'
+              AND oo.outbound_date BETWEEN ?1 AND ?2
+              AND (?3 IS NULL OR oo.customer_id = ?3)
+              AND (?4 IS NULL OR oo.warehouse_id = ?4)
+              AND (?5 IS NULL OR oo.order_no LIKE '%' || ?5 || '%' OR EXISTS (
+                  SELECT 1 FROM outbound_order_items ooi JOIN materials m ON m.id = ooi.material_id
+                  WHERE ooi.outbound_id = oo.id AND (m.code LIKE '%' || ?5 || '%' OR m.name LIKE '%' || ?5 || '%')
+              ))
+            GROUP BY oo.customer_id
+        )
+        "#,
+    )
+    .bind(&start_date)
+    .bind(&end_date)
+    .bind(filter.customer_id)
+    .bind(filter.warehouse_id)
+    .bind(&filter.keyword)
+    .fetch_one(&db.pool)
+    .await
+    .map_err(|e| AppError::Database(format!("统计客户排行失败: {}", e)))?;
+
+    let items = sqlx::query_as(
+        r#"
+        SELECT
+            c.id AS partner_id,
+            c.code AS partner_code,
+            c.name AS partner_name,
+            COALESCE(SUM(CASE WHEN oo.currency = 'USD' THEN oo.receivable_amount
+                              WHEN oo.currency = 'VND' THEN CAST(ROUND(oo.receivable_amount * 100.0 / oo.exchange_rate, 0) AS INTEGER)
+                              ELSE CAST(ROUND(oo.receivable_amount * 1.0 / oo.exchange_rate, 0) AS INTEGER) END), 0) AS amount,
+            COUNT(DISTINCT oo.id) AS order_count,
+            CASE WHEN ?6 = 0 THEN 0 ELSE COALESCE(SUM(CASE WHEN oo.currency = 'USD' THEN oo.receivable_amount
+                              WHEN oo.currency = 'VND' THEN CAST(ROUND(oo.receivable_amount * 100.0 / oo.exchange_rate, 0) AS INTEGER)
+                              ELSE CAST(ROUND(oo.receivable_amount * 1.0 / oo.exchange_rate, 0) AS INTEGER) END), 0) * 100.0 / ?6 END AS ratio
+        FROM outbound_orders oo
+        JOIN customers c ON c.id = oo.customer_id
+        WHERE oo.status = 'confirmed' AND oo.outbound_type = 'sales'
+          AND oo.outbound_date BETWEEN ?1 AND ?2
+          AND (?3 IS NULL OR oo.customer_id = ?3)
+          AND (?4 IS NULL OR oo.warehouse_id = ?4)
+          AND (?5 IS NULL OR oo.order_no LIKE '%' || ?5 || '%' OR EXISTS (
+              SELECT 1 FROM outbound_order_items ooi JOIN materials m ON m.id = ooi.material_id
+              WHERE ooi.outbound_id = oo.id AND (m.code LIKE '%' || ?5 || '%' OR m.name LIKE '%' || ?5 || '%')
+          ))
+        GROUP BY c.id, c.code, c.name
+        ORDER BY amount DESC
+        LIMIT ?7 OFFSET ?8
+        "#,
+    )
+    .bind(&start_date)
+    .bind(&end_date)
+    .bind(filter.customer_id)
+    .bind(filter.warehouse_id)
+    .bind(&filter.keyword)
+    .bind(stats.total_amount)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&db.pool)
+    .await
+    .map_err(|e| AppError::Database(format!("查询客户排行失败: {}", e)))?;
+
+    Ok(BusinessReportResponse {
+        generated_at: now_iso8601(),
+        stats,
+        trend: vec![],
+        items,
+        total: total.0,
+        page,
+        page_size,
+    })
+}
+
+#[tauri::command]
+pub async fn get_purchase_material_detail(
+    db: State<'_, DbState>,
+    filter: PurchaseReportFilter,
+) -> Result<BusinessReportResponse<MaterialReportItem>, AppError> {
+    let (start_date, end_date) =
+        default_report_dates(filter.start_date.as_deref(), filter.end_date.as_deref());
+    let (page, page_size, offset) = page_offset(filter.page, filter.page_size);
+    let stats = purchase_stats(&db.pool, &filter, &start_date, &end_date).await?;
+    let total: (i64,) = sqlx::query_as(
+        r#"
+        SELECT COUNT(*) FROM (
+            SELECT ioi.material_id
+            FROM inbound_orders io
+            JOIN inbound_order_items ioi ON ioi.inbound_id = io.id
+            JOIN materials m ON m.id = ioi.material_id
+            WHERE io.status = 'confirmed' AND io.inbound_type = 'purchase'
+              AND io.inbound_date BETWEEN ?1 AND ?2
+              AND (?3 IS NULL OR io.supplier_id = ?3)
+              AND (?4 IS NULL OR io.warehouse_id = ?4)
+              AND (?5 IS NULL OR io.order_no LIKE '%' || ?5 || '%' OR m.code LIKE '%' || ?5 || '%' OR m.name LIKE '%' || ?5 || '%')
+            GROUP BY ioi.material_id
+        )
+        "#,
+    )
+    .bind(&start_date).bind(&end_date).bind(filter.supplier_id).bind(filter.warehouse_id).bind(&filter.keyword)
+    .fetch_one(&db.pool).await.map_err(|e| AppError::Database(format!("统计采购物料明细失败: {}", e)))?;
+
+    let items = sqlx::query_as(
+        r#"
+        SELECT
+            m.id AS material_id,
+            m.code AS material_code,
+            m.name AS material_name,
+            m.spec,
+            MAX(ioi.unit_name_snapshot) AS unit_name,
+            COALESCE(SUM(ioi.quantity), 0) AS quantity,
+            COALESCE(SUM(CASE WHEN io.currency = 'USD' THEN ioi.amount
+                              WHEN io.currency = 'VND' THEN CAST(ROUND(ioi.amount * 100.0 / io.exchange_rate, 0) AS INTEGER)
+                              ELSE CAST(ROUND(ioi.amount * 1.0 / io.exchange_rate, 0) AS INTEGER) END), 0) AS amount,
+            CASE WHEN SUM(ioi.quantity) = 0 THEN 0 ELSE CAST(ROUND(COALESCE(SUM(CASE WHEN io.currency = 'USD' THEN ioi.amount
+                              WHEN io.currency = 'VND' THEN CAST(ROUND(ioi.amount * 100.0 / io.exchange_rate, 0) AS INTEGER)
+                              ELSE CAST(ROUND(ioi.amount * 1.0 / io.exchange_rate, 0) AS INTEGER) END), 0) * 1.0 / SUM(ioi.quantity), 0) AS INTEGER) END AS avg_price
+        FROM inbound_orders io
+        JOIN inbound_order_items ioi ON ioi.inbound_id = io.id
+        JOIN materials m ON m.id = ioi.material_id
+        WHERE io.status = 'confirmed' AND io.inbound_type = 'purchase'
+          AND io.inbound_date BETWEEN ?1 AND ?2
+          AND (?3 IS NULL OR io.supplier_id = ?3)
+          AND (?4 IS NULL OR io.warehouse_id = ?4)
+          AND (?5 IS NULL OR io.order_no LIKE '%' || ?5 || '%' OR m.code LIKE '%' || ?5 || '%' OR m.name LIKE '%' || ?5 || '%')
+        GROUP BY m.id, m.code, m.name, m.spec
+        ORDER BY amount DESC
+        LIMIT ?6 OFFSET ?7
+        "#,
+    )
+    .bind(&start_date).bind(&end_date).bind(filter.supplier_id).bind(filter.warehouse_id).bind(&filter.keyword)
+    .bind(page_size).bind(offset)
+    .fetch_all(&db.pool).await.map_err(|e| AppError::Database(format!("查询采购物料明细失败: {}", e)))?;
+
+    Ok(BusinessReportResponse {
+        generated_at: now_iso8601(),
+        stats,
+        trend: vec![],
+        items,
+        total: total.0,
+        page,
+        page_size,
+    })
+}
+
+#[tauri::command]
+pub async fn get_sales_material_detail(
+    db: State<'_, DbState>,
+    filter: SalesReportFilter,
+) -> Result<BusinessReportResponse<MaterialReportItem>, AppError> {
+    let (start_date, end_date) =
+        default_report_dates(filter.start_date.as_deref(), filter.end_date.as_deref());
+    let (page, page_size, offset) = page_offset(filter.page, filter.page_size);
+    let stats = sales_stats(&db.pool, &filter, &start_date, &end_date).await?;
+    let total: (i64,) = sqlx::query_as(
+        r#"
+        SELECT COUNT(*) FROM (
+            SELECT ooi.material_id
+            FROM outbound_orders oo
+            JOIN outbound_order_items ooi ON ooi.outbound_id = oo.id
+            JOIN materials m ON m.id = ooi.material_id
+            WHERE oo.status = 'confirmed' AND oo.outbound_type = 'sales'
+              AND oo.outbound_date BETWEEN ?1 AND ?2
+              AND (?3 IS NULL OR oo.customer_id = ?3)
+              AND (?4 IS NULL OR oo.warehouse_id = ?4)
+              AND (?5 IS NULL OR oo.order_no LIKE '%' || ?5 || '%' OR m.code LIKE '%' || ?5 || '%' OR m.name LIKE '%' || ?5 || '%')
+            GROUP BY ooi.material_id
+        )
+        "#,
+    )
+    .bind(&start_date).bind(&end_date).bind(filter.customer_id).bind(filter.warehouse_id).bind(&filter.keyword)
+    .fetch_one(&db.pool).await.map_err(|e| AppError::Database(format!("统计销售物料明细失败: {}", e)))?;
+
+    let items = sqlx::query_as(
+        r#"
+        SELECT
+            m.id AS material_id,
+            m.code AS material_code,
+            m.name AS material_name,
+            m.spec,
+            MAX(ooi.unit_name_snapshot) AS unit_name,
+            COALESCE(SUM(ooi.quantity), 0) AS quantity,
+            COALESCE(SUM(CASE WHEN oo.currency = 'USD' THEN ooi.amount
+                              WHEN oo.currency = 'VND' THEN CAST(ROUND(ooi.amount * 100.0 / oo.exchange_rate, 0) AS INTEGER)
+                              ELSE CAST(ROUND(ooi.amount * 1.0 / oo.exchange_rate, 0) AS INTEGER) END), 0) AS amount,
+            CASE WHEN SUM(ooi.quantity) = 0 THEN 0 ELSE CAST(ROUND(COALESCE(SUM(CASE WHEN oo.currency = 'USD' THEN ooi.amount
+                              WHEN oo.currency = 'VND' THEN CAST(ROUND(ooi.amount * 100.0 / oo.exchange_rate, 0) AS INTEGER)
+                              ELSE CAST(ROUND(ooi.amount * 1.0 / oo.exchange_rate, 0) AS INTEGER) END), 0) * 1.0 / SUM(ooi.quantity), 0) AS INTEGER) END AS avg_price
+        FROM outbound_orders oo
+        JOIN outbound_order_items ooi ON ooi.outbound_id = oo.id
+        JOIN materials m ON m.id = ooi.material_id
+        WHERE oo.status = 'confirmed' AND oo.outbound_type = 'sales'
+          AND oo.outbound_date BETWEEN ?1 AND ?2
+          AND (?3 IS NULL OR oo.customer_id = ?3)
+          AND (?4 IS NULL OR oo.warehouse_id = ?4)
+          AND (?5 IS NULL OR oo.order_no LIKE '%' || ?5 || '%' OR m.code LIKE '%' || ?5 || '%' OR m.name LIKE '%' || ?5 || '%')
+        GROUP BY m.id, m.code, m.name, m.spec
+        ORDER BY amount DESC
+        LIMIT ?6 OFFSET ?7
+        "#,
+    )
+    .bind(&start_date).bind(&end_date).bind(filter.customer_id).bind(filter.warehouse_id).bind(&filter.keyword)
+    .bind(page_size).bind(offset)
+    .fetch_all(&db.pool).await.map_err(|e| AppError::Database(format!("查询销售物料明细失败: {}", e)))?;
+
+    Ok(BusinessReportResponse {
+        generated_at: now_iso8601(),
+        stats,
+        trend: vec![],
+        items,
+        total: total.0,
+        page,
+        page_size,
     })
 }
