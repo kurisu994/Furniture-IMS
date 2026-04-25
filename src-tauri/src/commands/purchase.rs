@@ -11,6 +11,7 @@ use tauri::State;
 
 use crate::db::DbState;
 use crate::error::AppError;
+use crate::operation_log;
 
 use super::PaginatedResponse;
 
@@ -753,6 +754,28 @@ pub async fn save_purchase_order(
         .await
         .map_err(|e| AppError::Database(format!("提交事务失败: {}", e)))?;
 
+    // 记录操作日志
+    let action = if params.id.is_some() { "update" } else { "create" };
+    let order_no: String = sqlx::query_scalar("SELECT order_no FROM purchase_orders WHERE id = ?")
+        .bind(order_id)
+        .fetch_one(&db.pool)
+        .await
+        .unwrap_or_else(|_| "未知".to_string());
+    operation_log::write_log(
+        &db.pool,
+        operation_log::OperationLogEntry {
+            module: "purchase".to_string(),
+            action: action.to_string(),
+            target_type: Some("purchase_order".to_string()),
+            target_id: Some(order_id),
+            target_no: Some(order_no.clone()),
+            detail: format!("{} 采购单 {}", if action == "create" { "创建" } else { "更新" }, order_no),
+            operator_user_id: Some(1),
+            operator_name: Some("admin".to_string()),
+        },
+    )
+    .await;
+
     Ok(order_id)
 }
 
@@ -789,6 +812,27 @@ pub async fn approve_purchase_order(db: State<'_, DbState>, id: i64) -> Result<(
         }
         return Err(AppError::Business("仅草稿状态的采购单可以审核".to_string()));
     }
+
+    // 记录操作日志
+    let order_no: String = sqlx::query_scalar("SELECT order_no FROM purchase_orders WHERE id = ?")
+        .bind(id)
+        .fetch_one(&db.pool)
+        .await
+        .unwrap_or_else(|_| "未知".to_string());
+    operation_log::write_log(
+        &db.pool,
+        operation_log::OperationLogEntry {
+            module: "purchase".to_string(),
+            action: "approve".to_string(),
+            target_type: Some("purchase_order".to_string()),
+            target_id: Some(id),
+            target_no: Some(order_no.clone()),
+            detail: format!("审核采购单 {}", order_no),
+            operator_user_id: Some(1),
+            operator_name: Some("admin".to_string()),
+        },
+    )
+    .await;
 
     Ok(())
 }
