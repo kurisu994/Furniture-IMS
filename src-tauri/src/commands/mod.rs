@@ -7,6 +7,7 @@ pub mod bom;
 pub mod category;
 pub mod custom_order;
 pub mod customer;
+pub mod data_management;
 pub mod finance;
 pub mod inventory;
 pub mod inventory_ops;

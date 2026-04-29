@@ -115,7 +115,25 @@
       "saveFailed": "保存失败",
       "materialEnabled": "已启用",
       "materialDisabled": "已禁用",
-      "toggleFailed": "操作失败"
+      "toggleFailed": "操作失败",
+      "importReadFailed": "读取导入文件失败",
+      "importValidationFailed": "导入校验未通过",
+      "importFailed": "导入失败",
+      "importSuccess": "导入完成：新增 {created} 条，更新 {updated} 条",
+      "exportSuccess": "导出完成",
+      "exportFailed": "导出失败",
+      "tauriOnly": "此功能仅在桌面端可用"
+    },
+    "import": {
+      "previewTitle": "物料导入预览",
+      "previewSummary": "共读取 {count} 条数据，发现 {errors} 个问题",
+      "confirmImport": "确认导入",
+      "errors": {
+        "codeRequired": "第 {line} 行：物料编码不能为空",
+        "nameRequired": "第 {line} 行：物料名称不能为空",
+        "unitRequired": "第 {line} 行：基础单位不能为空",
+        "duplicateCode": "第 {line} 行：导入文件内物料编码重复"
+      }
     }
   }
 }

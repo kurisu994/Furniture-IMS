@@ -115,7 +115,25 @@
       "saveFailed": "Failed to save",
       "materialEnabled": "Enabled",
       "materialDisabled": "Disabled",
-      "toggleFailed": "Operation failed"
+      "toggleFailed": "Operation failed",
+      "importReadFailed": "Failed to read import file",
+      "importValidationFailed": "Import validation failed",
+      "importFailed": "Import failed",
+      "importSuccess": "Import complete: {created} created, {updated} updated",
+      "exportSuccess": "Export complete",
+      "exportFailed": "Export failed",
+      "tauriOnly": "This feature is only available in the desktop app"
+    },
+    "import": {
+      "previewTitle": "Material Import Preview",
+      "previewSummary": "{count} rows read, {errors} issues found",
+      "confirmImport": "Confirm Import",
+      "errors": {
+        "codeRequired": "Line {line}: material code is required",
+        "nameRequired": "Line {line}: material name is required",
+        "unitRequired": "Line {line}: base unit is required",
+        "duplicateCode": "Line {line}: duplicate material code in import file"
+      }
     }
   }
 }

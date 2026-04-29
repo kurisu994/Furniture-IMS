@@ -122,7 +122,20 @@
       "pageCount": "Trang 1 / 1",
       "printTestPage": "In trang kiểm tra",
       "resetDefaults": "Khôi phục mặc định",
-      "saveAllSettings": "Lưu tất cả cài đặt"
+      "saveAllSettings": "Lưu tất cả cài đặt",
+      "fixedTemplates": "Mẫu in cố định",
+      "fixedTemplatesDesc": "Chọn và xem trước 9 mẫu chứng từ nghiệp vụ có sẵn",
+      "templates": {
+        "purchaseOrder": "Đơn mua hàng",
+        "purchaseReceipt": "Phiếu nhập mua hàng",
+        "purchaseReturn": "Phiếu trả hàng mua",
+        "salesOrder": "Đơn bán hàng",
+        "salesDelivery": "Phiếu xuất bán",
+        "salesReturn": "Phiếu trả hàng bán",
+        "stockCheck": "Phiếu kiểm kho",
+        "stockTransfer": "Phiếu chuyển kho",
+        "productionOrder": "Lệnh sản xuất"
+      }
     },
     "appearance": {
       "title": "Cài đặt Giao diện",
@@ -191,7 +204,40 @@
       "templateDownload": "Tải mẫu thường dùng",
       "materialTemplate": "Mẫu dữ liệu vật liệu chính",
       "inventoryTemplate": "Mẫu nhập tồn kho ban đầu",
-      "productionTemplate": "Mẫu chi tiết đơn sản xuất"
+      "productionTemplate": "Mẫu chi tiết đơn sản xuất",
+      "dailyBackup": "Hàng ngày (kích hoạt thủ công)",
+      "refresh": "Làm mới",
+      "noBackups": "Chưa có file sao lưu",
+      "desktopOnly": "Chức năng này chỉ có trong ứng dụng desktop",
+      "backupSuccess": "Tạo sao lưu thành công",
+      "backupFailed": "Sao lưu thất bại",
+      "restoreConfirm": "Khôi phục sẽ ghi đè CSDL hiện tại. Hãy khởi động lại ứng dụng sau khi hoàn tất. Tiếp tục?",
+      "restoreSuccess": "Khôi phục hoàn tất. Vui lòng khởi động lại ứng dụng.",
+      "restoreFailed": "Khôi phục thất bại",
+      "deleteBackupConfirm": "Xóa file sao lưu này?",
+      "deleteBackupSuccess": "Đã xóa sao lưu",
+      "deleteBackupFailed": "Xóa sao lưu thất bại",
+      "cancel": "Hủy",
+      "initialImport": {
+        "previewTitle": "Xem trước nhập tồn kho ban đầu",
+        "previewSummary": "Đã đọc {count} dòng, phát hiện {errors} lỗi",
+        "confirmImport": "Xác nhận nhập",
+        "materialCode": "Mã vật tư",
+        "warehouseCode": "Mã kho",
+        "quantity": "Số lượng",
+        "receivedDate": "Ngày nhập",
+        "readFailed": "Đọc file tồn kho ban đầu thất bại",
+        "validationFailed": "Kiểm tra nhập tồn kho ban đầu thất bại",
+        "failed": "Nhập tồn kho ban đầu thất bại",
+        "success": "Nhập tồn kho ban đầu hoàn tất: {count} dòng",
+        "errors": {
+          "materialRequired": "Dòng {line}: mã vật tư là bắt buộc",
+          "warehouseRequired": "Dòng {line}: mã kho là bắt buộc",
+          "quantityRequired": "Dòng {line}: số lượng phải lớn hơn 0",
+          "costRequired": "Dòng {line}: đơn giá không được âm",
+          "dateRequired": "Dòng {line}: ngày nhập là bắt buộc"
+        }
+      }
     },
     "operationLogs": {
       "filter": "Lọc nhật ký",

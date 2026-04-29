@@ -2,12 +2,15 @@
 
 import { Download, Plus, Search, Upload } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { invoke, isTauriEnv } from '@/lib/tauri'
+import { downloadBusinessWorkbook, materialExcelColumns, readBusinessExcelRows } from '@/lib/business-excel'
+import type { MaterialImportRow } from '@/lib/tauri'
+import { exportMaterials, importMaterials, invoke, isTauriEnv } from '@/lib/tauri'
 import { buildToggleMaterialStatusArgs } from './material-command-args'
 import { MaterialFormDialog } from './material-form-dialog'
 import { MaterialTable } from './material-table'
@@ -146,6 +149,7 @@ const MOCK_MATERIALS: MaterialItem[] = [
 
 export function MaterialsClientPage() {
   const t = useTranslations('materials')
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 数据
   const [data, setData] = useState<MaterialItem[]>([])
@@ -163,6 +167,10 @@ export function MaterialsClientPage() {
   // 弹窗
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
+  const [importDialogOpen, setImportDialogOpen] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [pendingImportRows, setPendingImportRows] = useState<MaterialImportRow[]>([])
+  const [importErrors, setImportErrors] = useState<string[]>([])
 
   // 下拉选项
   const [categories, setCategories] = useState<CategoryOption[]>([])
@@ -289,6 +297,78 @@ export function MaterialsClientPage() {
     }
   }
 
+  /** 校验物料导入预览数据 */
+  const validateMaterialImportRows = (rows: MaterialImportRow[]) => {
+    const errors: string[] = []
+    const seenCodes = new Set<string>()
+    rows.forEach((row, index) => {
+      const lineNo = index + 2
+      if (!row.code?.trim()) errors.push(t('import.errors.codeRequired', { line: lineNo }))
+      if (!row.name?.trim()) errors.push(t('import.errors.nameRequired', { line: lineNo }))
+      if (!row.base_unit_name?.trim()) errors.push(t('import.errors.unitRequired', { line: lineNo }))
+      if (row.code && seenCodes.has(row.code.trim())) errors.push(t('import.errors.duplicateCode', { line: lineNo }))
+      if (row.code) seenCodes.add(row.code.trim())
+    })
+    return errors
+  }
+
+  /** 读取物料导入文件并打开预览 */
+  const handleImportFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    try {
+      const rows = await readBusinessExcelRows<MaterialImportRow>(file, materialExcelColumns)
+      const filteredRows = rows.filter(row => row.code || row.name)
+      setPendingImportRows(filteredRows)
+      setImportErrors(validateMaterialImportRows(filteredRows))
+      setImportDialogOpen(true)
+    } catch (error) {
+      console.error('读取物料导入文件失败', error)
+      toast.error(t('notifications.importReadFailed'))
+    }
+  }
+
+  /** 确认导入物料 */
+  const handleConfirmImport = async () => {
+    if (!isTauriEnv()) {
+      toast.info(t('notifications.tauriOnly'))
+      return
+    }
+    setImporting(true)
+    try {
+      const result = await importMaterials(pendingImportRows)
+      if (result.errors.length) {
+        setImportErrors(result.errors)
+        toast.error(t('notifications.importValidationFailed'))
+        return
+      }
+      toast.success(t('notifications.importSuccess', { created: result.created, updated: result.updated }))
+      setImportDialogOpen(false)
+      setPendingImportRows([])
+      fetchMaterials()
+    } catch (error) {
+      toast.error(typeof error === 'string' ? error : t('notifications.importFailed'))
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  /** 导出物料主数据 */
+  const handleExportMaterials = async () => {
+    try {
+      const rows: object[] = isTauriEnv()
+        ? await exportMaterials()
+        : MOCK_MATERIALS.map(item => ({ ...item, base_unit_name: item.unit_name ?? '', lot_tracking_mode: 'none' }))
+      await downloadBusinessWorkbook('materials.xlsx', 'materials', materialExcelColumns, rows)
+      toast.success(t('notifications.exportSuccess'))
+    } catch (error) {
+      console.error('导出物料失败', error)
+      toast.error(t('notifications.exportFailed'))
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       {/* 页面标题 */}
@@ -373,11 +453,12 @@ export function MaterialsClientPage() {
           <Plus data-icon="inline-start" />
           {t('actions.add')}
         </Button>
-        <Button variant="outline">
+        <input ref={fileInputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportFileChange} />
+        <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
           <Upload data-icon="inline-start" />
           {t('actions.import')}
         </Button>
-        <Button variant="outline">
+        <Button variant="outline" onClick={handleExportMaterials}>
           <Download data-icon="inline-start" />
           {t('actions.export')}
         </Button>
@@ -414,6 +495,57 @@ export function MaterialsClientPage() {
           fetchMaterials()
         }}
       />
+
+      {/* 物料导入预览弹窗 */}
+      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{t('import.previewTitle')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="rounded-lg border p-3 text-sm">
+              {t('import.previewSummary', { count: pendingImportRows.length, errors: importErrors.length })}
+            </div>
+            {importErrors.length > 0 && (
+              <div className="max-h-32 overflow-auto rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+                {importErrors.slice(0, 8).map(error => (
+                  <div key={error}>{error}</div>
+                ))}
+              </div>
+            )}
+            <div className="max-h-72 overflow-auto rounded-lg border">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-muted text-muted-foreground sticky top-0">
+                  <tr>
+                    <th className="px-3 py-2">{t('form.code')}</th>
+                    <th className="px-3 py-2">{t('form.name')}</th>
+                    <th className="px-3 py-2">{t('form.type')}</th>
+                    <th className="px-3 py-2">{t('form.baseUnit')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingImportRows.slice(0, 20).map((row, index) => (
+                    <tr key={`${row.code}-${index}`} className="border-t">
+                      <td className="px-3 py-2">{row.code}</td>
+                      <td className="px-3 py-2">{row.name}</td>
+                      <td className="px-3 py-2">{row.material_type}</td>
+                      <td className="px-3 py-2">{row.base_unit_name}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setImportDialogOpen(false)}>
+              {t('actions.cancel')}
+            </Button>
+            <Button disabled={importing || importErrors.length > 0 || pendingImportRows.length === 0} onClick={handleConfirmImport}>
+              {t('import.confirmImport')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

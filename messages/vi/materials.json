@@ -115,7 +115,25 @@
       "saveFailed": "Lưu thất bại",
       "materialEnabled": "Đã bật",
       "materialDisabled": "Đã tắt",
-      "toggleFailed": "Thao tác thất bại"
+      "toggleFailed": "Thao tác thất bại",
+      "importReadFailed": "Đọc file nhập thất bại",
+      "importValidationFailed": "Kiểm tra dữ liệu nhập thất bại",
+      "importFailed": "Nhập thất bại",
+      "importSuccess": "Nhập hoàn tất: tạo {created}, cập nhật {updated}",
+      "exportSuccess": "Xuất hoàn tất",
+      "exportFailed": "Xuất thất bại",
+      "tauriOnly": "Chức năng này chỉ có trong ứng dụng desktop"
+    },
+    "import": {
+      "previewTitle": "Xem trước nhập vật tư",
+      "previewSummary": "Đã đọc {count} dòng, phát hiện {errors} lỗi",
+      "confirmImport": "Xác nhận nhập",
+      "errors": {
+        "codeRequired": "Dòng {line}: mã vật tư là bắt buộc",
+        "nameRequired": "Dòng {line}: tên vật tư là bắt buộc",
+        "unitRequired": "Dòng {line}: đơn vị cơ bản là bắt buộc",
+        "duplicateCode": "Dòng {line}: mã vật tư bị trùng trong file nhập"
+      }
     }
   }
 }

@@ -122,7 +122,20 @@
       "pageCount": "Page 1 / 1",
       "printTestPage": "Print Test Page",
       "resetDefaults": "Reset Defaults",
-      "saveAllSettings": "Save All Settings"
+      "saveAllSettings": "Save All Settings",
+      "fixedTemplates": "Fixed Print Templates",
+      "fixedTemplatesDesc": "Select and preview 9 built-in business document templates",
+      "templates": {
+        "purchaseOrder": "Purchase Order",
+        "purchaseReceipt": "Purchase Receipt",
+        "purchaseReturn": "Purchase Return",
+        "salesOrder": "Sales Order",
+        "salesDelivery": "Sales Delivery",
+        "salesReturn": "Sales Return",
+        "stockCheck": "Stock Check",
+        "stockTransfer": "Stock Transfer",
+        "productionOrder": "Production Order"
+      }
     },
     "appearance": {
       "title": "Appearance Settings",
@@ -191,7 +204,40 @@
       "templateDownload": "Template Downloads",
       "materialTemplate": "Material Master Data Template",
       "inventoryTemplate": "Initial Inventory Template",
-      "productionTemplate": "Production Order Detail Template"
+      "productionTemplate": "Production Order Detail Template",
+      "dailyBackup": "Daily (manual trigger)",
+      "refresh": "Refresh",
+      "noBackups": "No backup files",
+      "desktopOnly": "This feature is only available in the desktop app",
+      "backupSuccess": "Backup created successfully",
+      "backupFailed": "Backup failed",
+      "restoreConfirm": "Restore will overwrite the current database. Restart the app after completion. Continue?",
+      "restoreSuccess": "Restore complete. Please restart the app.",
+      "restoreFailed": "Restore failed",
+      "deleteBackupConfirm": "Delete this backup file?",
+      "deleteBackupSuccess": "Backup deleted",
+      "deleteBackupFailed": "Failed to delete backup",
+      "cancel": "Cancel",
+      "initialImport": {
+        "previewTitle": "Initial Inventory Import Preview",
+        "previewSummary": "{count} rows read, {errors} issues found",
+        "confirmImport": "Confirm Import",
+        "materialCode": "Material Code",
+        "warehouseCode": "Warehouse Code",
+        "quantity": "Quantity",
+        "receivedDate": "Received Date",
+        "readFailed": "Failed to read initial inventory file",
+        "validationFailed": "Initial inventory import validation failed",
+        "failed": "Initial inventory import failed",
+        "success": "Initial inventory import complete: {count} rows",
+        "errors": {
+          "materialRequired": "Line {line}: material code is required",
+          "warehouseRequired": "Line {line}: warehouse code is required",
+          "quantityRequired": "Line {line}: quantity must be greater than 0",
+          "costRequired": "Line {line}: unit cost cannot be negative",
+          "dateRequired": "Line {line}: received date is required"
+        }
+      }
     },
     "operationLogs": {
       "filter": "Filter Logs",

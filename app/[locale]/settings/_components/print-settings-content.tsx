@@ -1,12 +1,25 @@
 'use client'
 
-import { Eye, FileText, Grid2X2, Image as ImageIcon, Languages, Printer, RotateCcw, Save } from 'lucide-react'
+import { ClipboardList, Eye, FileText, Grid2X2, Image as ImageIcon, Languages, Printer, RotateCcw, Save } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
+const PRINT_TEMPLATE_KEYS = [
+  'purchaseOrder',
+  'purchaseReceipt',
+  'purchaseReturn',
+  'salesOrder',
+  'salesDelivery',
+  'salesReturn',
+  'stockCheck',
+  'stockTransfer',
+  'productionOrder',
+]
 
 /**
  * 打印语言设置模块
@@ -223,8 +236,13 @@ function DisplayItemsCard() {
 /**
  * 实时预览与重置模块
  */
-function RealtimePreviewModule() {
+function RealtimePreviewModule({ templateName }: { templateName: string }) {
   const t = useTranslations('settings.printSettings')
+
+  /** 打印当前预览模板 */
+  const handlePrintTestPage = () => {
+    window.print()
+  }
 
   return (
     <div className="relative flex min-h-full flex-col items-center overflow-hidden rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-inner">
@@ -244,7 +262,7 @@ function RealtimePreviewModule() {
             <ImageIcon className="size-6 text-slate-300" />
           </div>
           <div className="text-right">
-            <h4 className="text-[10px] font-black text-slate-900">{t('salesOrder')}</h4>
+            <h4 className="text-[10px] font-black text-slate-900">{templateName}</h4>
             <p className="font-mono text-[8px] text-slate-400">SO20240001</p>
           </div>
         </div>
@@ -284,6 +302,7 @@ function RealtimePreviewModule() {
         <Button
           variant="outline"
           className="flex-1 gap-2 border-slate-700 bg-transparent text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+          onClick={handlePrintTestPage}
         >
           <Printer className="size-4" />
           {t('printTestPage')}
@@ -295,6 +314,58 @@ function RealtimePreviewModule() {
           <RotateCcw className="size-4" />
           {t('resetDefaults')}
         </Button>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * 固定打印模板选择模块
+ */
+function FixedTemplatesCard({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const t = useTranslations('settings.printSettings')
+  const templateItems = useMemo(() => PRINT_TEMPLATE_KEYS.map(key => ({ value: key, label: t(`templates.${key}`) })), [t])
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+      <div className="mb-6 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-50 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
+          <ClipboardList className="size-5" />
+        </div>
+        <div>
+          <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">{t('fixedTemplates')}</h2>
+          <p className="text-xs text-slate-400">{t('fixedTemplatesDesc')}</p>
+        </div>
+      </div>
+
+      <Select value={value} onValueChange={next => onChange(next ?? 'salesOrder')} items={templateItems}>
+        <SelectTrigger className="mb-4 h-10 bg-slate-50 dark:bg-slate-900/50">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {templateItems.map(item => (
+            <SelectItem key={item.value} value={item.value}>
+              {item.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {templateItems.map(item => (
+          <button
+            type="button"
+            key={item.value}
+            className={`rounded-lg border px-3 py-2 text-left text-sm font-bold transition-colors ${
+              value === item.value
+                ? 'border-primary bg-primary/5 text-primary'
+                : 'border-slate-100 text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-900'
+            }`}
+            onClick={() => onChange(item.value)}
+          >
+            {item.label}
+          </button>
+        ))}
       </div>
     </div>
   )
@@ -318,11 +389,16 @@ function ActionButtons() {
 
 /** 打印设置主内容 */
 export function PrintSettingsContent() {
+  const t = useTranslations('settings.printSettings')
+  const [selectedTemplate, setSelectedTemplate] = useState('salesOrder')
+  const selectedTemplateName = t(`templates.${selectedTemplate}`)
+
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-12 gap-6">
         {/* Left Column: Form Settings */}
         <div className="col-span-12 flex flex-col gap-6 lg:col-span-7">
+          <FixedTemplatesCard value={selectedTemplate} onChange={setSelectedTemplate} />
           <PrintLanguageCard />
           <PaperAndMarginsCard />
           <DisplayItemsCard />
@@ -330,7 +406,7 @@ export function PrintSettingsContent() {
 
         {/* Right Column: Real-time Preview */}
         <div className="col-span-12 lg:col-span-5">
-          <RealtimePreviewModule />
+          <RealtimePreviewModule templateName={selectedTemplateName} />
         </div>
       </div>
 

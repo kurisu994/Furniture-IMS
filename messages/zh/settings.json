@@ -122,7 +122,20 @@
       "pageCount": "第 1 / 1 页",
       "printTestPage": "打印测试页",
       "resetDefaults": "重置默认",
-      "saveAllSettings": "保存所有设置"
+      "saveAllSettings": "保存所有设置",
+      "fixedTemplates": "固定打印模板",
+      "fixedTemplatesDesc": "选择 9 种内置业务单据模板并预览版式",
+      "templates": {
+        "purchaseOrder": "采购订单",
+        "purchaseReceipt": "采购入库单",
+        "purchaseReturn": "采购退货单",
+        "salesOrder": "销售订单",
+        "salesDelivery": "销售出库单",
+        "salesReturn": "销售退货单",
+        "stockCheck": "库存盘点单",
+        "stockTransfer": "库存调拨单",
+        "productionOrder": "生产工单"
+      }
     },
     "appearance": {
       "title": "外观设置",
@@ -191,7 +204,40 @@
       "templateDownload": "常用模板下载",
       "materialTemplate": "物料主数据模板",
       "inventoryTemplate": "期初库存导入模板",
-      "productionTemplate": "生产订单明细模板"
+      "productionTemplate": "生产订单明细模板",
+      "dailyBackup": "每天 (手动触发)",
+      "refresh": "刷新",
+      "noBackups": "暂无备份文件",
+      "desktopOnly": "此功能仅在桌面端可用",
+      "backupSuccess": "备份创建成功",
+      "backupFailed": "备份失败",
+      "restoreConfirm": "恢复会覆盖当前数据库，完成后请重启应用。确定继续？",
+      "restoreSuccess": "恢复完成，请重启应用",
+      "restoreFailed": "恢复失败",
+      "deleteBackupConfirm": "确定删除这个备份文件？",
+      "deleteBackupSuccess": "备份已删除",
+      "deleteBackupFailed": "删除备份失败",
+      "cancel": "取消",
+      "initialImport": {
+        "previewTitle": "期初库存导入预览",
+        "previewSummary": "共读取 {count} 条数据，发现 {errors} 个问题",
+        "confirmImport": "确认导入",
+        "materialCode": "物料编码",
+        "warehouseCode": "仓库编码",
+        "quantity": "数量",
+        "receivedDate": "入库日期",
+        "readFailed": "读取期初库存文件失败",
+        "validationFailed": "期初库存导入校验未通过",
+        "failed": "期初库存导入失败",
+        "success": "期初库存导入完成：{count} 条",
+        "errors": {
+          "materialRequired": "第 {line} 行：物料编码不能为空",
+          "warehouseRequired": "第 {line} 行：仓库编码不能为空",
+          "quantityRequired": "第 {line} 行：数量必须大于 0",
+          "costRequired": "第 {line} 行：单位成本不能为负数",
+          "dateRequired": "第 {line} 行：入库日期不能为空"
+        }
+      }
     },
     "operationLogs": {
       "filter": "筛选日志",

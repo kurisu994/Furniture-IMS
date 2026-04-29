@@ -229,6 +229,140 @@ export async function setSystemConfigs(configs: { key: string; value: string }[]
 }
 
 // ================================================================
+// 数据管理 / 导入导出
+// ================================================================
+
+/** 备份文件信息 */
+export interface BackupFileInfo {
+  file_name: string
+  file_path: string
+  size_bytes: number
+  created_at: string
+}
+
+/** 数据管理状态 */
+export interface DataManagementStatus {
+  db_path: string
+  db_size_bytes: number
+  backup_dir: string
+  last_backup_at: string | null
+  backups: BackupFileInfo[]
+}
+
+/** 业务导入结果 */
+export interface ImportResult {
+  created: number
+  updated: number
+  skipped: number
+  errors: string[]
+}
+
+/** 物料导入行 */
+export interface MaterialImportRow {
+  code: string
+  name: string
+  material_type: string
+  category_code?: string | null
+  category_name?: string | null
+  spec?: string | null
+  base_unit_name: string
+  aux_unit_name?: string | null
+  conversion_rate?: number | null
+  ref_cost_price?: number | null
+  sale_price?: number | null
+  safety_stock?: number | null
+  max_stock?: number | null
+  lot_tracking_mode?: string | null
+  texture?: string | null
+  color?: string | null
+  surface_craft?: string | null
+  length_mm?: number | null
+  width_mm?: number | null
+  height_mm?: number | null
+  barcode?: string | null
+  remark?: string | null
+}
+
+/** 物料导出行 */
+export interface MaterialExportRow extends MaterialImportRow {
+  category_code: string | null
+  category_name: string | null
+  spec: string | null
+  aux_unit_name: string | null
+  conversion_rate: number | null
+  ref_cost_price: number
+  sale_price: number
+  safety_stock: number
+  max_stock: number
+  lot_tracking_mode: string
+  texture: string | null
+  color: string | null
+  surface_craft: string | null
+  length_mm: number | null
+  width_mm: number | null
+  height_mm: number | null
+  barcode: string | null
+  remark: string | null
+  is_enabled: boolean
+}
+
+/** 期初库存导入行 */
+export interface InitialInventoryImportRow {
+  material_code: string
+  warehouse_code: string
+  quantity: number
+  unit_cost_usd: number
+  received_date: string
+  lot_no?: string | null
+  supplier_batch_no?: string | null
+  remark?: string | null
+}
+
+/** 获取数据管理状态 */
+export async function getDataManagementStatus(): Promise<DataManagementStatus> {
+  if (isTauriEnv()) {
+    return invoke<DataManagementStatus>('get_data_management_status')
+  }
+  return {
+    db_path: 'web-preview/cloudpivot.db',
+    db_size_bytes: 0,
+    backup_dir: 'web-preview/backups',
+    last_backup_at: null,
+    backups: [],
+  }
+}
+
+/** 创建数据库备份 */
+export async function createDatabaseBackup(): Promise<BackupFileInfo> {
+  return invoke<BackupFileInfo>('create_database_backup')
+}
+
+/** 恢复数据库备份 */
+export async function restoreDatabaseBackup(fileName: string): Promise<void> {
+  return invoke<void>('restore_database_backup', { fileName })
+}
+
+/** 删除数据库备份 */
+export async function deleteDatabaseBackup(fileName: string): Promise<void> {
+  return invoke<void>('delete_database_backup', { fileName })
+}
+
+/** 导入物料主数据 */
+export async function importMaterials(rows: MaterialImportRow[]): Promise<ImportResult> {
+  return invoke<ImportResult>('import_materials', { rows })
+}
+
+/** 导出物料主数据 */
+export async function exportMaterials(): Promise<MaterialExportRow[]> {
+  return invoke<MaterialExportRow[]>('export_materials')
+}
+
+/** 导入期初库存 */
+export async function importInitialInventory(rows: InitialInventoryImportRow[]): Promise<ImportResult> {
+  return invoke<ImportResult>('import_initial_inventory', { rows })
+}
+
+// ================================================================
 // 仓库命令（向导专用）
 // ================================================================
 

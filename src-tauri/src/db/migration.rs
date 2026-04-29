@@ -44,6 +44,11 @@ fn get_migrations() -> Vec<Migration> {
             name: "production_orders",
             sql: include_str!("../../migrations/sqlite/004_production_orders.sql"),
         },
+        Migration {
+            version: 5,
+            name: "drop_legacy_work_orders",
+            sql: include_str!("../../migrations/sqlite/005_drop_legacy_work_orders.sql"),
+        },
     ]
 }
 
