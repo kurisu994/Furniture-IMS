@@ -14,6 +14,66 @@ import {
   getReplenishmentSuggestions,
   getSalesReportSummary,
 } from '@/lib/tauri'
+import { addDays, formatDashboardUsd, formatLocalDate } from './format'
+
+type DeltaTrend = 'up' | 'down' | 'flat'
+
+interface KpiDelta {
+  percent: number | null
+  trend: DeltaTrend
+}
+
+/** 获取上月同期日期范围，用于本月至今环比 */
+function getPreviousMonthToDateRange(today: Date) {
+  const currentMonth = today.getMonth()
+  const previousMonthStart = new Date(today.getFullYear(), currentMonth - 1, 1)
+  const previousMonthLastDay = new Date(today.getFullYear(), currentMonth, 0).getDate()
+  const previousMonthEnd = new Date(today.getFullYear(), currentMonth - 1, Math.min(today.getDate(), previousMonthLastDay))
+
+  return {
+    start: formatLocalDate(previousMonthStart),
+    end: formatLocalDate(previousMonthEnd),
+  }
+}
+
+/** 计算两个金额之间的百分比变化 */
+function calculateDelta(current: number, previous: number): KpiDelta {
+  if (previous === 0) {
+    return {
+      percent: current === 0 ? 0 : null,
+      trend: current > 0 ? 'up' : 'flat',
+    }
+  }
+
+  const percent = ((current - previous) / previous) * 100
+  return {
+    percent,
+    trend: percent > 0 ? 'up' : percent < 0 ? 'down' : 'flat',
+  }
+}
+
+/** KPI 涨跌标记 */
+function KpiDeltaBadge({ delta }: { delta: KpiDelta }) {
+  const isUp = delta.trend === 'up'
+  const isDown = delta.trend === 'down'
+  const label = delta.percent === null ? '—' : `${delta.percent > 0 ? '+' : ''}${delta.percent.toFixed(1)}%`
+
+  return (
+    <Badge
+      className={
+        isDown
+          ? 'border-none bg-rose-50 px-2 py-0.5 font-bold text-rose-600 shadow-none hover:bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400'
+          : isUp
+            ? 'border-none bg-emerald-50 px-2 py-0.5 font-bold text-emerald-600 shadow-none hover:bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400'
+            : 'border-none bg-slate-100 px-2 py-0.5 font-bold text-slate-500 shadow-none hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-400'
+      }
+    >
+      {label}
+      {isUp && <TrendingUp className="ml-0.5 h-3.5 w-3.5" />}
+      {isDown && <TrendingDown className="ml-0.5 h-3.5 w-3.5" />}
+    </Badge>
+  )
+}
 
 /** 看板主要指标卡片 */
 export function MetricsCards() {
@@ -23,11 +83,17 @@ export function MetricsCards() {
   const [urgentDelta, setUrgentDelta] = useState(0)
 
   const [todaySales, setTodaySales] = useState(0)
+  const [yesterdaySales, setYesterdaySales] = useState(0)
   const [monthSales, setMonthSales] = useState(0)
+  const [previousMonthSales, setPreviousMonthSales] = useState(0)
   const [todayPurchase, setTodayPurchase] = useState(0)
+  const [yesterdayPurchase, setYesterdayPurchase] = useState(0)
   const [lowStockCount, setLowStockCount] = useState(0)
   const [receivables, setReceivables] = useState(0)
   const [payables, setPayables] = useState(0)
+  const [todaySalesDelta, setTodaySalesDelta] = useState<KpiDelta>({ percent: 0, trend: 'flat' })
+  const [monthSalesDelta, setMonthSalesDelta] = useState<KpiDelta>({ percent: 0, trend: 'flat' })
+  const [todayPurchaseDelta, setTodayPurchaseDelta] = useState<KpiDelta>({ percent: 0, trend: 'flat' })
 
   useEffect(() => {
     void (async () => {
@@ -45,21 +111,48 @@ export function MetricsCards() {
   useEffect(() => {
     void (async () => {
       try {
-        const today = new Date().toISOString().slice(0, 10)
-        const monthStart = `${today.slice(0, 7)}-01`
+        const currentDate = new Date()
+        const today = formatLocalDate(currentDate)
+        const yesterday = formatLocalDate(addDays(currentDate, -1))
+        const monthStart = formatLocalDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), 1))
+        const previousMonthToDate = getPreviousMonthToDateRange(currentDate)
 
-        const [salesTodayRes, salesMonthRes, purchaseTodayRes, inventoryLowRes, receivablesRes, payablesRes] = await Promise.all([
+        const [
+          salesTodayRes,
+          salesYesterdayRes,
+          salesMonthRes,
+          salesPreviousMonthRes,
+          purchaseTodayRes,
+          purchaseYesterdayRes,
+          inventoryLowRes,
+          receivablesRes,
+          payablesRes,
+        ] = await Promise.all([
           getSalesReportSummary({ start_date: today, end_date: today, page: 1, page_size: 1 }),
+          getSalesReportSummary({ start_date: yesterday, end_date: yesterday, page: 1, page_size: 1 }),
           getSalesReportSummary({ start_date: monthStart, end_date: today, page: 1, page_size: 1 }),
+          getSalesReportSummary({
+            start_date: previousMonthToDate.start,
+            end_date: previousMonthToDate.end,
+            page: 1,
+            page_size: 1,
+          }),
           getPurchaseReportSummary({ start_date: today, end_date: today, page: 1, page_size: 1 }),
+          getPurchaseReportSummary({ start_date: yesterday, end_date: yesterday, page: 1, page_size: 1 }),
           getInventoryList({ page: 1, pageSize: 1, alertStatus: 'low' }),
           getReceivables({ page: 1, page_size: 1 }),
           getPayables({ page: 1, page_size: 1 }),
         ])
 
         setTodaySales(salesTodayRes.stats.total_amount)
+        setYesterdaySales(salesYesterdayRes.stats.total_amount)
         setMonthSales(salesMonthRes.stats.total_amount)
+        setPreviousMonthSales(salesPreviousMonthRes.stats.total_amount)
         setTodayPurchase(purchaseTodayRes.stats.total_amount)
+        setYesterdayPurchase(purchaseYesterdayRes.stats.total_amount)
+        setTodaySalesDelta(calculateDelta(salesTodayRes.stats.total_amount, salesYesterdayRes.stats.total_amount))
+        setMonthSalesDelta(calculateDelta(salesMonthRes.stats.total_amount, salesPreviousMonthRes.stats.total_amount))
+        setTodayPurchaseDelta(calculateDelta(purchaseTodayRes.stats.total_amount, purchaseYesterdayRes.stats.total_amount))
         setLowStockCount(inventoryLowRes.total)
         setReceivables(receivablesRes.summary.total_overdue)
         setPayables(payablesRes.summary.total_overdue)
@@ -76,39 +169,39 @@ export function MetricsCards() {
         <Card className="rounded-xl border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900/50">
           <CardHeader className="flex flex-row items-start justify-between space-y-0 p-5 pb-3">
             <span className="text-xs font-semibold tracking-wider text-slate-500">{t('todaySales')}</span>
-            <Badge className="border-none bg-emerald-50 px-2 py-0.5 font-bold text-emerald-600 shadow-none hover:bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400">
-              +5.2% <TrendingUp className="ml-0.5 h-3.5 w-3.5" />
-            </Badge>
+            <KpiDeltaBadge delta={todaySalesDelta} />
           </CardHeader>
           <CardContent className="p-5 pt-0">
-            <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">${(todaySales / 100).toLocaleString()}</h3>
-            <p className="mt-2 text-[10px] text-slate-400">{t('vsYesterday')}</p>
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{formatDashboardUsd(todaySales)}</h3>
+            <p className="mt-2 text-[10px] text-slate-400">
+              {t('comparisonAmount', { label: t('vsYesterday'), amount: formatDashboardUsd(yesterdaySales) })}
+            </p>
           </CardContent>
         </Card>
 
         <Card className="rounded-xl border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900/50">
           <CardHeader className="flex flex-row items-start justify-between space-y-0 p-5 pb-3">
             <span className="text-xs font-semibold tracking-wider text-slate-500">{t('monthSales')}</span>
-            <Badge className="border-none bg-emerald-50 px-2 py-0.5 font-bold text-emerald-600 shadow-none hover:bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400">
-              +12.8% <TrendingUp className="ml-0.5 h-3.5 w-3.5" />
-            </Badge>
+            <KpiDeltaBadge delta={monthSalesDelta} />
           </CardHeader>
           <CardContent className="p-5 pt-0">
-            <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">${(monthSales / 100).toLocaleString()}</h3>
-            <p className="mt-2 text-[10px] text-slate-400">{t('progress', { percent: '85', target: '$4.2M' })}</p>
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{formatDashboardUsd(monthSales)}</h3>
+            <p className="mt-2 text-[10px] text-slate-400">
+              {t('comparisonAmount', { label: t('vsPreviousMonthPeriod'), amount: formatDashboardUsd(previousMonthSales) })}
+            </p>
           </CardContent>
         </Card>
 
         <Card className="rounded-xl border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900/50">
           <CardHeader className="flex flex-row items-start justify-between space-y-0 p-5 pb-3">
             <span className="text-xs font-semibold tracking-wider text-slate-500">{t('todayPurchase')}</span>
-            <Badge className="border-none bg-rose-50 px-2 py-0.5 font-bold text-rose-600 shadow-none hover:bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400">
-              -3.1% <TrendingDown className="ml-0.5 h-3.5 w-3.5" />
-            </Badge>
+            <KpiDeltaBadge delta={todayPurchaseDelta} />
           </CardHeader>
           <CardContent className="p-5 pt-0">
-            <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">${(todayPurchase / 100).toLocaleString()}</h3>
-            <p className="mt-2 text-[10px] text-slate-400">{t('mainMaterial')}</p>
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{formatDashboardUsd(todayPurchase)}</h3>
+            <p className="mt-2 text-[10px] text-slate-400">
+              {t('comparisonAmount', { label: t('vsYesterday'), amount: formatDashboardUsd(yesterdayPurchase) })}
+            </p>
           </CardContent>
         </Card>
 
@@ -116,7 +209,7 @@ export function MetricsCards() {
           <CardHeader className="flex flex-row items-start justify-between space-y-0 p-5 pb-3">
             <span className="text-xs font-semibold tracking-wider text-slate-500">{t('lowStock')}</span>
             <Badge className="border-none bg-orange-50 px-2 py-0.5 font-bold text-orange-600 shadow-none hover:bg-orange-50 dark:bg-orange-500/10 dark:text-orange-400">
-              +3 <AlertTriangle className="ml-0.5 h-3.5 w-3.5" />
+              {lowStockCount} <AlertTriangle className="ml-0.5 h-3.5 w-3.5" />
             </Badge>
           </CardHeader>
           <CardContent className="p-5 pt-0">
@@ -134,7 +227,7 @@ export function MetricsCards() {
           </div>
           <div>
             <p className="text-[11px] font-bold tracking-tight text-slate-500 uppercase">{t('receivables')}</p>
-            <p className="text-lg font-bold text-slate-800 dark:text-slate-200">${(receivables / 100).toLocaleString()}</p>
+            <p className="text-lg font-bold text-slate-800 dark:text-slate-200">{formatDashboardUsd(receivables)}</p>
           </div>
         </div>
 
@@ -144,7 +237,7 @@ export function MetricsCards() {
           </div>
           <div>
             <p className="text-[11px] font-bold tracking-tight text-slate-500 uppercase">{t('payables')}</p>
-            <p className="text-lg font-bold text-slate-800 dark:text-slate-200">${(payables / 100).toLocaleString()}</p>
+            <p className="text-lg font-bold text-slate-800 dark:text-slate-200">{formatDashboardUsd(payables)}</p>
           </div>
         </div>
 
@@ -156,7 +249,9 @@ export function MetricsCards() {
             <p className="text-[11px] font-bold tracking-tight text-slate-500 uppercase">{t('replenishmentPending')}</p>
             <p className="text-lg font-bold text-slate-800 dark:text-slate-200">
               {t('itemCount', { count: replenishmentCount })}
-              {urgentDelta > 0 && <span className="ml-2 text-sm font-normal text-red-600 dark:text-red-400">({urgentDelta} urgent)</span>}
+              {urgentDelta > 0 && (
+                <span className="ml-2 text-sm font-normal text-red-600 dark:text-red-400">{t('urgentCount', { count: urgentDelta })}</span>
+              )}
             </p>
           </div>
         </div>

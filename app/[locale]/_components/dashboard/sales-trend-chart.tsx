@@ -6,6 +6,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import { getSalesReportSummary } from '@/lib/tauri'
+import { formatDashboardUsdCompact } from './format'
 
 interface TrendPoint {
   label: string
@@ -63,7 +64,7 @@ export function SalesTrendChart({ className }: { className?: string }) {
               tickMargin={10}
               fontSize={11}
               className="text-slate-400"
-              tickFormatter={value => `$${value / 1000}k`}
+              tickFormatter={value => formatDashboardUsdCompact(Number(value))}
             />
             <ChartTooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} content={<ChartTooltipContent indicator="dashed" className="w-[180px]" />} />
             <Bar dataKey="current" fill="var(--color-current)" radius={[4, 4, 0, 0]} />

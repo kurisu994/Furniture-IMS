@@ -7,6 +7,7 @@ import { getSalesMaterialDetail } from '@/lib/tauri'
 
 interface BestSellerItem {
   name: string
+  unitName: string
   units: number
   percent: number
 }
@@ -29,6 +30,7 @@ export function BestSellers({ className }: { className?: string }) {
         const maxAmount = Math.max(...res.items.map(i => i.amount))
         const mapped = res.items.map(item => ({
           name: item.material_name,
+          unitName: item.unit_name,
           units: Math.round(item.quantity),
           percent: maxAmount > 0 ? Math.round((item.amount / maxAmount) * 100) : 0,
         }))
@@ -50,7 +52,9 @@ export function BestSellers({ className }: { className?: string }) {
           <div key={item.name} className="space-y-1.5">
             <div className="flex justify-between text-xs font-medium">
               <span className="text-slate-700 dark:text-slate-300">{item.name}</span>
-              <span className="font-bold text-[#294985] dark:text-[#6b85c1]">{item.units} Units</span>
+              <span className="font-bold text-[#294985] dark:text-[#6b85c1]">
+                {t('quantityWithUnit', { quantity: item.units, unit: item.unitName })}
+              </span>
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
               <div className="h-full rounded-full bg-[#294985] dark:bg-[#6b85c1]" style={{ width: `${item.percent}%` }}></div>

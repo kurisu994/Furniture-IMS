@@ -96,6 +96,7 @@ export default function LoginPage() {
                     width={56}
                     height={48}
                     className="h-12 w-auto object-contain dark:hidden"
+                    style={{ width: 'auto' }}
                     priority
                   />
                   <Image
@@ -104,6 +105,7 @@ export default function LoginPage() {
                     width={56}
                     height={48}
                     className="hidden h-12 w-auto object-contain dark:block"
+                    style={{ width: 'auto' }}
                     priority
                   />
                 </div>

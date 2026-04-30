@@ -37,8 +37,22 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <div className="flex items-center gap-2.5 overflow-hidden">
           {/* Logo 图标 */}
           <div className="relative h-8 shrink-0">
-            <Image src="/cloudpivot_logo.png" alt="CloudPivot" width={37} height={32} className="h-8 w-auto object-contain dark:hidden" />
-            <Image src="/cloudpivot_logo_dark.png" alt="CloudPivot" width={37} height={32} className="hidden h-8 w-auto object-contain dark:block" />
+            <Image
+              src="/cloudpivot_logo.png"
+              alt="CloudPivot"
+              width={37}
+              height={32}
+              className="h-8 w-auto object-contain dark:hidden"
+              style={{ width: 'auto' }}
+            />
+            <Image
+              src="/cloudpivot_logo_dark.png"
+              alt="CloudPivot"
+              width={37}
+              height={32}
+              className="hidden h-8 w-auto object-contain dark:block"
+              style={{ width: 'auto' }}
+            />
           </div>
           {/* 展开时显示品牌名称 */}
           {!collapsed && (

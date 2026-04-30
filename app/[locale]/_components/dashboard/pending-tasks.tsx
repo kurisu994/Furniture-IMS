@@ -5,6 +5,14 @@ import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getInventoryList, getOutboundOrders, getPurchaseOrders, getReceivables } from '@/lib/tauri'
+import { formatLocalDate } from './format'
+
+/** 计算日期距今天的逾期天数 */
+function getOverdueDays(dueDate: string, today: string) {
+  const due = new Date(`${dueDate}T00:00:00`)
+  const current = new Date(`${today}T00:00:00`)
+  return Math.max(0, Math.floor((current.getTime() - due.getTime()) / 86400000))
+}
 
 /** 待办事项面板 */
 export function PendingTasks({ className }: { className?: string }) {
@@ -14,20 +22,25 @@ export function PendingTasks({ className }: { className?: string }) {
   const [pendingPurchaseCount, setPendingPurchaseCount] = useState(0)
   const [pendingOutboundCount, setPendingOutboundCount] = useState(0)
   const [overdueReceivableCount, setOverdueReceivableCount] = useState(0)
+  const [maxOverdueDays, setMaxOverdueDays] = useState(0)
 
   useEffect(() => {
     void (async () => {
       try {
+        const today = formatLocalDate(new Date())
         const [lowStockRes, purchaseRes, outboundRes, receivableRes] = await Promise.all([
           getInventoryList({ page: 1, pageSize: 1, alertStatus: 'low' }),
           getPurchaseOrders({ status: 'draft', page: 1, pageSize: 1 }),
           getOutboundOrders({ status: 'draft', page: 1, pageSize: 1 }),
-          getReceivables({ status: 'unpaid', page: 1, page_size: 1 }),
+          getReceivables({ page: 1, page_size: 1000 }),
         ])
+        const overdueItems = receivableRes.list.items.filter(item => item.status !== 'paid' && item.due_date && item.due_date < today)
+        const overdueDays = overdueItems.map(item => getOverdueDays(item.due_date!, today))
         setLowStockCount(lowStockRes.total)
         setPendingPurchaseCount(purchaseRes.total)
         setPendingOutboundCount(outboundRes.total)
-        setOverdueReceivableCount(receivableRes.summary.total_overdue > 0 ? receivableRes.list.total : 0)
+        setOverdueReceivableCount(overdueItems.length)
+        setMaxOverdueDays(overdueDays.length > 0 ? Math.max(...overdueDays) : 0)
       } catch {
         // 降级为 0
       }
@@ -53,7 +66,7 @@ export function PendingTasks({ className }: { className?: string }) {
           <FileCheck className="mt-0.5 h-5 w-5 text-orange-600 dark:text-orange-500" />
           <div>
             <p className="text-xs font-bold text-orange-900 dark:text-orange-400">{t('purchaseAuditTitle', { count: pendingPurchaseCount })}</p>
-            <p className="mt-0.5 text-[10px] text-orange-700 dark:text-orange-500/80">{t('purchaseAuditDesc', { amount: '$45,000' })}</p>
+            <p className="mt-0.5 text-[10px] text-orange-700 dark:text-orange-500/80">{t('purchaseAuditDesc')}</p>
           </div>
         </div>
         <div className="flex items-start gap-3 rounded border-l-4 border-l-blue-500 bg-blue-50 p-3 dark:bg-blue-500/10">
@@ -67,7 +80,9 @@ export function PendingTasks({ className }: { className?: string }) {
           <AlertCircle className="mt-0.5 h-5 w-5 text-slate-600 dark:text-slate-400" />
           <div>
             <p className="text-xs font-bold text-slate-900 dark:text-slate-300">{t('overdueReceivableTitle', { count: overdueReceivableCount })}</p>
-            <p className="mt-0.5 text-[10px] text-slate-600 dark:text-slate-400">{t('overdueReceivableDesc', { days: 45 })}</p>
+            <p className="mt-0.5 text-[10px] text-slate-600 dark:text-slate-400">
+              {overdueReceivableCount > 0 ? t('overdueReceivableDesc', { days: maxOverdueDays }) : t('noOverdueReceivableDesc')}
+            </p>
           </div>
         </div>
       </CardContent>

@@ -6,6 +6,7 @@ import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import { getPurchaseReportSummary } from '@/lib/tauri'
+import { formatDashboardUsdCompact } from './format'
 
 interface TrendPoint {
   date: string
@@ -42,7 +43,7 @@ export function PurchaseTrendChart({ className }: { className?: string }) {
     <Card className={`mt-6 rounded-xl border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900/50 ${className || ''}`}>
       <CardHeader className="flex flex-row items-center justify-between pb-6">
         <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-100">{t('purchaseTrend')}</CardTitle>
-        <span className="text-xs text-slate-400">{t('unitVND')}</span>
+        <span className="text-xs text-slate-400">{t('unitUSD')}</span>
       </CardHeader>
       <CardContent>
         <ChartContainer config={purchaseConfig} className="h-[250px] min-h-[250px] w-full min-w-full">
@@ -61,7 +62,7 @@ export function PurchaseTrendChart({ className }: { className?: string }) {
               tickMargin={12}
               fontSize={11}
               className="text-slate-400"
-              tickFormatter={val => `${(val / 1000000000).toFixed(1)}B`}
+              tickFormatter={val => formatDashboardUsdCompact(Number(val))}
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent className="min-w-[150px]" />} />
             <Area

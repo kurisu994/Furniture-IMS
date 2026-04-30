@@ -6,6 +6,7 @@ import { Label, Pie, PieChart } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import { getInventoryList } from '@/lib/tauri'
+import { formatDashboardUsd, formatDashboardUsdCompact } from './format'
 
 interface DonutItem {
   name: string
@@ -66,7 +67,7 @@ export function InventoryDonut({ className }: { className?: string }) {
                     return (
                       <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
                         <tspan x={viewBox.cx} y={viewBox.cy} className="fill-slate-800 text-2xl font-bold dark:fill-slate-100">
-                          ${(totalValue / 100000).toFixed(1)}M
+                          {formatDashboardUsdCompact(totalValue)}
                         </tspan>
                         <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 20} className="fill-slate-500 text-xs font-medium dark:fill-slate-400">
                           {t('totalStock')}
@@ -87,7 +88,7 @@ export function InventoryDonut({ className }: { className?: string }) {
                 <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: item.fill }} />
                 {item.name}
               </div>
-              <span className="font-semibold text-slate-800 dark:text-slate-200">${(item.value / 1000).toFixed(0)}K</span>
+              <span className="font-semibold text-slate-800 dark:text-slate-200">{formatDashboardUsd(item.value)}</span>
             </div>
           ))}
         </div>
