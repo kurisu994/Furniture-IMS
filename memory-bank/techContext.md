@@ -6,21 +6,21 @@
 
 | 技术 | 版本 | 说明 |
 |------|------|------|
-| Next.js | 16.2.2 | App Router + SSG（Tauri 构建时启用 `output: 'export'`） |
-| React | 19.2.4 | React 19 新特性 |
+| Next.js | 16.3.1 | App Router + SSG（Tauri 构建时启用 `output: 'export'`） |
+| React | 19.2.8 | React 19 新特性 |
 | TypeScript | 5.9.3 | 严格模式 |
-| Tailwind CSS | 4.3.2 | v4 新语法 |
-| @base-ui/react | 1.6.0 | shadcn/ui base-nova 底层 |
-| next-intl | 4.13.1 | i18n 国际化 |
+| Tailwind CSS | 4.3.3 | v4 新语法 |
+| @base-ui/react | 1.7.0 | shadcn/ui base-nova 底层 |
+| next-intl | 4.13.6 | i18n 国际化 |
 | next-themes | 0.4.6 | 主题切换 |
-| recharts | 3.8.0 | 图表库 |
+| recharts | 3.10.1 | 图表库 |
 | date-fns | 4.4.0 | 日期处理 |
 | react-day-picker | 10.0.1 | 日期选择器 |
-| react-arborist | 3.13.1 | 树形组件（分类管理） |
-| lucide-react | 1.23.0 | 图标库 |
-| sonner | 2.0.7 | Toast 通知 |
+| react-arborist | 3.16.0 | 树形组件（分类管理） |
+| lucide-react | 1.31.0 | 图标库 |
+| sonner | 2.0.8 | Toast 通知 |
 | xlsx | 0.18.5 | Excel 导出 |
-| Biome | 2.4.11 | Lint + Format（替代 ESLint + Prettier） |
+| Biome | 2.5.8 | Lint + Format（替代 ESLint + Prettier） |
 | pnpm | 10.33.0 | 包管理器 |
 
 ### 后端（Rust）
@@ -28,7 +28,8 @@
 | 技术 | 版本 | 说明 |
 |------|------|------|
 | Rust | edition 2024 | MSRV: 1.85 |
-| Tauri | 2.10.3 | 桌面框架 |
+| Tauri | 2.11.5 | 桌面框架 |
+| tauri-build | 2.6.3 | 构建脚本 |
 | sqlx | 0.8 | PostgreSQL 异步驱动（runtime-tokio） |
 | tokio | 1 (full) | 异步运行时 |
 | bcrypt | 0.17 | 密码哈希 |
@@ -45,14 +46,14 @@
 | 技术 | 说明 |
 |------|------|
 | PostgreSQL | 远程共享数据库 |
-| 表数量 | 58 张业务表（017 新增 user_roles） |
-| 迁移文件 | 17 个（001_init ~ 017_user_roles_and_department_roles） |
+| 表数量 | 58 张业务表 |
+| 迁移文件 | 21 个（001_init ~ 021_warehouse_staff_revoke_stock_checks_confirm） |
 | 连接方式 | `DATABASE_URL` 编译时注入 |
 | 迁移互斥 | `run_migrations` 持 pg_advisory_lock，多客户端并发启动安全 |
 
-## IPC 命令概览（182 个）
+## IPC 命令概览（180 个）
 
-按模块分布：
+按模块分布（命令数按 `#[tauri::command]` 统计）：
 
 | 模块 | 命令数 | 文件 |
 |------|--------|------|
@@ -72,7 +73,7 @@
 | 库存 | 13 | `inventory.rs` |
 | 自由出入库 | 5 | `manual_stock_movement.rs` |
 | 定制单 | 10 | `custom_order.rs` |
-| 生产工单 | 10 | `production_order.rs` |
+| 生产工单 | 11 | `production_order.rs` |
 | 智能补货 | 8 | `replenishment.rs` |
 | 财务 | 6 | `finance.rs` |
 | 报表 | 10 | `reports.rs` |
