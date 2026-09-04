@@ -86,8 +86,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [needsSetup, setNeedsSetup] = useState(cachedNeedsSetup)
   const [permissions, setPermissions] = useState<Set<string>>(cachedPermissions)
 
-  /** 认证相关页面，不需要鉴权 */
-  const authRoutes = ['/login', '/change-password', '/setup-wizard']
+  /** 认证相关页面，不需要鉴权
+   *
+   * 仅登录页允许未登录访问。改密页与向导页都依赖已登录的 user 状态：
+   * 若它们也被视为「无需鉴权」页面，未登录（user=null）时会被路由守卫放行，
+   * 导致在改密页提交时才报「未登录」，体验糟糕。故这里不把它们列为 authRoute，
+   * 未登录访问改密页/向导页时由路由守卫正常重定向到 /login。
+   */
+  const authRoutes = ['/login']
   const isAuthRoute = authRoutes.includes(pathname)
 
   /** 更新用户状态并同步模块缓存 */
@@ -237,7 +243,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const changePassword = useCallback(
     async (oldPassword: string, newPassword: string) => {
       if (!user) {
-        throw new Error('未登录')
+        // 防御兜底：正常情况下路由守卫已把未登录访问改密页重定向到 /login，
+        // 若仍走到这里（如竞态），清理会话并引导重新登录，而非仅抛一串「未登录」。
+        await clearAuth()
+        router.push('/login')
+        throw new Error('请先登录')
       }
 
       if (isTauriEnv()) {
@@ -267,7 +277,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await saveAuth(updated, true)
       }
     },
-    [user, updateUser, saveAuth],
+    [user, updateUser, saveAuth, clearAuth, router],
   )
 
   /** 登出 */
