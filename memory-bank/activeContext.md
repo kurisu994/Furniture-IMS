@@ -6,6 +6,22 @@
 
 ## 本次会话（已提交 `009f4cf`）
 
+- **守卫决策抽纯函数 + 补测试**（`lib/auth-guard.ts` / `tests/auth-guard.test.mjs`）：
+  `resolveAuthRedirect(state)` 统一承载守卫决策，路由守卫 effect 与 `isPendingRedirect` 都消费它
+  （此前两处各写一遍相同的四个条件、必须手工同步，正是首次改密误报「未登录」的结构性温床）。
+  新增 16 个用例：场景表锁住每个有意义的组合，另有 4 条不变量跨 isLoading × user × needsSetup × pathname
+  全笛卡尔积断言，其中「决策结果永不指向当前页」与「决策一次即收敛」直接防住重定向死循环。
+  **零新依赖**：沿用项目既有的 `tests/*.test.mjs` + `node:test` 约定（曾误以为项目无测试而装了 vitest，
+  发现既有约定后已卸载还原）。
+
+## 待办 / 已知缺口
+
+- **前端 `tests/*.test.mjs` 未接入 CI**：`.github/workflows/ci.yml` 的 `test` job 只跑 `cargo test`，
+  11 个前端测试文件从未在流水线执行；本次已补 `pnpm test`（`node --test "tests/**/*.test.mjs"`）作为本地入口，
+  CI 接入待定。另注意 CI 用 `node-version: 22`，而这些 `.mjs` 测试直接 `import '../lib/*.ts'`，
+  依赖 Node 的 TS type stripping（本地 `.node-version` 为 Node 24 原生支持，Node 22 需实验开关）。
+- **`@types/node` 停留在 ^20，实际 runtime 为 Node 24**：升到 ^24 后 `tsc --noEmit` 实测通过，但与本次改动无关，未纳入。
+
 - **认证守卫加固（review 后续）**（`auth-provider.tsx` / `app-layout.tsx`）：
   1. 抽出 `resetAuthState()`，统一 logout / 会话失效 / 改密兜底三处的状态清理（此前兜底只清了 user 与会话文件，漏掉 `needsSetup`、`permissions`、`authInitialized`）；`clearAuth` 保留给启动恢复流程。
   2. 两处同名 `authRoutes` 改名消歧：`auth-provider` 的 → `publicRoutes`（免鉴权白名单，仅 `/login`），`app-layout` 的 → `bareLayoutRoutes`（不套主布局，含改密页/向导页），并互相加了「勿统一」注释。
