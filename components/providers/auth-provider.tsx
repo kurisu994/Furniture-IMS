@@ -69,6 +69,14 @@ let cachedNeedsSetup = false
 let cachedPermissions: Set<string> = new Set()
 let authInitialized = false
 
+/**
+ * 仅服务于「待办」的页面：待办完成后不应再停留于此，需送回首页
+ *
+ * 不含 `/change-password`：该页改密成功后会自行调用 logout() 跳登录页，
+ * 若守卫同时把它推向首页会产生跳转竞争。
+ */
+const PENDING_ONLY_ROUTES = ['/login', '/setup-wizard']
+
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 /**
@@ -86,15 +94,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [needsSetup, setNeedsSetup] = useState(cachedNeedsSetup)
   const [permissions, setPermissions] = useState<Set<string>>(cachedPermissions)
 
-  /** 认证相关页面，不需要鉴权
+  /** 免鉴权页面：允许 user=null 时访问的路由白名单
    *
-   * 仅登录页允许未登录访问。改密页与向导页都依赖已登录的 user 状态：
-   * 若它们也被视为「无需鉴权」页面，未登录（user=null）时会被路由守卫放行，
-   * 导致在改密页提交时才报「未登录」，体验糟糕。故这里不把它们列为 authRoute，
+   * 仅登录页。改密页与向导页都依赖已登录的 user 状态：
+   * 若它们也被视为免鉴权页面，未登录（user=null）时会被路由守卫放行，
+   * 导致在改密页提交时才报「未登录」，体验糟糕。故不把它们列入白名单，
    * 未登录访问改密页/向导页时由路由守卫正常重定向到 /login。
+   *
+   * ⚠️ 勿与 `app-layout.tsx` 的 `bareLayoutRoutes` 混淆并"统一"：那份列表是
+   * 「不套用主布局（侧边栏/顶栏）的页面」，包含改密页与向导页，两者语义不同。
    */
-  const authRoutes = ['/login']
-  const isAuthRoute = authRoutes.includes(pathname)
+  const publicRoutes = ['/login']
+  const isPublicRoute = publicRoutes.includes(pathname)
 
   /** 更新用户状态并同步模块缓存 */
   const updateUser = useCallback((newUser: UserInfo | null) => {
@@ -149,6 +160,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // 忽略
     }
   }, [updateUser])
+
+  /**
+   * 重置全部认证态（登出 / 会话失效 / 兜底跳登录页共用）
+   *
+   * 比 clearAuth 更彻底：除了 user 与会话文件，还清掉向导状态、权限缓存和
+   * 初始化标记，避免残留上一个用户的状态。clearAuth 单独保留给启动恢复流程
+   * 使用（那时 needsSetup/permissions 尚为初值，authInitialized 由 finally 统一置位）。
+   */
+  const resetAuthState = useCallback(async () => {
+    await clearAuth()
+    updateNeedsSetup(false)
+    updatePermissions(new Set())
+    authInitialized = false
+  }, [clearAuth, updateNeedsSetup, updatePermissions])
 
   /**
    * 检查系统是否已完成初始化配置
@@ -243,9 +268,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const changePassword = useCallback(
     async (oldPassword: string, newPassword: string) => {
       if (!user) {
-        // 防御兜底：正常情况下路由守卫已把未登录访问改密页重定向到 /login，
-        // 若仍走到这里（如竞态），清理会话并引导重新登录，而非仅抛一串「未登录」。
-        await clearAuth()
+        // 纯防御，理论不可达：user=null 且停在改密页时 isPendingRedirect 已为 true，
+        // 渲染的是 SplashScreen，改密表单根本不会挂载，因此提交入口不存在。
+        // 保留是为了万一守卫条件被改动时不至于静默写坏状态。
+        await resetAuthState()
         router.push('/login')
         throw new Error('请先登录')
       }
@@ -277,7 +303,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await saveAuth(updated, true)
       }
     },
-    [user, updateUser, saveAuth, clearAuth, router],
+    [user, updateUser, saveAuth, resetAuthState, router],
   )
 
   /** 登出 */
@@ -291,12 +317,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.warn('[Auth] 记录退出登录日志失败', error)
       }
     }
-    await clearAuth()
-    updateNeedsSetup(false)
-    updatePermissions(new Set())
-    authInitialized = false
+    await resetAuthState()
     router.push('/login')
-  }, [clearAuth, updateNeedsSetup, updatePermissions, router])
+  }, [resetAuthState, router])
 
   /** 完成向导 — 由向导完成页调用 */
   const completeSetup = useCallback(() => {
@@ -313,15 +336,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     tauriApi.setAuthErrorHandler(() => {
       // 仅在"自以为已登录"时处理，避免登录页或恢复阶段误触发
       if (!cachedUser) return
-      void clearAuth()
-      updateNeedsSetup(false)
-      updatePermissions(new Set())
-      authInitialized = false
+      void resetAuthState()
       toast.error('登录已失效，请重新登录')
       router.push('/login')
     })
     return () => tauriApi.setAuthErrorHandler(null)
-  }, [clearAuth, updateNeedsSetup, updatePermissions, router])
+  }, [resetAuthState, router])
 
   /** 启动时恢复认证状态（仅首次挂载时执行，locale 切换时从缓存同步恢复） */
   useEffect(() => {
@@ -413,12 +433,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * 1. 未登录 → /login
    * 2. 需要改密 → /change-password
    * 3. 需要向导 → /setup-wizard
-   * 4. 已登录访问 /login → 首页
+   * 4. 已登录且无待办，却停在 /login 或 /setup-wizard → 首页
    */
   useEffect(() => {
     if (isLoading) return
 
-    if (!user && !isAuthRoute) {
+    if (!user && !isPublicRoute) {
       // 未登录访问受保护页面 → 跳转登录
       router.push('/login')
     } else if (user && user.must_change_password && pathname !== '/change-password') {
@@ -427,11 +447,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else if (user && !user.must_change_password && needsSetup && pathname !== '/setup-wizard') {
       // 需要向导但不在向导页 → 强制跳转
       router.push('/setup-wizard')
-    } else if (user && !user.must_change_password && !needsSetup && pathname === '/login') {
-      // 已登录且无待办事项，但仍在登录页 → 跳转首页
+    } else if (user && !user.must_change_password && !needsSetup && PENDING_ONLY_ROUTES.includes(pathname)) {
+      // 已登录且无待办事项，却停在只服务于待办的页面 → 跳转首页。
+      // 覆盖向导页：守卫此前只在 needsSetup=true 时把人推进向导，反向不拦，
+      // 任何已登录用户都能直达 /setup-wizard（写操作虽有后端权限兜底，但 UI 不该可达）。
+      // 不含 /change-password：改密成功后该页会立即调 logout() 跳登录页，
+      // 若这里同时推首页会产生跳转竞争。
       router.push('/')
     }
-  }, [user, isLoading, isAuthRoute, pathname, router, needsSetup])
+  }, [user, isLoading, isPublicRoute, pathname, router, needsSetup])
 
   const value: AuthContextValue = {
     user,
@@ -448,14 +472,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /**
    * 同步计算是否正在等待重定向，阻止目标页面闪烁。
-   * 覆盖场景：加载中、未登录访问受保护页、需改密、需向导、已登录仍在登录页。
+   * 覆盖场景：加载中、未登录访问受保护页、需改密、需向导、已登录仍停在待办专用页。
    */
   const isPendingRedirect =
     isLoading ||
-    (!user && !isAuthRoute) ||
+    (!user && !isPublicRoute) ||
     (!!user && user.must_change_password && pathname !== '/change-password') ||
     (!!user && !user.must_change_password && needsSetup && pathname !== '/setup-wizard') ||
-    (!!user && !user.must_change_password && !needsSetup && pathname === '/login')
+    (!!user && !user.must_change_password && !needsSetup && PENDING_ONLY_ROUTES.includes(pathname))
 
   if (isPendingRedirect) {
     return (

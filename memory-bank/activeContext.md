@@ -4,7 +4,13 @@
 
 项目处于 **功能完备、持续打磨** 阶段，当前版本 **v0.3.3**（2026-08-19 发布）。本月主要围绕"销售 → 生产"链路打通与权限精细化收敛：新增销售单下推生产、库管角色权限收紧，并修复一批上线前缺陷（Tauri 版本不匹配、记住我登录、看板权限报错等）。
 
-## 本次会话（进行中，未提交）
+## 本次会话（已提交 `009f4cf`）
+
+- **认证守卫加固（review 后续）**（`auth-provider.tsx` / `app-layout.tsx`）：
+  1. 抽出 `resetAuthState()`，统一 logout / 会话失效 / 改密兜底三处的状态清理（此前兜底只清了 user 与会话文件，漏掉 `needsSetup`、`permissions`、`authInitialized`）；`clearAuth` 保留给启动恢复流程。
+  2. 两处同名 `authRoutes` 改名消歧：`auth-provider` 的 → `publicRoutes`（免鉴权白名单，仅 `/login`），`app-layout` 的 → `bareLayoutRoutes`（不套主布局，含改密页/向导页），并互相加了「勿统一」注释。
+  3. 新增 `PENDING_ONLY_ROUTES = ['/login', '/setup-wizard']` 反向守卫：此前守卫只在 `needsSetup=true` 时把人推进向导、反向不拦，任何已登录用户都能直达 `/setup-wizard`（写操作有后端 `require_permission` 兜底，但 UI 不该可达）。`/change-password` 故意不在其中——该页改密成功后会自行 `logout()`，同时推首页会造成跳转竞争。
+  4. `changePassword` 的 `if (!user)` 兜底注释改为「理论不可达，纯防御」：`isPendingRedirect` 已覆盖该场景，表单不会挂载。
 
 - **修复首次登录改密码报「未登录」**（`components/providers/auth-provider.tsx`）：根因是 `/change-password` 被列进 `authRoutes`（无需鉴权页面），导致未登录（user=null）时路由守卫放行、停留在改密页，提交时才由 `changePassword` 的 `if (!user)` 抛出「未登录」。已改为仅 `/login` 属于免鉴权 authRoute，改密页/向导页在未登录时被路由守卫正常重定向到 `/login`；同时给 `changePassword` 增加兜底——user 为空时清会话并跳登录页，而非仅抛文案。
 

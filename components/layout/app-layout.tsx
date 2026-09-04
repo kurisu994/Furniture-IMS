@@ -168,9 +168,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { sidebarAutoCollapse, isLoading } = useDisplayPreferences()
 
-  /** 认证相关页面（登录、改密码、向导等）无需主布局，直接渲染 */
-  const authRoutes = ['/login', '/change-password', '/setup-wizard']
-  if (authRoutes.includes(pathname)) {
+  /** 独立布局页面：不套用侧边栏/顶栏，直接渲染
+   *
+   * ⚠️ 勿与 `auth-provider.tsx` 的 `publicRoutes` 混淆并"统一"：那份列表是
+   * 「允许未登录访问的免鉴权白名单」，仅含 /login。改密页与向导页都要求已登录，
+   * 但同样不需要主布局，因此只出现在这里。
+   */
+  const bareLayoutRoutes = ['/login', '/change-password', '/setup-wizard']
+  if (bareLayoutRoutes.includes(pathname)) {
     return <>{children}</>
   }
 
