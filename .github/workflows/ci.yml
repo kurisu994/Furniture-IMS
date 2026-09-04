@@ -72,17 +72,24 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          # 与 .nvmrc 的 lts-krypton 对齐；tests/*.test.mjs 直接 import .ts，
+          # 依赖 Node 24 原生的 TS type stripping（Node 22 需实验开关）
+          node-version: 24
           cache: pnpm
 
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: ESLint
+      - name: Biome lint
         run: pnpm lint
 
       - name: TypeScript type check
         run: pnpm exec tsc --noEmit
+
+      # 前端纯逻辑测试（node:test，约 150ms）。此前 tests/*.test.mjs 从未在 CI 执行过，
+      # 放在 Rust 工具链之前，好让廉价的用例先失败。
+      - name: Frontend unit tests
+        run: pnpm test
 
       - name: Install system dependencies (Linux)
         run: |
@@ -173,7 +180,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          # 与 .nvmrc 的 lts-krypton 及 lint job 对齐，避免两个 job 的构建环境漂移
+          node-version: 24
           cache: pnpm
 
       - name: Install frontend dependencies
