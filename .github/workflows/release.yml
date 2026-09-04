@@ -39,7 +39,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          # 与 .nvmrc 的 lts-krypton 及 ci.yml 对齐，避免发布构建环境与 CI 验证环境漂移
+          node-version: 24
           cache: pnpm
 
       - name: Install frontend dependencies
