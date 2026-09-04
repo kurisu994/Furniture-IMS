@@ -20,7 +20,9 @@
   11 个前端测试文件从未在流水线执行；本次已补 `pnpm test`（`node --test "tests/**/*.test.mjs"`）作为本地入口，
   CI 接入待定。另注意 CI 用 `node-version: 22`，而这些 `.mjs` 测试直接 `import '../lib/*.ts'`，
   依赖 Node 的 TS type stripping（本地 `.node-version` 为 Node 24 原生支持，Node 22 需实验开关）。
-- **`@types/node` 停留在 ^20，实际 runtime 为 Node 24**：升到 ^24 后 `tsc --noEmit` 实测通过，但与本次改动无关，未纳入。
+- **CI `node-version: 22` 与 `.nvmrc` 的 `lts-krypton`（Node 24）不一致**：`@types/node` 已升到 ^24 对齐本地 runtime，
+  类型层面（`tsc --noEmit`）在 Node 22 上照样通过（纯类型包不进运行时），但这个版本漂移仍在，
+  且前端 `.mjs` 测试若接入 CI 会先撞上 Node 22 的 TS type stripping 问题。建议把 CI 的两处 `node-version` 一并抬到 24。
 
 - **认证守卫加固（review 后续）**（`auth-provider.tsx` / `app-layout.tsx`）：
   1. 抽出 `resetAuthState()`，统一 logout / 会话失效 / 改密兜底三处的状态清理（此前兜底只清了 user 与会话文件，漏掉 `needsSetup`、`permissions`、`authInitialized`）；`clearAuth` 保留给启动恢复流程。
