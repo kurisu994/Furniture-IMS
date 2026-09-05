@@ -129,7 +129,6 @@
     "validation": {
       "nameRequired": "请输入供应商名称",
       "contactPersonRequired": "请输入联系人",
-      "contactPhoneRequired": "请输入联系电话",
       "contactPhoneInvalid": "请输入有效的国际电话号码",
       "emailInvalid": "请输入有效的邮箱地址",
       "taxIdInvalid": "请输入有效的税号",

@@ -129,7 +129,6 @@
     "validation": {
       "nameRequired": "Enter supplier name",
       "contactPersonRequired": "Enter contact person",
-      "contactPhoneRequired": "Enter contact phone",
       "contactPhoneInvalid": "Enter a valid international phone number",
       "emailInvalid": "Enter a valid email address",
       "taxIdInvalid": "Enter a valid tax ID",

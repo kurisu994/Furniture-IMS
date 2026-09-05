@@ -129,7 +129,6 @@
     "validation": {
       "nameRequired": "Vui lòng nhập tên nhà cung cấp",
       "contactPersonRequired": "Vui lòng nhập người liên hệ",
-      "contactPhoneRequired": "Vui lòng nhập số điện thoại",
       "contactPhoneInvalid": "Vui lòng nhập số điện thoại quốc tế hợp lệ",
       "emailInvalid": "Vui lòng nhập email hợp lệ",
       "taxIdInvalid": "Vui lòng nhập mã số thuế hợp lệ",

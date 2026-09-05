@@ -13,7 +13,7 @@ export interface CustomerValidationInput {
 }
 
 /** 客户表单校验错误键 */
-export type CustomerValidationErrorKey = 'nameRequired' | 'contactPersonRequired' | 'contactPhoneRequired' | 'contactPhoneInvalid' | 'emailInvalid'
+export type CustomerValidationErrorKey = 'nameRequired' | 'contactPersonRequired' | 'contactPhoneInvalid' | 'emailInvalid'
 
 /**
  * 构建切换客户状态的 IPC 参数
@@ -48,9 +48,7 @@ export function validateCustomerForm(input: CustomerValidationInput): Partial<Re
     errors.contactPerson = 'contactPersonRequired'
   }
 
-  if (!input.contactPhone.trim()) {
-    errors.contactPhone = 'contactPhoneRequired'
-  } else if (!PHONE_PATTERN.test(input.contactPhone.trim())) {
+  if (input.contactPhone.trim() && !PHONE_PATTERN.test(input.contactPhone.trim())) {
     errors.contactPhone = 'contactPhoneInvalid'
   }
 

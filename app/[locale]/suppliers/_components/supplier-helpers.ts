@@ -15,7 +15,6 @@ export interface SupplierValidationInput {
 export type SupplierValidationErrorKey =
   | 'nameRequired'
   | 'contactPersonRequired'
-  | 'contactPhoneRequired'
   | 'contactPhoneInvalid'
   | 'emailInvalid'
   | 'taxIdInvalid'
@@ -45,9 +44,7 @@ export function validateSupplierForm(input: SupplierValidationInput): Partial<Re
     errors.contactPerson = 'contactPersonRequired'
   }
 
-  if (!input.contactPhone.trim()) {
-    errors.contactPhone = 'contactPhoneRequired'
-  } else if (!PHONE_PATTERN.test(input.contactPhone.trim())) {
+  if (input.contactPhone.trim() && !PHONE_PATTERN.test(input.contactPhone.trim())) {
     errors.contactPhone = 'contactPhoneInvalid'
   }
 

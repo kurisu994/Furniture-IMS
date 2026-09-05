@@ -453,9 +453,7 @@ export function SupplierDialog({ open, onOpenChange, supplierId, onSaved }: Supp
                           <FieldError>{errors.contactPerson}</FieldError>
                         </Field>
                         <Field data-invalid={!!errors.contactPhone || undefined}>
-                          <FieldLabel>
-                            {t('contactPhone')} <span className="text-destructive">*</span>
-                          </FieldLabel>
+                          <FieldLabel>{t('contactPhone')}</FieldLabel>
                           <Input value={form.contactPhone} onChange={event => updateField('contactPhone', event.target.value)} />
                           <FieldError>{errors.contactPhone}</FieldError>
                         </Field>

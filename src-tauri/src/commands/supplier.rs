@@ -280,11 +280,11 @@ pub(crate) fn validate_save_supplier_params(params: &SaveSupplierParams) -> Resu
         return Err(AppError::Business("联系人不能为空".to_string()));
     }
 
-    let Some(contact_phone) = params.contact_phone.as_deref() else {
-        return Err(AppError::Business("联系电话不能为空".to_string()));
-    };
-    if !validate_contact_phone(contact_phone) {
-        return Err(AppError::Business("请输入有效的国际电话号码".to_string()));
+    // 联系电话选填；填写后仍校验国际号码格式
+    if let Some(contact_phone) = params.contact_phone.as_deref() {
+        if !contact_phone.trim().is_empty() && !validate_contact_phone(contact_phone) {
+            return Err(AppError::Business("请输入有效的国际电话号码".to_string()));
+        }
     }
 
     if let Some(email) = params.email.as_deref() {

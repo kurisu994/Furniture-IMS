@@ -305,9 +305,7 @@ export function CustomerDialog({ open, onOpenChange, customerId, onSaved }: Cust
                     </Field>
                     {/* 联系电话 */}
                     <Field data-invalid={!!errors.contactPhone || undefined}>
-                      <FieldLabel>
-                        {t('form.contactPhone')} <span className="text-destructive">*</span>
-                      </FieldLabel>
+                      <FieldLabel>{t('form.contactPhone')}</FieldLabel>
                       <Input
                         value={form.contactPhone}
                         onChange={event => updateField('contactPhone', event.target.value)}
