@@ -16,9 +16,18 @@ Rust 测试使用内置 `#[test]` / `#[tokio::test]`，通常与被测模块同�
 
 TypeScript 遵循 `biome.json`：2 空格缩进、单引号、尽量使用 `useConst`，不要手动编辑 `pnpm-lock.yaml`。Rust 使用 `cargo fmt` 和 `clippy -D warnings`。用户可见文案必须进入 `messages/{zh,en,vi}/` 并通过 `t()` 获取；新增页面需同步更新路由、导航与三语文案。数据库设计不增加外键约束，关联关系通过代码校验、索引和业务逻辑维护。
 
-## AI 会话收尾与记忆银行
+## 项目记忆（memory-bank）
 
-每次最终回复前，AI 必须检查本轮是否产生代码变更、重要决策、阻塞或下一步计划；如有，先更新 `memory-bank/activeContext.md`，记录当前状态、活跃文件、已做决策、下一步和阻塞。涉及里程碑、架构调整或长期约定变化时，同步更新 `memory-bank/progress.md`，最后再检查一下是否需要更新 `CHANGELOG.md`。
+项目长期记忆在 `memory-bank/`，按变更频率分四层：共识层 `00-project.md` + `1X-*.md`、任务层 `active/<branch>.md`、个人层 `journal/<dev>.md`、归档层 `archive/YYYY-MM/`。入口 `memory-bank/README.md` 是索引、路径映射表与写入规则的唯一出处。
+
+- 新会话先读 `memory-bank/00-project.md`；读写 `1X-*.md` 覆盖的代码路径时，规范由 hook 自动注入（Claude Code / Codex / OpenCode）。
+
+## AI 会话收尾
+
+最终回复前检查：
+- 本轮代码变更、重要决策、阻塞、下一步计划。
+- **重要：** 把本轮结果写进 `memory-bank/` 对应层：任务进展更新 `active/<branch>.md`，里程碑与长期约定沉淀到共识层或 `archive/`，会话流水追加到 `journal/<dev>.md`。
+- 判断是否需要更新 `CHANGELOG.md`（用户视角，不写文件路径/工具链细节）。
 
 ## Commit 与 Pull Request 指南
 

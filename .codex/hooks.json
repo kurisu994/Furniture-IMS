@@ -1,0 +1,29 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -X utf8 .codex/hooks/inject-memory-bank.py",
+            "timeout": 15,
+            "additionalContextLimit": 0
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "^(?:clear|compact)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -X utf8 .codex/hooks/inject-memory-bank.py",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}
